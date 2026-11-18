@@ -23,7 +23,7 @@ handles one ecosystem:
 
 [`schedule.toml`](schedule.toml) is the source of truth. Repositories are
 discovered at run time, so a repository that gains the prompt joins its group
-the following week. `./update_deps.py list` shows the current assignment.
+the following week. `make list` shows the current assignment.
 
 ## How a run works
 
@@ -64,12 +64,12 @@ Requires `agy` (signed in), `gh` (authenticated), `git`, and `uv`, plus each
 repository's own toolchain.
 
 ```sh
-./update_deps.py install     # write and load the launchd agents
-./update_deps.py status      # schedule and pending pull requests
+make install     # write and load the launchd agents
+make status      # schedule and pending pull requests
 ```
 
-Run `install` again after editing `schedule.toml`. `uninstall` removes the
-agents.
+Run `make install` again after editing `schedule.toml`. `make uninstall`
+removes the agents. Run `make help` to list every target.
 
 > [!IMPORTANT]
 > macOS privacy protection blocks launchd jobs from reading `~/Documents`,
@@ -86,9 +86,9 @@ configured through environment variables.
 ## Manual use
 
 ```sh
-./update_deps.py run python --dry-run          # list the group's repositories
-./update_deps.py run python --repo md2linkedin # run a single repository now
-./update_deps.py cleanup                       # clean up after finished PRs
+make dry-run GROUP=python                  # list the group's repositories
+make run GROUP=python REPO=md2linkedin     # run a single repository now
+make cleanup                               # clean up after finished PRs
 ```
 
 ## Files outside the repository
@@ -104,5 +104,8 @@ configured through environment variables.
 ## Development
 
 ```sh
-uvx ruff check && uvx ruff format --check && uvx ty check
+make check    # ruff check, ruff format --check, and ty check
+make format   # apply ruff formatting
 ```
+
+See [AGENTS.md](AGENTS.md) for guidance aimed at AI coding agents.
