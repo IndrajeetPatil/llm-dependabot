@@ -14,10 +14,14 @@ with Antigravity CLI (`agy`) on a weekly `launchd` schedule (macOS only). See
 | Path | Purpose |
 | --- | --- |
 | `llm_dependabot.py` | The whole CLI: a single-file `uv` script (Python 3.15+) |
+| `llm_dependabot.py.lock` | Locked versions of the script's dependencies |
 | `config.yaml` | Shared settings and the source of truth for groups, weekdays, and times |
 | `private.example.yaml` | Template for the git-ignored `private.yaml` listing private repositories |
 | `app/` | Sources of the LLM Dependabot app (`launcher.c`, `icon.png`), which holds the Full Disk Access grant |
 | `docs/` | User and developer documentation; `docs/images/logo.png` is the hex sticker |
+| `DESIGN.md` | Visual identity for the sticker, app icon, and documentation figures |
+| `.agents/skills/documentation-illustrations/` | Skill for generating documentation figures |
+| `.github/prompts/update-deps.md` | This repository's own dependency-update prompt |
 | `hextools/` | Artwork and R script that render the hex sticker and `app/icon.png` |
 | `hooks/check_private_names.py` | Hook that keeps private repository names out of commits |
 | `prek.toml` | Git hooks, run with `make hooks` |
@@ -33,6 +37,7 @@ make help          # list all targets
 make check         # lint, format check, and type check
 make hooks         # every prek hook on all files; must pass before committing
 make format        # apply ruff formatting
+make update-deps   # upgrade locked dependencies and prek hooks
 make list          # show group assignment (needs gh authenticated)
 make dry-run GROUP=python
 ```
@@ -56,6 +61,9 @@ owner's Mac.
 - Keep the README short: an overview, the quick start, and links. Put details
   in the matching page under `docs/`, and update it when behaviour, commands,
   configuration, or files outside the repository change.
+
+- Follow `DESIGN.md` for anything visual: the hex sticker, the app icon,
+  diagrams, and illustrations.
 
 - Changing anything under `app/` rebuilds the app and invalidates its Full
   Disk Access grant, so the user must grant it again; avoid needless changes.

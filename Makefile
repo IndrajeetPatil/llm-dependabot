@@ -3,7 +3,7 @@
 SCRIPT := ./llm_dependabot.py
 
 .DEFAULT_GOAL := help
-.PHONY: help setup install uninstall list status cleanup run dry-run lint format format-check typecheck check hooks hooks-install
+.PHONY: help setup update-deps install uninstall list status cleanup run dry-run lint format format-check typecheck check hooks hooks-install
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z_-]+:.*## / {printf "  %-14s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -16,6 +16,10 @@ setup: ## Interactive first-time setup (tools, sign-ins, private repos, hooks, l
 		brew install uv; \
 	}
 	$(SCRIPT) setup
+
+update-deps: ## Upgrade the locked script dependencies and the prek hook revisions
+	uv lock --script $(SCRIPT) --upgrade
+	prek update --freeze
 
 install: ## Build the app, then write and load the launchd agents
 	$(SCRIPT) install

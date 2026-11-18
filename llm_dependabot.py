@@ -2,10 +2,10 @@
 # /// script
 # requires-python = ">=3.15"
 # dependencies = [
-#   "filelock>=4.2",
-#   "pydantic>=2.14",
+#   "filelock>=4.2.12",
+#   "pydantic>=2.14.3",
 #   "pyyaml>=6.0.3",
-#   "typer>=0.29",
+#   "typer>=0.29.2",
 # ]
 # ///
 """Run each repository's update-deps prompt with Antigravity CLI every week."""
