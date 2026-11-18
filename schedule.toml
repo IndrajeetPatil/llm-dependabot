@@ -1,0 +1,45 @@
+# Weekly dependency-update schedule.
+#
+# Every non-archived, non-fork repository owned by `owner` that contains
+# `prompt_path` is assigned to the first group whose `languages` include its
+# GitHub primary language; the group with `languages = ["*"]` takes the rest.
+# Times are local wall-clock times (24-hour). Run `./update_deps.py install`
+# after editing this file so launchd picks up the change.
+
+owner = "IndrajeetPatil"
+prompt_path = ".github/prompts/update-deps.md"
+include_private = true
+
+# Existing clones are reused from here; missing ones are cloned here and
+# deleted again once their pull request is merged or closed.
+clone_root = "~/Documents/GitHub"
+
+# Upper bound for one repository's agent run.
+agent_timeout_hours = 4
+
+# How often to check pending pull requests and clean up after merged ones.
+cleanup_interval_hours = 3
+
+[[groups]]
+name = "r"
+languages = ["R"]
+weekday = "Monday"
+time = "11:00"
+
+[[groups]]
+name = "workflows"
+languages = ["*"]
+weekday = "Tuesday"
+time = "11:00"
+
+[[groups]]
+name = "python"
+languages = ["Python"]
+weekday = "Wednesday"
+time = "14:30"
+
+[[groups]]
+name = "web"
+languages = ["TypeScript", "JavaScript", "Astro", "Svelte", "Vue", "HTML", "CSS"]
+weekday = "Thursday"
+time = "11:00"
