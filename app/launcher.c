@@ -1,10 +1,11 @@
-// Minimal launcher that launchd starts instead of /bin/zsh.
+// Executable of the LLM Dependabot app, which launchd starts instead of zsh.
 //
 // macOS privacy protection (TCC) blocks launchd jobs from reading ~/Documents
-// unless the job's executable has Full Disk Access. Granting that to this
-// dedicated binary, rather than to /bin/zsh, keeps the permission narrow.
-// The command runs as a child process (not via exec) so that this binary stays
-// the "responsible process" TCC checks for everything the job starts.
+// unless the job's program has Full Disk Access. Granting that to this
+// dedicated app, rather than to /bin/zsh, keeps the permission narrow and
+// shows up under a recognisable name in System Settings. The command runs as a
+// child process (not via exec) so that this program stays the "responsible
+// process" TCC checks for everything the job starts.
 
 #include <errno.h>
 #include <signal.h>

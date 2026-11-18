@@ -1,6 +1,6 @@
 # Common operations for llm-dependabot. Run `make help` for the list.
 
-SCRIPT := ./update_deps.py
+SCRIPT := ./llm_dependabot.py
 
 .DEFAULT_GOAL := help
 .PHONY: help setup install uninstall list status cleanup run dry-run lint format format-check typecheck check hooks hooks-install
@@ -17,7 +17,7 @@ setup: ## Interactive first-time setup (tools, sign-ins, private repos, hooks, l
 	}
 	$(SCRIPT) setup
 
-install: ## Write and load the launchd agents
+install: ## Build the app, then write and load the launchd agents
 	$(SCRIPT) install
 
 uninstall: ## Unload and remove the launchd agents

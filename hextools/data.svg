@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 252 136" width="504" height="272">
+  <!-- Edges from the project to its dependencies -->
+  <g fill="none" stroke="#5d574c" stroke-width="5" stroke-linecap="round">
+    <path d="M76 68 C112 68 112 22 148 22"/>
+    <path d="M76 68 H148"/>
+    <path d="M76 68 C112 68 112 114 148 114"/>
+  </g>
+  <!-- The project: a card with lines of code -->
+  <rect x="10" y="40" width="66" height="56" rx="10" fill="#fdfcf9" stroke="#201d18" stroke-width="6"/>
+  <rect x="24" y="54" width="38" height="7" rx="3" fill="#201d18"/>
+  <rect x="24" y="66" width="26" height="7" rx="3" fill="#5d574c"/>
+  <rect x="24" y="78" width="32" height="7" rx="3" fill="#5d574c"/>
+  <!-- Dependencies: two unchanged, one bumped by the agent -->
+  <rect x="148" y="8" width="58" height="28" rx="8" fill="#f2efe8" stroke="#5d574c" stroke-width="5"/>
+  <rect x="162" y="19" width="30" height="6" rx="3" fill="#5d574c"/>
+  <rect x="148" y="100" width="58" height="28" rx="8" fill="#f2efe8" stroke="#5d574c" stroke-width="5"/>
+  <rect x="162" y="111" width="30" height="6" rx="3" fill="#5d574c"/>
+  <rect x="148" y="50" width="58" height="36" rx="8" fill="#14584d"/>
+  <path d="M177 78 V58 M168 66 L177 57 L186 66" fill="none" stroke="#fdfcf9" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- The language model at work: a sparkle beside the update -->
+  <path d="M232 42 Q234 54 246 56 Q234 58 232 70 Q230 58 218 56 Q230 54 232 42 Z" fill="#0e7466"/>
+  <path d="M222 78 Q223 84 229 85 Q223 86 222 92 Q221 86 215 85 Q221 84 222 78 Z" fill="#0e7466"/>
+</svg>

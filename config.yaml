@@ -6,7 +6,7 @@
 #
 # Each repository joins the first group whose `languages` include its GitHub
 # primary language; the group with `languages: ["*"]` takes the rest. Times are
-# local wall-clock times (24-hour). Run `./update_deps.py install` after editing
+# local wall-clock times (24-hour). Run `make install` after editing
 # either file so launchd picks up the change.
 
 owner: IndrajeetPatil

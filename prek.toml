@@ -13,7 +13,7 @@ hooks = [
 [[repos]]
 repo = "local"
 hooks = [
-  # ty runs in the scripts' own environments, which hold PyYAML.
+  # ty runs in the script's own environment, which holds its dependencies.
   { id = "ty", name = "ty", entry = "make typecheck", language = "system", pass_filenames = false, files = "\\.py$" },
   # Keep private repository names out of files and commit messages.
   { id = "private-names", name = "no private repository names", entry = "hooks/check_private_names.py", language = "system", stages = ["pre-commit", "commit-msg"] },
