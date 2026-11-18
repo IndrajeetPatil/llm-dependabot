@@ -1,4 +1,4 @@
-# Common operations for update-deps-scheduler. Run `make help` for the list.
+# Common operations for llm-dependabot. Run `make help` for the list.
 
 SCRIPT := ./update_deps.py
 
@@ -40,7 +40,8 @@ format: ## Format with ruff
 format-check: ## Check formatting with ruff
 	uvx ruff format --check
 
-typecheck: ## Type-check with ty
-	uvx ty check
+typecheck: ## Type-check with ty against the script's environment
+	uv sync --script $(SCRIPT) --quiet
+	uvx ty check --python "$$(uv python find --script $(SCRIPT))"
 
 check: lint format-check typecheck ## Run all development checks

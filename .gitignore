@@ -1,3 +1,6 @@
 __pycache__/
 .ruff_cache/
 .venv/
+
+# Private repository list; never committed.
+private.yaml

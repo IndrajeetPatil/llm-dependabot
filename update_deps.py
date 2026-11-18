@@ -1,12 +1,12 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.15"
-# dependencies = []
+# dependencies = ["pyyaml>=6.0.3"]
 # ///
 """Run each repository's update-deps prompt with Antigravity CLI on a weekly schedule.
 
 Subcommands:
-  install          write and load the launchd agents described in schedule.toml
+  install          write and load the launchd agents described in config.yaml
   uninstall        unload and remove those launchd agents
   list             show which repositories fall into which group
   run GROUP        run the update-deps prompt for every repository in GROUP
@@ -25,7 +25,6 @@ import shutil
 import signal
 import subprocess
 import sys
-import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -33,8 +32,11 @@ lazy import plistlib
 lazy import shlex
 lazy from collections.abc import Generator
 
+lazy import yaml
+
 SCRIPT = Path(__file__).resolve()
-CONFIG_FILE = SCRIPT.parent / "schedule.toml"
+CONFIG_FILE = SCRIPT.parent / "config.yaml"
+PRIVATE_FILE = SCRIPT.parent / "private.yaml"
 LABEL_PREFIX = "com.indrajeetpatil.update-deps"
 LAUNCH_AGENTS = Path.home() / "Library/LaunchAgents"
 LOG_DIR = Path.home() / "Library/Logs/update-deps"
@@ -107,14 +109,18 @@ def notify(title: str, message: str) -> None:
 
 
 def load_config() -> dict:
-    with CONFIG_FILE.open("rb") as fh:
-        config = tomllib.load(fh)
+    """Read config.yaml plus the private repository list from private.yaml."""
+    config = yaml.safe_load(CONFIG_FILE.read_text())
     names = [g["name"] for g in config["groups"]]
     if len(names) != len(set(names)):
-        sys.exit("schedule.toml: group names must be unique")
+        sys.exit(f"{CONFIG_FILE.name}: group names must be unique")
     for group in config["groups"]:
         if group["weekday"] not in WEEKDAYS:
-            sys.exit(f"schedule.toml: unknown weekday {group['weekday']!r}")
+            sys.exit(f"{CONFIG_FILE.name}: unknown weekday {group['weekday']!r}")
+    private = {}
+    if PRIVATE_FILE.exists():
+        private = yaml.safe_load(PRIVATE_FILE.read_text()) or {}
+    config["private_repos"] = frozenset(private.get("repos") or ())
     return config
 
 
@@ -192,8 +198,11 @@ def discover(config: dict, group: str | None = None) -> dict[str, list[Repo]]:
         "name,visibility,primaryLanguage,defaultBranchRef",
     )
     grouped: dict[str, list[Repo]] = {g["name"]: [] for g in config["groups"]}
+    private = config["private_repos"]
+    if missing := private - {i["name"] for i in listing if i["visibility"] != "PUBLIC"}:
+        log(f"{PRIVATE_FILE.name}: not owned private repositories: {sorted(missing)}")
     for item in sorted(listing, key=lambda r: r["name"].lower()):
-        if item["visibility"] != "PUBLIC" and not config["include_private"]:
+        if item["visibility"] != "PUBLIC" and item["name"] not in private:
             continue
         if not item["defaultBranchRef"]:
             continue  # empty repository

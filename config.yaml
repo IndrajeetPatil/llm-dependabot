@@ -1,0 +1,44 @@
+# Weekly dependency-update schedule, shared by public and private repositories.
+#
+# Every non-archived, non-fork public repository owned by `owner` that contains
+# `prompt_path` is picked up automatically. Private repositories are opt-in:
+# list them in private.yaml (git-ignored; see private.example.yaml).
+#
+# Each repository joins the first group whose `languages` include its GitHub
+# primary language; the group with `languages: ["*"]` takes the rest. Times are
+# local wall-clock times (24-hour). Run `./update_deps.py install` after editing
+# either file so launchd picks up the change.
+
+owner: IndrajeetPatil
+prompt_path: .github/prompts/update-deps.md
+
+# Existing clones are reused from here; missing ones are cloned here and
+# deleted again once their pull request is merged or closed.
+clone_root: ~/Documents/GitHub
+
+# Upper bound for one repository's agent run.
+agent_timeout_hours: 4
+
+# How often to check pending pull requests and clean up after merged ones.
+cleanup_interval_hours: 3
+
+groups:
+  - name: r
+    languages: [R]
+    weekday: Monday
+    time: "11:00"
+
+  - name: workflows
+    languages: ["*"]
+    weekday: Tuesday
+    time: "11:00"
+
+  - name: python
+    languages: [Python]
+    weekday: Wednesday
+    time: "14:30"
+
+  - name: web
+    languages: [TypeScript, JavaScript, Astro, Svelte, Vue, HTML, CSS]
+    weekday: Thursday
+    time: "11:00"

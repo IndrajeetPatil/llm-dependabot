@@ -1,13 +1,13 @@
-# update-deps-scheduler
+# llm-dependabot
 
-Weekly, unattended dependency updates for my repositories, run locally on macOS
-by [Antigravity CLI](https://antigravity.google) (`agy`) in YOLO mode.
+Dependabot, but the updates are done by an LLM agent: weekly, unattended
+dependency updates for my repositories, run locally on macOS by
+[Antigravity CLI](https://antigravity.google) (`agy`) in YOLO mode.
 
-Every non-archived, non-fork repository I own that contains
-`.github/prompts/update-deps.md` gets that prompt run verbatim by `agy`, which
-updates the dependencies and opens a pull request. Nothing runs in the cloud:
-`launchd` starts the jobs, and `agy`, `gh`, and `git` use the credentials already
-on this Mac.
+Every repository that contains `.github/prompts/update-deps.md` gets that prompt
+run verbatim by `agy`, which updates the dependencies and opens a pull request.
+Nothing runs in the cloud: `launchd` starts the jobs, and `agy`, `gh`, and `git`
+use the credentials already on this Mac.
 
 ## Schedule
 
@@ -21,9 +21,24 @@ handles one ecosystem:
 | `python` | Python | Wednesday 14:30 |
 | `web` | TypeScript, JavaScript, Astro, and similar | Thursday 11:00 |
 
-[`schedule.toml`](schedule.toml) is the source of truth. Repositories are
-discovered at run time, so a repository that gains the prompt joins its group
-the following week. `make list` shows the current assignment.
+Repositories are discovered at run time, so a repository that gains the prompt
+joins its group the following week. `make list` shows the current assignment.
+
+## Configuration
+
+Two YAML files sit next to the script, and every command reads both:
+
+| File | Committed | Contents |
+| --- | --- | --- |
+| [`config.yaml`](config.yaml) | yes | Owner, prompt path, clone directory, timeouts, and the group schedule |
+| `private.yaml` | no (git-ignored) | Private repositories to include, by name |
+
+- Public repositories are picked up automatically: every non-archived, non-fork
+  public repository owned by `owner` that contains the prompt.
+
+- Private repositories are opt-in, so their names never reach version control.
+  Copy [`private.example.yaml`](private.example.yaml) to `private.yaml` and
+  list them there. Without `private.yaml`, only public repositories run.
 
 ## How a run works
 
@@ -68,8 +83,8 @@ make install     # write and load the launchd agents
 make status      # schedule and pending pull requests
 ```
 
-Run `make install` again after editing `schedule.toml`. `make uninstall`
-removes the agents. Run `make help` to list every target.
+Run `make install` again after editing `config.yaml` or `private.yaml`.
+`make uninstall` removes the agents. Run `make help` to list every target.
 
 > [!IMPORTANT]
 > macOS privacy protection blocks launchd jobs from reading `~/Documents`,
@@ -87,7 +102,7 @@ configured through environment variables.
 
 ```sh
 make dry-run GROUP=python                  # list the group's repositories
-make run GROUP=python REPO=md2linkedin     # run a single repository now
+make run GROUP=python REPO=my-project      # run a single repository now
 make cleanup                               # clean up after finished PRs
 ```
 
