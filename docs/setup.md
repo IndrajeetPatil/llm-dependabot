@@ -44,9 +44,15 @@ therefore start through a tiny app, **LLM Dependabot**, which setup builds
 into `~/Library/Application Support/llm-dependabot/`.
 
 Setup opens **System Settings › Privacy & Security › Full Disk Access** and
-reveals the app in Finder. Drag it into the list (or click **+** and choose
-it) and switch it on. Setup then confirms the grant by starting a throwaway
-launchd job and continues once that job can read your clones.
+reveals the app in Finder. If LLM Dependabot is already listed, switch it on;
+otherwise drag it into the list (or click **+** and choose it) first. Setup
+then confirms the grant by starting a throwaway launchd job and continues once
+that job can read your clones.
+
+<img src="images/full-disk-access.webp" width="560" alt="System Settings, Full Disk Access pane, with LLM Dependabot listed and switched on" />
+
+macOS may already list the app, switched off: it adds any program that tries
+to read protected data, which the app does the first time a job runs.
 
 > [!NOTE]
 > Only the LLM Dependabot app gets the permission, not `/bin/zsh`. It needs
