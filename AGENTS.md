@@ -18,6 +18,8 @@ See [README.md](README.md) for behaviour and setup.
 | `launcher.c` | Small launcher that holds the macOS Full Disk Access grant |
 | `ruff.toml`, `ty.toml` | Lint, format, and type-check configuration |
 | `Makefile` | Entry points for common operations (`make help`) |
+| `prek.toml` | Git hooks, run with `make hooks` |
+| `hooks/check_private_names.py` | Hook that keeps private repository names out of commits |
 
 ## Commands
 
@@ -26,6 +28,7 @@ Prefer the Makefile targets over invoking tools directly:
 ```sh
 make help          # list all targets
 make check         # lint, format check, and type check (run before committing)
+make hooks         # every prek hook on all files; must pass before committing
 make format        # apply ruff formatting
 make list          # show group assignment (needs gh authenticated)
 make dry-run GROUP=python

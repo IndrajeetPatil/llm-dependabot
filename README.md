@@ -119,8 +119,16 @@ make cleanup                               # clean up after finished PRs
 ## Development
 
 ```sh
-make check    # ruff check, ruff format --check, and ty check
-make format   # apply ruff formatting
+make hooks-install   # once per clone: install the prek git hooks
+make check           # ruff check, ruff format --check, and ty check
+make format          # apply ruff formatting
+make hooks           # run every prek hook on all files
 ```
+
+The [prek](https://prek.j178.dev) hooks in [`prek.toml`](prek.toml) run Ruff
+and ty, tidy whitespace, and block committed private keys, large files, and
+merge-conflict markers. A local hook also fails any commit whose files or
+message name a repository listed in `private.yaml`, or that adds
+`private.yaml` itself.
 
 See [AGENTS.md](AGENTS.md) for guidance aimed at AI coding agents.

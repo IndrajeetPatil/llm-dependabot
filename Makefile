@@ -3,7 +3,7 @@
 SCRIPT := ./update_deps.py
 
 .DEFAULT_GOAL := help
-.PHONY: help install uninstall list status cleanup run dry-run lint format format-check typecheck check
+.PHONY: help install uninstall list status cleanup run dry-run lint format format-check typecheck check hooks hooks-install
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z_-]+:.*## / {printf "  %-14s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -45,3 +45,9 @@ typecheck: ## Type-check with ty against the script's environment
 	uvx ty check --python "$$(uv python find --script $(SCRIPT))"
 
 check: lint format-check typecheck ## Run all development checks
+
+hooks: ## Run every prek hook on all files
+	prek run --all-files
+
+hooks-install: ## Install the prek git hooks (pre-commit and commit-msg)
+	prek install
