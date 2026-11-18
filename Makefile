@@ -3,10 +3,19 @@
 SCRIPT := ./update_deps.py
 
 .DEFAULT_GOAL := help
-.PHONY: help install uninstall list status cleanup run dry-run lint format format-check typecheck check hooks hooks-install
+.PHONY: help setup install uninstall list status cleanup run dry-run lint format format-check typecheck check hooks hooks-install
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z_-]+:.*## / {printf "  %-14s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+setup: ## Interactive first-time setup (tools, sign-ins, private repos, hooks, launchd, Full Disk Access)
+	@command -v brew >/dev/null || { echo "Install Homebrew first: https://brew.sh"; exit 1; }
+	@command -v uv >/dev/null || { \
+		printf "uv is missing. Install it with Homebrew? [Y/n] "; read answer; \
+		case "$$answer" in [nN]*) exit 1;; esac; \
+		brew install uv; \
+	}
+	$(SCRIPT) setup
 
 install: ## Write and load the launchd agents
 	$(SCRIPT) install

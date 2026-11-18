@@ -12,6 +12,8 @@ Subcommands:
   run GROUP        run the update-deps prompt for every repository in GROUP
   cleanup          remove checkouts whose pull requests are merged or closed
   status           show the schedule and the pull requests still pending
+  setup            interactive first-time setup: prerequisites, private
+                   repositories, git hooks, launchd agents, Full Disk Access
 """
 
 import argparse
@@ -21,10 +23,12 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -580,21 +584,78 @@ def build_launcher() -> bool:
     return True
 
 
-def cmd_install(_: argparse.Namespace) -> None:
-    config = load_config()
+def running_jobs() -> list[str]:
+    """Labels of installed agents whose job is running right now."""
+    running = []
+    for label in installed_labels():
+        out = launchctl("print", f"gui/{os.getuid()}/{label}").stdout
+        if re.search(r"^\tstate = running$", out, re.MULTILINE):
+            running.append(label)
+    return running
+
+
+def full_disk_access_granted(path: Path) -> bool:
+    """Check that a launchd job started through the launcher can read path.
+
+    This runs a throwaway agent, so it exercises the same privacy checks as
+    the scheduled jobs rather than those of the current terminal.
+    """
+    label = f"{LABEL_PREFIX}.access-check"
+    plist_path = STATE_DIR / f"{label}.plist"
+    with plist_path.open("wb") as fh:
+        plistlib.dump(
+            {
+                "Label": label,
+                "ProgramArguments": [str(LAUNCHER), "/bin/ls", str(path)],
+                "RunAtLoad": True,
+                "StandardOutPath": "/dev/null",
+                "StandardErrorPath": "/dev/null",
+            },
+            fh,
+        )
+    target = f"gui/{os.getuid()}/{label}"
+    launchctl("bootout", target)
+    launchctl("bootstrap", f"gui/{os.getuid()}", str(plist_path))
+    code = None
+    for _ in range(100):
+        out = launchctl("print", target).stdout
+        if match := re.search(r"last exit code = (\d+)", out):
+            code = int(match[1])
+            break
+        time.sleep(0.1)
+    launchctl("bootout", target)
+    plist_path.unlink(missing_ok=True)
+    return code == 0
+
+
+def print_full_disk_access_steps() -> None:
+    print(
+        "\nmacOS blocks launchd jobs from ~/Documents and similar folders unless"
+        " their program has Full Disk Access. In System Settings > Privacy &"
+        " Security > Full Disk Access, click +, press Cmd-Shift-G, paste the"
+        f" path below, and switch it on:\n  {LAUNCHER}\n"
+        "If macOS instead asks whether update-deps-launcher may access a folder,"
+        " that check timed out; dismiss the prompt and use the setting above.\n"
+    )
+    subprocess.run(["open", FULL_DISK_ACCESS_PANE], check=False)
+    subprocess.run(["open", "-R", LAUNCHER], check=False)
+
+
+def install_agents(config: dict) -> bool:
+    """Write and load the launchd agents; return True if the launcher is new."""
+    if busy := running_jobs():
+        sys.exit(
+            f"{', '.join(busy)} is running; reinstalling would stop it."
+            " Try again once it finishes (see `status`)."
+        )
     agents = desired_agents(config)
     LOG_DIR.mkdir(parents=True, exist_ok=True)
-    if build_launcher():
+    rebuilt = build_launcher()
+    if rebuilt:
         log(f"built {LAUNCHER}")
-        print(
-            "\nOne-time step: add the launcher to System Settings > Privacy &"
-            " Security > Full Disk Access (press Cmd-Shift-G in the file dialog"
-            f" and paste the path below), so jobs can read your clones:\n  {LAUNCHER}\n"
-        )
-        subprocess.run(["open", FULL_DISK_ACCESS_PANE], check=False)
-        subprocess.run(["open", "-R", LAUNCHER], check=False)
     for label in installed_labels():
         unload(label)
+    LAUNCH_AGENTS.mkdir(parents=True, exist_ok=True)
     for label, plist in agents.items():
         path = LAUNCH_AGENTS / f"{label}.plist"
         with path.open("wb") as fh:
@@ -603,6 +664,14 @@ def cmd_install(_: argparse.Namespace) -> None:
         if result.returncode != 0:
             sys.exit(f"launchctl bootstrap {label} failed: {result.stderr.strip()}")
         log(f"loaded {label}")
+    return rebuilt
+
+
+def cmd_install(_: argparse.Namespace) -> None:
+    config = load_config()
+    install_agents(config)
+    if not full_disk_access_granted(clone_root(config)):
+        print_full_disk_access_steps()
     cmd_status(_)
 
 
@@ -635,6 +704,207 @@ def cmd_status(_: argparse.Namespace) -> None:
             print(f"  {path}")
 
 
+# --------------------------------------------------------------------------- #
+# Interactive setup
+# --------------------------------------------------------------------------- #
+
+# Command-line tools and the Homebrew packages that provide them.
+BREW_FORMULAE = frozendict(gh="gh", prek="prek")
+BREW_CASKS = frozendict(agy="antigravity-cli")
+
+
+def step(title: str) -> None:
+    print(f"\n==> {title}")
+
+
+def ask(question: str, *, default: bool = True) -> bool:
+    hint = "[Y/n]" if default else "[y/N]"
+    while True:
+        answer = input(f"{question} {hint} ").strip().lower()
+        if not answer:
+            return default
+        if answer in {"y", "yes", "n", "no"}:
+            return answer.startswith("y")
+
+
+def pause(message: str) -> None:
+    input(f"{message} Press Enter to continue. ")
+
+
+def interactive(*args: str) -> int:
+    """Run a command attached to the terminal, so it can prompt the user."""
+    return subprocess.run(args, check=False).returncode
+
+
+def succeeds(*args: str, timeout: float = 120) -> bool:
+    try:
+        result = subprocess.run(
+            args,
+            capture_output=True,
+            stdin=subprocess.DEVNULL,
+            timeout=timeout,
+            check=False,
+        )
+    except FileNotFoundError, subprocess.TimeoutExpired:
+        return False
+    return result.returncode == 0
+
+
+def ensure_command_line_tools() -> None:
+    step("Xcode Command Line Tools (git, clang)")
+    while not succeeds("xcode-select", "-p"):
+        interactive("xcode-select", "--install")
+        pause("Finish the Command Line Tools installer.")
+    print("installed")
+
+
+def ensure_brew_tools() -> None:
+    step("gh, prek, and Antigravity CLI")
+    packages = [("formula", c, f) for c, f in BREW_FORMULAE.items()]
+    packages += [("cask", c, f) for c, f in BREW_CASKS.items()]
+    for kind, command, package in packages:
+        if shutil.which(command):
+            print(f"{command}: {shutil.which(command)}")
+            continue
+        if not shutil.which("brew"):
+            sys.exit(
+                f"{command} is missing; install Homebrew from https://brew.sh first"
+            )
+        if not ask(f"{command} is missing. Install it with Homebrew ({package})?"):
+            sys.exit(f"{command} is required")
+        flag = ["--cask"] if kind == "cask" else []
+        if interactive("brew", "install", *flag, package) != 0:
+            sys.exit(f"brew install {package} failed")
+
+
+def ensure_signed_in() -> None:
+    step("GitHub CLI sign-in")
+    while not succeeds("gh", "auth", "status"):
+        if not ask("gh is not signed in. Run `gh auth login` now?"):
+            sys.exit("gh must be signed in")
+        interactive("gh", "auth", "login")
+    print("signed in")
+
+    step("Antigravity CLI sign-in")
+    while not succeeds("agy", "models"):
+        print("agy is not signed in. Run `agy` in another terminal and sign in.")
+        pause("Once signed in, come back here.")
+    print("signed in")
+
+
+def check_owner(config: dict) -> None:
+    step("Repository owner")
+    login = sh("gh", "api", "user", "--jq", ".login")
+    if login.lower() == config["owner"].lower():
+        print(f"{CONFIG_FILE.name} owner {config['owner']!r} matches your account")
+        return
+    print(
+        f"{CONFIG_FILE.name} names {config['owner']!r},"
+        f" but gh is signed in as {login!r}."
+    )
+    if ask(f"Set owner to {login!r} in {CONFIG_FILE.name}?"):
+        text = CONFIG_FILE.read_text()
+        CONFIG_FILE.write_text(
+            re.sub(r"^owner: .*$", f"owner: {login}", text, count=1, flags=re.MULTILINE)
+        )
+        config["owner"] = login
+
+
+def ensure_clone_root(config: dict) -> None:
+    step("Clone directory")
+    root = clone_root(config)
+    if not root.is_dir():
+        if not ask(f"{root} does not exist. Create it?"):
+            sys.exit(f"set clone_root in {CONFIG_FILE.name} to an existing directory")
+        root.mkdir(parents=True)
+    print(root)
+
+
+def choose_private_repos(config: dict) -> None:
+    step("Private repositories")
+    if PRIVATE_FILE.exists():
+        count = len(config["private_repos"])
+        print(f"{PRIVATE_FILE.name} already lists {count} repositories")
+        if not ask(f"Choose them again (rewrites {PRIVATE_FILE.name})?", default=False):
+            return
+    listing = gh_json(
+        "repo",
+        "list",
+        config["owner"],
+        "--source",
+        "--no-archived",
+        "--visibility",
+        "private",
+        "--limit",
+        "1000",
+        "--json",
+        "name,defaultBranchRef",
+    )
+    candidates = sorted(
+        item["name"]
+        for item in listing
+        if item["defaultBranchRef"]
+        and has_prompt(
+            Repo(config["owner"], item["name"], item["defaultBranchRef"]["name"], ""),
+            config["prompt_path"],
+        )
+    )
+    if not candidates:
+        print(f"no private repositories contain {config['prompt_path']}")
+    chosen = [n for n in candidates if ask(f"Include private repository {n}?")]
+    lines = [
+        "# Private repositories to include; git-ignored, never commit it.",
+        "",
+        "repos:" if chosen else "repos: []",
+        *(f"  - {name}" for name in chosen),
+    ]
+    PRIVATE_FILE.write_text("\n".join(lines) + "\n")
+    config["private_repos"] = frozenset(chosen)
+    print(f"wrote {PRIVATE_FILE.name} with {len(chosen)} repositories")
+
+
+def install_git_hooks() -> None:
+    step("Git hooks")
+    if interactive("prek", "install") != 0:
+        sys.exit("prek install failed")
+
+
+def ensure_full_disk_access(config: dict) -> None:
+    step("launchd agents and Full Disk Access")
+    install_agents(config)
+    root = clone_root(config)
+    while not full_disk_access_granted(root):
+        print_full_disk_access_steps()
+        pause("Once the launcher is switched on,")
+    print(f"scheduled jobs can read {root}")
+
+
+def cmd_setup(args: argparse.Namespace) -> None:
+    if sys.platform != "darwin":
+        sys.exit("llm-dependabot runs on macOS only")
+    if not sys.stdin.isatty():
+        sys.exit("setup is interactive; run it from a terminal")
+    try:
+        run_setup(args)
+    except EOFError, KeyboardInterrupt:
+        sys.exit("\nsetup cancelled; rerun `make setup` to continue")
+
+
+def run_setup(args: argparse.Namespace) -> None:
+    config = load_config()
+    ensure_command_line_tools()
+    ensure_brew_tools()
+    ensure_signed_in()
+    check_owner(config)
+    ensure_clone_root(config)
+    choose_private_repos(config)
+    install_git_hooks()
+    ensure_full_disk_access(config)
+    step("Done")
+    cmd_status(args)
+    print("\nPreview a group with `make dry-run GROUP=<group>`.")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(required=True)
@@ -643,6 +913,7 @@ def main() -> None:
     sub.add_parser("list").set_defaults(func=cmd_list)
     sub.add_parser("status").set_defaults(func=cmd_status)
     sub.add_parser("cleanup").set_defaults(func=cmd_cleanup)
+    sub.add_parser("setup").set_defaults(func=cmd_setup)
     run = sub.add_parser("run")
     run.add_argument("group")
     run.add_argument("--repo", action="append", help="limit to this repository")

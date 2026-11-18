@@ -75,24 +75,45 @@ flowchart TD
 
 ## Setup
 
-Requires `agy` (signed in), `gh` (authenticated), `git`, and `uv`, plus each
-repository's own toolchain.
+On a Mac with [Homebrew](https://brew.sh) (which also installs the Xcode
+Command Line Tools, providing `git`, `make`, and `clang`):
 
 ```sh
-make install     # write and load the launchd agents
-make status      # schedule and pending pull requests
+gh repo clone IndrajeetPatil/llm-dependabot ~/Documents/GitHub/llm-dependabot
+cd ~/Documents/GitHub/llm-dependabot
+make setup
 ```
 
-Run `make install` again after editing `config.yaml` or `private.yaml`.
-`make uninstall` removes the agents. Run `make help` to list every target.
+`make setup` is interactive and safe to rerun. It walks through each step,
+offering to fix whatever is missing:
+
+| Step | What happens |
+| --- | --- |
+| Tools | Installs `uv`, `gh`, `prek`, and Antigravity CLI with Homebrew if absent |
+| Sign-ins | Runs `gh auth login` if needed and waits until `agy` is signed in |
+| Owner | Offers to set `owner` in `config.yaml` to your GitHub account |
+| Clone directory | Creates `clone_root` if it does not exist |
+| Private repositories | Asks about each private repository that has the prompt and writes `private.yaml` |
+| Git hooks | Installs the prek hooks |
+| launchd | Builds the launcher, loads the agents, and waits until Full Disk Access is granted |
 
 > [!IMPORTANT]
 > macOS privacy protection blocks launchd jobs from reading `~/Documents`,
-> where the clones live. `install` compiles [`launcher.c`](launcher.c) into
-> `~/Library/Application Support/update-deps/update-deps-launcher` and opens
-> **System Settings › Privacy & Security › Full Disk Access**; add that binary
-> there once. Only this launcher gets the permission, not `/bin/zsh`. It is
-> rebuilt, and needs granting again, only when `launcher.c` changes.
+> where the clones live, even when your terminal has Full Disk Access. Setup
+> compiles [`launcher.c`](launcher.c) into
+> `~/Library/Application Support/update-deps/update-deps-launcher`, opens
+> **System Settings › Privacy & Security › Full Disk Access**, and reveals the
+> binary in Finder. Add it there and switch it on; setup confirms the grant by
+> starting a throwaway launchd job. Only this launcher gets the permission, not
+> `/bin/zsh`, and it needs granting again only when `launcher.c` changes.
+
+Agents work inside each repository, so its own toolchain (R, Python, Node.js,
+and so on) must also be installed for the agent to run its checks.
+
+Run `make install` after editing `config.yaml` or `private.yaml`; it refuses
+to reload while a job is running, since that would stop it. `make status`
+shows the schedule and pending pull requests, `make uninstall` removes the
+agents, and `make help` lists every target.
 
 Jobs run through the launcher and a login, interactive `zsh`, so they see the
 same `PATH` and keychain-backed credentials as a terminal session. Nothing is

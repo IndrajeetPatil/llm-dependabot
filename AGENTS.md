@@ -34,7 +34,7 @@ make list          # show group assignment (needs gh authenticated)
 make dry-run GROUP=python
 ```
 
-`make install`, `make uninstall`, `make run`, and `make cleanup` change the
+`make setup`, `make install`, `make uninstall`, `make run`, and `make cleanup` change the
 user's `launchd` agents, run the agent in YOLO mode, or delete checkouts. Do
 not run them unless explicitly asked; they only work on the owner's Mac.
 
