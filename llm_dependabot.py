@@ -60,9 +60,7 @@ FULL_DISK_ACCESS_PANE = (
 )
 CATCH_ALL = "*"
 FINISHED_PR_STATES = frozenset({"MERGED", "CLOSED"})
-# Command-line tools and the Homebrew formulae and casks that provide them.
-BREW_FORMULAE = frozendict(gh="gh", prek="prek")
-BREW_CASKS = frozendict(agy="antigravity-cli")
+BREWFILE = ROOT / "Brewfile"
 
 type Weekday = Literal[
     "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
@@ -867,31 +865,13 @@ def pause(message: str) -> None:
     typer.prompt(f"{message} Press Enter to continue", default="", show_default=False)
 
 
-def ensure_command_line_tools() -> None:
-    step("Xcode Command Line Tools (git, clang)")
-    while not succeeds("xcode-select", "-p"):
-        interactive("xcode-select", "--install")
-        pause("Finish the Command Line Tools installer.")
+def ensure_brew_bundle() -> None:
+    step("Homebrew packages (Brewfile)")
+    if not succeeds("brew", "bundle", "check", "--no-upgrade", "--file", BREWFILE):
+        fail(
+            "some Brewfile packages are missing; run `make setup`, which installs them"
+        )
     typer.echo("installed")
-
-
-def ensure_brew_tools() -> None:
-    step("gh, prek, and Antigravity CLI")
-    packages = [(c, f, []) for c, f in BREW_FORMULAE.items()]
-    packages += [(c, f, ["--cask"]) for c, f in BREW_CASKS.items()]
-    for command, package, flags in packages:
-        if path := shutil.which(command):
-            typer.echo(f"{command}: {path}")
-            continue
-        if not shutil.which("brew"):
-            fail(f"{command} is missing; install Homebrew from https://brew.sh first")
-        if not typer.confirm(
-            f"{command} is missing. Install it with Homebrew ({package})?",
-            default=True,
-        ):
-            fail(f"{command} is required")
-        if interactive("brew", "install", *flags, package) != 0:
-            fail(f"brew install {package} failed")
 
 
 def ensure_signed_in() -> None:
@@ -996,8 +976,7 @@ def setup() -> None:
     if not os.isatty(0):
         fail("setup is interactive; run it from a terminal")
     config = load_config()
-    ensure_command_line_tools()
-    ensure_brew_tools()
+    ensure_brew_bundle()
     ensure_signed_in()
     check_owner(config)
     ensure_clone_root(config)

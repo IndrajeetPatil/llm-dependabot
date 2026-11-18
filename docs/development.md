@@ -14,13 +14,20 @@
 
 - **[prek](https://prek.j178.dev)** runs the git hooks.
 
+- **`uv audit`** checks the locked dependencies of both scripts against the
+  OSV vulnerability database.
+
+- **[Homebrew](https://brew.sh)** installs the command-line tools listed in
+  the [`Brewfile`](../Brewfile).
+
 There is no CI by design: everything runs locally.
 
 ## Checks
 
 ```sh
 make hooks-install   # once per clone: install the git hooks
-make check           # ruff check, ruff format --check, and ty check
+make check           # ruff check, ruff format --check, ty check, and audit
+make audit           # check locked dependencies for known vulnerabilities
 make format          # apply ruff formatting
 make hooks           # run every prek hook on all files
 make update-deps     # upgrade locked dependencies and prek hook revisions

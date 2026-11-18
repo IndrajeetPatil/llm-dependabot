@@ -27,6 +27,7 @@ with Antigravity CLI (`agy`) on a weekly `launchd` schedule (macOS only). See
 | `prek.toml` | Git hooks, run with `make hooks` |
 | `ruff.toml`, `ty.toml` | Lint, format, and type-check configuration |
 | `Makefile` | Entry points for common operations (`make help`) |
+| `Brewfile` | Command-line tools that `make setup` installs with `brew bundle` |
 
 ## Commands
 
@@ -34,7 +35,7 @@ Prefer the Makefile targets over invoking tools directly:
 
 ```sh
 make help          # list all targets
-make check         # lint, format check, and type check
+make check         # lint, format check, type check, and dependency audit
 make hooks         # every prek hook on all files; must pass before committing
 make format        # apply ruff formatting
 make update-deps   # upgrade locked dependencies and prek hooks

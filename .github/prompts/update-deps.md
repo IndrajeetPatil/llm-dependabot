@@ -9,7 +9,7 @@ Run `make update-deps` to upgrade the locked dependencies of `llm_dependabot.py`
 (`llm_dependabot.py.lock`) and the `prek` hook revisions. Then iterate until the
 full local quality gate passes:
 
-- `make check`
+- `make check` (including `uv audit` of the locked dependencies)
 - `make hooks`
 - `make dry-run GROUP=python` (a smoke test that loads the configuration and
   queries GitHub without running the agent)
