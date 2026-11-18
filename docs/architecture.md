@@ -4,6 +4,8 @@ llm-dependabot is a scheduler, not an agent. It decides when and where the
 agent runs, isolates its work, and cleans up afterwards. The intelligence lives
 in each repository's own prompt.
 
+![Execution lifecycle and isolation: three bands covering the responsible process permission boundary for Full Disk Access, repository workspace isolation with dedicated git worktrees, and filelock concurrency control with atomic state tracking and cleanup.](images/execution-lifecycle.webp)
+
 ## Components
 
 | Component | Role |

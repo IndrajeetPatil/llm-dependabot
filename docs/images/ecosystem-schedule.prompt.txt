@@ -1,0 +1,27 @@
+Use case: infographic-diagram. Asset type: wide editorial documentation infographic for llm-dependabot explaining the weekly schedule across ecosystem groups. Landscape 3:2, flat canvas warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, restrained deep teal #14584d accents for line-art motifs. Fraunces-like serif title, Hanken-like sans labels, generous whitespace, crisp vector-like stroke drawing. No shadows, gradients, texture, 3D, cards, boxed panels, emoji, decorative footers, ordinal numbering, or arrows.
+
+Title exactly: 'Weekly schedule by ecosystem'
+
+Layout: A carefully composed horizontal strip divided into four equal panels by fine vertical hairlines (#e3ded2). Each panel has one clear line-art motif in deep teal #14584d at the top, a bold heading below, and a one-line muted summary underneath, in this exact left-to-right order:
+
+Panel 1:
+- Motif: Capital 'R' inside a clean package box outline
+- Heading: 'R'
+- Note: 'Monday 11:00 · R packages'
+
+Panel 2:
+- Motif: Two interconnected workflow nodes beside a branch icon
+- Heading: 'Workflows'
+- Note: 'Tuesday 11:00 · Meta & default'
+
+Panel 3:
+- Motif: Python snake logo outline beside a terminal prompt
+- Heading: 'Python'
+- Note: 'Wednesday 14:30 · Python packages'
+
+Panel 4:
+- Motif: Browser window outline with code tags
+- Heading: 'Web'
+- Note: 'Thursday 11:00 · JS, TS & frameworks'
+
+Keep the four motifs distinct, legible, and balanced. Use the exact wording given; no extra words.

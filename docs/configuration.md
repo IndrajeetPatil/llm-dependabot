@@ -24,6 +24,8 @@ Run `make install` after editing either file.
 
 ## Groups and the schedule
 
+![Weekly schedule by ecosystem: four panels showing R packages on Monday, meta workflows on Tuesday, Python packages on Wednesday, and web projects on Thursday.](images/ecosystem-schedule.webp)
+
 Each group runs once a week at a local wall-clock time:
 
 ```yaml

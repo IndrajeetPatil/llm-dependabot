@@ -20,6 +20,8 @@ an upgrade causes, and batch related bumps into one reviewable change.
 - **Tidy:** the agent works in a separate git worktree, and clones made just
   for a run are deleted once their pull request is merged.
 
+![Architecture overview: three bands showing the scheduled launchd trigger and interactive login shell, repository discovery and git worktree isolation, and autonomous Antigravity CLI execution with pull request tracking and cleanup.](docs/images/architecture-overview.webp)
+
 ## Quick start
 
 On macOS with [Homebrew](https://brew.sh):
