@@ -4,7 +4,7 @@ llm-dependabot is a scheduler, not an agent. It decides when and where the
 agent runs, isolates its work, and cleans up afterwards. The intelligence lives
 in each repository's own prompt.
 
-![Execution lifecycle and isolation: three bands covering the responsible process permission boundary for Full Disk Access, repository workspace isolation with dedicated git worktrees, and filelock concurrency control with atomic state tracking and cleanup.](images/execution-lifecycle.webp)
+![Execution lifecycle and isolation: three bands show the Full Disk Access process boundary, safe Git worktree isolation, and coordinated pull-request tracking and cleanup.](images/execution-lifecycle.webp)
 
 ## Components
 
@@ -25,13 +25,7 @@ configuration and state, [PyYAML](https://pyyaml.org) to read the YAML, and
 
 ## Process tree
 
-```mermaid
-flowchart LR
-    L[launchd] --> A["LLM Dependabot app<br/>(Full Disk Access)"]
-    A --> Z["zsh -l -i<br/>(your PATH and credentials)"]
-    Z --> S[llm_dependabot.py run GROUP]
-    S --> G["agy -p &lt;prompt&gt;<br/>in a git worktree"]
-```
+![Process and run: launchd starts the app, login shell, update scheduler, and coding agent; each repository gets a Git worktree, and the run records a pull request or removes the worktree.](images/process-and-run.webp)
 
 - **The app** starts the job as a child process rather than replacing itself,
   so macOS treats it as the "responsible process" and applies its Full Disk
@@ -42,22 +36,6 @@ flowchart LR
   through environment variables.
 
 ## A run
-
-```mermaid
-flowchart TD
-    A[launchd fires the group's job] --> B[Discover repositories with the prompt]
-    B --> C{Local clone in clone_root?}
-    C -- yes --> D[Fetch origin]
-    C -- no --> E[Clone it and mark it as managed]
-    E --> D
-    D --> F[New worktree on a fresh branch from the default branch]
-    F --> G["agy --dangerously-skip-permissions -p &lt;prompt&gt;"]
-    G --> H{Pull request opened?}
-    H -- yes --> I[Record it as pending]
-    H -- no --> J[Remove the worktree]
-    I --> K[Cleanup job: PR merged or closed?]
-    K -- yes --> L[Remove worktree and branch; delete managed clone]
-```
 
 - **Discovery** lists the owner's repositories with `gh` and checks each for
   the prompt through the GitHub API, so repositories need not be cloned

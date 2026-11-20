@@ -4,6 +4,8 @@ Once set up, nothing needs doing: each group runs on its weekday, and pull
 requests appear in the repositories. Review and merge them as usual; clones
 made for a run are deleted after their pull request is merged.
 
+![Using llm-dependabot: check schedule status and project groups, preview or run a Python group or choose one project, then review pull requests before periodic cleanup removes the Git worktree.](images/usage-overview.webp)
+
 ## Commands
 
 `make help` lists every target. The everyday ones:

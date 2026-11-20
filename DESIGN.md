@@ -42,7 +42,7 @@ a choice or an addition below.
 
 The tokens above are the base values unchanged. There is no stylesheet: the
 values live in [`hextools/data.svg`](hextools/data.svg) and in the prompts in
-[`docs/illustrations.md`](docs/illustrations.md), so update those when a token
+[`docs/images/README.md`](docs/images/README.md), so update those when a token
 changes.
 
 ## Overview
@@ -53,8 +53,8 @@ llm-dependabot has no interface of its own. Its visual surfaces are:
 | --- | --- |
 | Hex sticker | `docs/images/logo.png`, shown in the README |
 | App icon | `app/icon.png`, shown for LLM Dependabot in System Settings |
-| Diagrams | Mermaid in `docs/`, rendered by GitHub |
-| Illustrations | Generated figures in `docs/images/`, if any |
+| Diagrams | Generated figures in `docs/images/`, embedded in `docs/` |
+| Illustration prompts | `docs/images/README.md` |
 
 All of them should read as part of the indrapatil.com family at a glance:
 paper, ink, hairlines, and one accent.
@@ -84,11 +84,12 @@ paper, ink, hairlines, and one accent.
   recognisable in Full Disk Access next to the sticker in the README.
 - Keep the drawing flat: no shadows, gradients, texture, or emoji.
 
-### Diagrams
+### Documentation diagrams
 
-Mermaid diagrams use GitHub's default theme, so they follow the reader's light
-or dark mode. Keep them small: one idea per diagram, labels in sentence case,
-and the same wording as the surrounding text.
+Generated diagrams use this file's palette and typography. Keep one idea per
+figure, labels in sentence case, and the same wording as the surrounding text.
+Record the prompts in [`docs/images/README.md`](docs/images/README.md), and
+preserve explanatory detail in searchable Markdown.
 
 ## Documentation illustrations
 

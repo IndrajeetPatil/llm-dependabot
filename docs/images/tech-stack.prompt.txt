@@ -27,3 +27,7 @@ Band 3 (bottom):
   'Ruff lint & format' (underneath note: 'select = ["ALL"] · fast Rust linter') →
   'ty & audit' (underneath note: 'Script type check · uv audit OSV scan') →
   'prek git hooks' (underneath note: 'Hygiene & private repository name guard')
+
+Palette correction edit prompt:
+
+Preserve this development infographic’s composition, wording, icons, arrows, bands, and warm-paper editorial design. Harmonize every teal line, icon, and arrow to the light-mode base accent from the design guide: #14584d (RGB 20, 88, 77). Use no brighter turquoise or accent-light teal. Anti-aliased edge pixels may blend between this teal and the paper, but flat stroke interiors should match #14584d. Keep headings in ink #201d18, explanatory copy in muted ink #5d574c, and hairlines #e3ded2. Preserve recognizable third-party brand marks in their official colours where shown. Make no other changes.

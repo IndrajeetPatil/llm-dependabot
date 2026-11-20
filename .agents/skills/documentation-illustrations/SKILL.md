@@ -18,7 +18,7 @@ for external references or prompts.
 - **Visual references:** open existing raster figures in `docs/images/` (other
   than the hex sticker) and match the one closest to the new subject.
 - **Prior prompts:** reuse the structure of prompts recorded in
-  `docs/illustrations.md`.
+  `docs/images/README.md` and the adjacent `.prompt.txt` files.
 - **Facts:** the guide the figure illustrates is the only source of labels,
   components, values, and flows. For how a run works, that is
   `docs/architecture.md`.
@@ -92,6 +92,6 @@ icon, colour, and other label) and the single change to make.
   hand-written SVG using the same tokens, or stop and ask.
 - Save raster output as WebP in `docs/images/` with a kebab-case name, and
   embed it with alt text that states what the diagram shows.
-- Record the final prompt and any edit prompts in `docs/illustrations.md`, so
-  the next figure can start from them.
+- Record the final prompt and any edit prompts in `docs/images/README.md` and
+  the adjacent `.prompt.txt` files, so the next figure can start from them.
 - Change `DESIGN.md` only when the illustration rules change.
