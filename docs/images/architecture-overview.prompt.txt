@@ -1,29 +1,9 @@
-Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot, a macOS tool that runs an AI coding agent weekly to update dependencies. Landscape 3:2, flat canvas warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, deep teal #14584d accent for all step outline icons and connecting arrows, muted rust #9a3d2e only for failure stops. Fraunces-like serif title and band headings, Hanken-like sans labels, generous whitespace, flat outline icons in deep teal #14584d, thin orthogonal teal arrows. Match the reference style of flat warm-paper editorial documentation diagrams from indrapatil.com and python-package-quality-checks.webp. No shadows, gradients, texture, 3D, cards, boxed panels, emoji, decorative footers, ordinal numbering, or invented statistics.
+Create a NEW documentation infographic, using the supplied image only as a reference for its warm-paper palette, restrained editorial layout, serif title, precise thin icon strokes, and generous whitespace. It must clearly show this specific llm-dependabot architecture, not copy any existing text or arrangement. Landscape 3:2. Flat warm-paper background #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, restrained teal #14584d only on the active flow. Fraunces-like serif title and band headings, Hanken-like sans labels, generous whitespace, flat outline icons, thin orthogonal arrows. Use an accurate small Apple silhouette to identify the macOS app and an authentic GitHub Octocat silhouette to identify repository discovery. Do not invent or approximate other brand marks; generic icons for scheduler, shell, worktree, coding agent, pull request, and cleanup are fine. Do not include a fake App Store mark. Ensure labels are legible, correctly spelled, exact wording below. Band one heading “Scheduled on your Mac”, summary “Weekly launchd jobs run with your login credentials”: nodes “launchd” → “LLM Dependabot app” (small note “Full Disk Access”) → “Login shell” (small note “zsh · PATH · keychain”). Band two heading “Repositories stay isolated”, summary “Matching prompts start work in a dedicated worktree”: nodes “GitHub discovery” (small note “Checks each repository prompt”) → “Clone or fetch” → “Git worktree” (small note “Fresh branch · checkout untouched”). Band three heading “Agent opens a pull request”, summary “The run is tracked and cleaned up after review”: nodes “Coding Agent” (small note “Runs the repository prompt”) → “Pull request” (small note “Pending state is recorded”) → “Cleanup” (small note “Removes worktree after merge or close”). Thin orthogonal arrows, no crossing, no cards or boxed panels, no shadows, gradients, texture, 3D, emojis, decorative footer, ordinal numbers, or extra text. Keep line breaks and alignment polished. Use British English.
 
-Title exactly: 'Architecture overview'
+Palette correction edit prompt:
 
-Layout: Three horizontal bands separated by fine horizontal hairlines (#e3ded2), each band having its heading and a one-line muted summary on the left, and its unboxed step-by-step flow on the right connected by thin orthogonal teal arrows (#14584d).
+Preserve this architecture infographic’s composition, wording, icons, arrows, and warm-paper editorial design. Harmonize every teal line, symbol, and arrow to the light-mode base accent from the design guide: #14584d (RGB 20, 88, 77). Use no brighter turquoise or accent-light teal. Anti-aliased edge pixels may blend between this teal and the paper, but flat stroke interiors should match #14584d. Keep all headings in ink #201d18, explanatory copy in muted ink #5d574c, and hairlines in #e3ded2. Preserve the Apple and GitHub silhouettes as simple single-colour marks in the same base teal; do not invent brand colours. Make no other changes.
 
-Band 1 (top):
-- Left heading: 'Scheduled trigger'
-- Left summary: 'macOS launchd fires weekly ecosystem runs with user credentials'
-- Right flow (each step with a deep teal #14584d outline icon):
-  'launchd daemon' (underneath note: 'Weekly schedule by ecosystem') →
-  'LLM Dependabot app' (underneath note: 'Holds Full Disk Access grant') →
-  'Interactive login shell' (underneath note: 'zsh inherits PATH and keychain')
+Agent-neutral label edit prompt:
 
-Band 2 (middle):
-- Left heading: 'Workspace isolation'
-- Left summary: 'Inspect repository prompts and isolate work in git worktrees'
-- Right flow (each step with a deep teal #14584d outline icon):
-  'gh discovery' (underneath note: 'Checks .github/prompts/update-deps.md') →
-  'Clone or fetch' (underneath note: 'Existing checkout or ephemeral clone') →
-  'Isolated git worktree' (underneath note: 'Fresh branch · working tree untouched')
-
-Band 3 (bottom):
-- Left heading: 'Agent execution & lifecycle'
-- Left summary: 'Autonomous prompt run, pull request tracking, and cleanup'
-- Right flow (each step with a deep teal #14584d outline icon):
-  'Antigravity CLI (agy)' (underneath note: 'YOLO autonomous prompt run with timeout') →
-  'Pull request opened' (underneath note: 'Atomic state update under filelock') →
-  'Periodic cleanup' (underneath note: 'Prunes worktrees and deletes ephemeral clones')
+Replace only “Antigravity CLI” with “Coding Agent” so the diagram remains accurate if the default coding agent changes. Preserve every other label, icon, arrow, layout, colour, and style.

@@ -24,7 +24,11 @@ Run `make install` after editing either file.
 
 ## Groups and the schedule
 
-![Weekly schedule by ecosystem: four panels showing R packages on Monday, meta workflows on Tuesday, Python packages on Wednesday, and web projects on Thursday.](images/ecosystem-schedule.webp)
+![Configured project groups and weekly cadence: R packages run Monday at 11:00, other/default projects Tuesday at 11:00, Python projects Wednesday at 14:30, and Astro and TypeScript web applications Thursday at 11:00 local time; cleanup removes local worktrees and branches after pull requests are merged or closed.](images/ecosystem-schedule.webp)
+
+The figure shows every configured group and its weekly schedule, including
+groups with no current repository assignments. The table below lists the
+language matches for each group.
 
 Each group runs once a week at a local wall-clock time:
 

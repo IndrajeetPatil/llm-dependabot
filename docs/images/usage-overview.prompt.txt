@@ -1,0 +1,23 @@
+Create a landscape 3:2 editorial documentation infographic for the llm-dependabot usage guide. Use warm paper #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, and restrained teal #14584d. Use a Fraunces-like serif title, Hanken-like sans labels, generous whitespace, flat outline icons, and no cards, shadows, gradients, texture, 3D, emoji, or decorative footer. Title “Using llm-dependabot”.
+
+Show three sections. “Check the schedule”: “Schedule status” → “Project groups”. “Run work on demand”: “Preview Python group” → “Run Python group” → “Pull request”, with the accurate official Python logo beside both Python group labels. Add the branch “Choose one project” from the run action. “Finish the lifecycle”: “Review and merge or close PR” → “Scheduled cleanup” → “Worktree removed”, with the note “Runs periodically”.
+
+Use a recognizable GitHub mark beside Pull request. No literal commands, parameters, filenames, or configuration keys. Keep labels legible, spelling exact, and the arrows correct. British English.
+
+Edit prompts:
+
+Edit the usage infographic to replace literal command and parameter labels with “Preview Python group”, “Run Python group”, “Choose one project”, and “Runs periodically”. Add a small accurate Python logo beside each Python group label.
+
+Refine the schedule section to use “Schedule status” and “Project groups”. Keep the Python group flow and GitHub mark, preserve the single-project branch, and label the final item “Worktree removed”. Keep the cleanup cadence at the higher level “Runs periodically”. Remove all code syntax and configuration names.
+
+Terminology edit prompt:
+
+Use “Worktree removed” for the final item because scheduled cleanup removes the isolated Git worktree. Keep “Scheduled cleanup” and “Runs periodically” unchanged.
+
+Palette correction edit prompt:
+
+Preserve the usage infographic’s layout, wording, arrows, all icons, and warm-paper editorial design. Set all teal line icons, arrows, and teal marks to the light-mode base accent #14584d (RGB 20, 88, 77), with no brighter turquoise or accent-light teal. Anti-aliased edges may blend between #14584d and the paper background, but flat stroke interiors should match the base accent. Keep headings in ink #201d18, supporting labels in muted ink #5d574c, and hairlines #e3ded2. Preserve both official Python logos in their correct blue and yellow colours; do not recolour them. Preserve the GitHub mark as a single-colour mark in the base accent. Do not alter any wording, spacing, or content.
+
+Divider-alignment edit prompt:
+
+Align all three thin vertical dividers between the left icon-and-summary column and the right-side flow on the same vertical x-position. Match the top and middle divider positions by moving only the bottom divider horizontally. Preserve divider lengths and vertical placement. Do not change any wording, icons, arrows, spacing elsewhere, colours, typography, or other layout elements.

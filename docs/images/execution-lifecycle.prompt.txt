@@ -1,29 +1,21 @@
-Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot, a macOS tool that runs an AI coding agent weekly to update dependencies. Landscape 3:2, flat canvas warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, deep teal #14584d accent for all step outline icons and connecting arrows, muted rust #9a3d2e only for failure stops. Fraunces-like serif title and band headings, Hanken-like sans labels, generous whitespace, flat outline icons in deep teal #14584d, thin orthogonal teal arrows. Match the reference style of flat warm-paper editorial documentation diagrams from indrapatil.com and python-package-quality-checks.webp. No shadows, gradients, texture, 3D, cards, boxed panels, emoji, decorative footers, ordinal numbering (do not write 'Band 1' or 'Step 1' or 'Tier 1'), or invented statistics.
+Restyle the first supplied image, “Execution lifecycle and isolation”, to follow the second supplied image, “How llm-dependabot works”. The second image is the visual style reference; the first is the factual content to revise. Match its warm editorial page, exact light palette, large elegant high-contrast serif title, smaller serif section headings, clean Hanken-like sans labels, thin flat line drawings, delicate orthogonal arrows, generous whitespace, and fine hairline separators. Use paper #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, and base teal #14584d only for the path and line icons. No bright turquoise, heavy icons, bold/condensed sans type, shadows, gradients, texture, cards, 3D, or decorative footer. Keep a landscape 3:2 canvas, three horizontal bands, with each band's heading and muted one-line summary on the left and its flow on the right. Keep all text clear at documentation width.
 
-Title exactly: 'Execution lifecycle and isolation'
+Use this exact content, with no other wording:
 
-Layout: Three horizontal bands separated by fine horizontal hairlines (#e3ded2), each band having its heading and a one-line muted summary on the left, and its unboxed step-by-step flow on the right connected by thin orthogonal teal arrows (#14584d).
+Title: “Execution lifecycle and isolation”.
 
-Band 1 (top):
-- Left heading: 'Permission boundary'
-- Left summary: 'Responsible process model grants Full Disk Access to child jobs'
-- Right flow (each step with a deep teal #14584d outline icon):
-  'launchd daemon' (underneath note: 'Fires scheduled ecosystem group') →
-  'LLM Dependabot app' (underneath note: 'Holds Full Disk Access for child tree') →
-  'Interactive login shell' (underneath note: 'zsh inherits PATH & keychain credentials')
+Band 1 heading “Permission boundary”. Summary “Full Disk Access follows the responsible app process”. Flow: “launchd” → “LLM Dependabot app” (note “Full Disk Access”) → “Login shell” (note “Uses your login environment”).
 
-Band 2 (middle):
-- Left heading: 'Repository isolation'
-- Left summary: 'Safe worktree branching protects local checkouts and uncommitted work'
-- Right flow (each step with a deep teal #14584d outline icon):
-  'Target repository' (underneath note: 'Existing checkout or managed clone') →
-  'Dedicated git worktree' (underneath note: 'Fresh branch off default branch') →
-  'Untouched checkout' (underneath note: 'Active branch & uncommitted changes safe')
+Band 2 heading “Repository isolation”. Summary “Dedicated branches protect existing checkouts”. Flow: “Target repository” (note “Existing checkout or managed clone”) → “Git worktree” (note “Fresh branch from default”) → “Original checkout” (note “Active branch and uncommitted work stay untouched”).
 
-Band 3 (bottom):
-- Left heading: 'State & automated cleanup'
-- Left summary: 'Atomic concurrency locking, pull request tracking, and pruning'
-- Right flow (each step with a deep teal #14584d outline icon):
-  'filelock concurrency' (underneath note: 'Serialises scheduled runs & cleanup') →
-  'Atomic state tracking' (underneath note: 'Records pending PRs in state.json') →
-  'Automated pruning' (underneath note: 'Deletes worktree & ephemeral clone on merge')
+Band 3 heading “Run tracking and cleanup”. Summary “Runs stay coordinated until pull requests finish”. Flow: “Run coordination” (note “Scheduled work does not overlap”) → “Pending pull request” (note “Tracked for review”) → “Automated cleanup” (note “Removes local worktree and run branch after merge or close”).
+
+Use simple elegant outline symbols matching the reference illustration style: clock/scheduler, app shield, terminal, repository, Git branch/worktree, untouched checkout, coordination lock, pending pull request document, and cleanup brush or pruning tool. Preserve clear left-to-right arrows. Use exact spelling and British English. Do not include implementation identifiers such as filelock or state.json.
+
+Style-match edit prompt:
+
+Restyle the execution-lifecycle illustration to match architecture-overview.webp: elegant serif title and section headings, restrained Hanken-like labels, delicate flat outline icons, warm-paper background, thin hairlines, generous whitespace, and base teal #14584d. Preserve the facts and wording, while using the supplied high-level labels. Do not use the heavier icons or dense technical typography from the earlier rendering.
+
+Palette correction edit prompt:
+
+Preserve this architecture infographic’s composition, wording, icons, arrows, and warm-paper editorial design. Harmonize every teal line, symbol, and arrow to the light-mode base accent from the design guide: #14584d (RGB 20, 88, 77). Use no brighter turquoise or accent-light teal. Anti-aliased edge pixels may blend between this teal and the paper, but flat stroke interiors should match #14584d. Keep all headings in ink #201d18, explanatory copy in muted ink #5d574c, and hairlines #e3ded2. Make no other changes.

@@ -52,7 +52,7 @@ keeps itself up to date like any other participating repository.
 [`DESIGN.md`](../DESIGN.md) records the visual identity, shared with
 indrapatil.com. Generated documentation figures follow the
 [documentation-illustrations skill](../.agents/skills/documentation-illustrations/SKILL.md),
-with their prompts recorded in [illustrations.md](illustrations.md).
+with their prompts recorded in [images/README.md](images/README.md).
 
 ## Hex sticker and app icon
 

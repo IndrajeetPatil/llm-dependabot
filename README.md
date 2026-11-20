@@ -20,7 +20,7 @@ an upgrade causes, and batch related bumps into one reviewable change.
 - **Tidy:** the agent works in a separate git worktree, and clones made just
   for a run are deleted once their pull request is merged.
 
-![Architecture overview: three bands showing the scheduled launchd trigger and interactive login shell, repository discovery and git worktree isolation, and autonomous Antigravity CLI execution with pull request tracking and cleanup.](docs/images/architecture-overview.webp)
+![How llm-dependabot works: scheduled jobs start the app and login environment, repositories are prepared in isolated Git worktrees, and the coding agent opens pull requests for later cleanup.](docs/images/architecture-overview.webp)
 
 ## Quick start
 
