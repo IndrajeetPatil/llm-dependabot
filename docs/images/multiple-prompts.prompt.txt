@@ -1,0 +1,13 @@
+Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot, a macOS tool that runs repository-owned coding prompts on a schedule. Create a new landscape 3:2 editorial infographic in a warm-paper documentation style: background #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, sparse base teal #14584d for the explained path. Use a Fraunces-like serif title and section headings, Hanken-like sans labels, generous whitespace, flat outline icons, and thin orthogonal arrows. Match the restrained visual language of the llm-dependabot documentation figures. No shadows, gradients, texture, 3D, cards, boxed panels, emoji, decorative footer, ordinal numbering, or invented facts.
+
+Title exactly: “One schedule, multiple prompts”
+Subtitle exactly: “Each due prompt gets its own isolated run”
+
+Show one short context line below the subtitle: “At each weekly group run, process prompts present in the repository when due” and a small muted note “One prompt at a time”.
+
+Then show three spacious horizontal rows, separated by fine hairlines. Each row repeats the same clear left-to-right flow with the exact labels and no branching:
+Row one: “update-deps” (small cadence note “Weekly”) → “Own Git worktree + branch” → “Coding agent runs this prompt” → “Its own pull request”
+Row two: “simplify-codebase” (small cadence note “Monthly, when due”) → “Own Git worktree + branch” → “Coding agent runs this prompt” → “Its own pull request”
+Row three: “…” (small note “Other configured prompts”) → “Own Git worktree + branch” → “Coding agent runs this prompt” → “Its own pull request”
+
+Use a file/page outline icon for prompt labels, a separate-branch/worktree outline for each worktree, a simple agent/terminal outline, and a pull-request branching icon. Make it visually obvious that every prompt row repeats the same setup and creates a separate pull request. Use thin arrows that do not cross. Do not imply that prompts run in parallel. Preserve the literal ellipsis “…” as shown. Ensure all wording, arrow direction, and spelling are exact and legible at documentation width. British English.
