@@ -21,7 +21,7 @@ an upgrade causes, and batch related bumps into one reviewable change.
   Nothing runs at weekends.
 
 - **Local only:** `launchd` starts the jobs, and the agent, `gh`, and `git` use
-  the credentials already on the Mac. There is no CI and no secrets.
+  the credentials already on the Mac. Updates run on the Mac, not in CI, and need no stored secrets.
 
 - **Tidy:** the agent works in a separate git worktree, and clones made just
   for a run are deleted once their pull request is merged.

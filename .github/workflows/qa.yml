@@ -1,12 +1,8 @@
 name: QA
 
-# CI is off for now. Uncomment the triggers below to switch it on; until then
-# the workflow runs only when started by hand.
-# on:
-#   pull_request:
-#     branches: [main]
 on:
-  workflow_dispatch:
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
