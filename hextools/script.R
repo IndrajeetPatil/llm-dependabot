@@ -36,7 +36,7 @@ edge_angle <- pi / 6
 inset <- 0.08 * cos(edge_angle)
 logo <- logo +
     geom_url(
-        "github.com/IndrajeetPatil/llm-dependabot",
+        "www.indrapatil.com/llm-dependabot",
         x = 1 + sqrt(3) / 4 - inset * sin(edge_angle),
         y = 0.25 + inset * cos(edge_angle),
         size = 6,

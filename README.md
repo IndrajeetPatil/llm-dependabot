@@ -1,7 +1,8 @@
 # llm-dependabot <img src="https://raw.githubusercontent.com/IndrajeetPatil/llm-dependabot/main/docs/images/logo.png" align="right" width="240" alt="llm-dependabot hex sticker" />
 
-A template for your own software giga factory: a coding agent keeps your
-repositories up to date and opens pull requests for you to review.
+A template for your own software giga factory: schedule repository-owned
+prompts across your projects, and let a coding agent turn maintenance work
+into pull requests for you to review.
 
 ## The problem
 
@@ -23,11 +24,19 @@ more repositories you maintain, the further this work falls behind.
 
 ## The solution
 
-llm-dependabot hands that work to a coding agent. Each repository commits
+llm-dependabot coordinates a software factory in each of your projects.
+Each repository commits
 prompts describing its own maintenance (updating dependencies, simplifying
 the codebase, or anything else), and on a schedule, llm-dependabot runs each
 due prompt with the agent. The agent opens a pull request, which goes through
 the project's own checks and your review like any other.
+
+The giga factory is the layer coordinating those project-level factories:
+it decides which repositories and prompts are due, prepares isolated
+worktrees, and invokes your chosen agent. Dependency updates are one use
+case; repository-owned prompts can also cover refactoring, documentation,
+or other repeatable work. The prompts define the work, and each project
+provides its own instructions, checks, and review process.
 
 - **Opt in per repository and prompt:** a repository takes part in each
   prompt it commits, such as `.github/prompts/update-deps.md` or
