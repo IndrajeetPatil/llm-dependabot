@@ -95,6 +95,10 @@ Preserve the usage infographic’s layout, wording, arrows, all icons, and warm-
 Divider-alignment edit prompt:
 
 Align all three thin vertical dividers between the left icon-and-summary column and the right-side flow on the same vertical x-position. Match the top and middle divider positions by moving only the bottom divider horizontally. Preserve divider lengths and vertical placement. Do not change any wording, icons, arrows, spacing elsewhere, colours, typography, or other layout elements.
+
+Bottom-row spacing edit prompt:
+
+Keep all three dividers aligned. In the final row only, shift the complete right-hand flow, including labels, icons, arrows, and subtitle, about 24 pixels right while preserving its content and positions relative to one another. Keep the divider fixed and leave the left title, icon, heading, and summary unchanged. This gives the first flow label more breathing room after the divider. Keep the last node inside the canvas margin.
 ```
 ### Execution lifecycle and isolation
 
