@@ -13,7 +13,7 @@ llm-dependabot runs on macOS only.
 - Each participating repository's own toolchain (R, Python, Node.js, and so
   on), so the agent can run its checks.
 
-`make setup` installs everything else from the [`Brewfile`](../Brewfile):
+`make setup` installs everything else from the [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile):
 `uv`, `gh`, `prek`, and the default agent, Antigravity CLI. To use another
 agent, see [The coding agent](configuration.md#the-coding-agent).
 
@@ -30,7 +30,7 @@ to fix whatever is missing:
 
 | Step | What happens |
 | --- | --- |
-| Tools | Installs missing [`Brewfile`](../Brewfile) packages with `brew bundle` |
+| Tools | Installs missing [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile) packages with `brew bundle` |
 | Sign-ins | Runs `gh auth login` if needed and waits until the agent's `check` command succeeds |
 | Owner | Offers to set `owner` in `config.yaml` to your GitHub account |
 | Clone directory | Creates `clone_root` if it does not exist |

@@ -16,13 +16,31 @@
 
 - **[prek](https://prek.j178.dev)** runs the git hooks.
 
-- **`uv audit`** checks the locked dependencies of both scripts against the
-  OSV vulnerability database.
+- **`uv audit`** checks the locked dependencies of both scripts and the docs
+  project against the OSV vulnerability database.
+
+- **[Zensical](https://zensical.org)** builds this documentation into a
+  website. It is the only dependency of the docs-only uv project in
+  `pyproject.toml`, locked in `uv.lock`.
 
 - **[Homebrew](https://brew.sh)** installs the command-line tools listed in
-  the [`Brewfile`](../Brewfile).
+  the [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile).
 
-There is no CI by design: everything runs locally.
+Every check runs locally. The GitHub Actions workflows in
+[`.github/workflows/`](https://github.com/IndrajeetPatil/llm-dependabot/tree/main/.github/workflows)
+mirror them, but their triggers are commented out, so they run only when
+started by hand:
+
+| Workflow | Runs | Intended trigger |
+| --- | --- | --- |
+| `qa.yml` | `make check` | Pull requests |
+| `prek.yml` | The prek hooks other than Ruff and ty | Pull requests |
+| `security.yml` | Gitleaks over the full history and zizmor over the workflows | Pull requests |
+| `conventional-commits.yml` | Commit messages and the pull-request title | Pull requests |
+| `link-check.yml` | lychee over every link | Pull requests |
+| `docs.yml` | Builds the site; deploys it to GitHub Pages from `main` | Pull requests and `main` |
+
+Uncomment a workflow's `on:` block to switch it on.
 
 ## Checks
 
@@ -33,29 +51,51 @@ make audit           # check locked dependencies for known vulnerabilities
 make format          # apply ruff formatting
 make hooks           # run every prek hook on all files
 make update-deps     # upgrade locked dependencies and prek hook revisions
+make docs            # build the documentation site, failing on any warning
+make docs-serve      # preview the documentation site locally
 ```
 
-The hooks in [`prek.toml`](../prek.toml) run Ruff and ty, tidy whitespace, and
+The hooks in [`prek.toml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/prek.toml) run Ruff and ty, tidy whitespace, and
 block private keys, large files, and merge-conflict markers. A local hook,
-[`hooks/check_private_names.py`](../hooks/check_private_names.py), fails any
+[`hooks/check_private_names.py`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/hooks/check_private_names.py), fails any
 commit whose files or message name a repository listed in `private.yaml`, or
 that adds `private.yaml` itself.
+
+## Documentation site
+
+The pages in `docs/` are a [Zensical](https://zensical.org) site configured
+in [`zensical.toml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/zensical.toml),
+published at <https://www.indrapatil.com/llm-dependabot/>. To keep it
+building:
+
+- Add a new page to `nav` in `zensical.toml`.
+
+- Link to other pages and images with paths relative to `docs/`; link to
+  anything outside `docs/` with its full GitHub URL, since the site only
+  contains `docs/`.
+
+- `docs/index.md` is the home page and follows the README; keep the two in
+  step.
+
+- `docs/stylesheets/extra.css` applies the palette and headings from
+  `DESIGN.md`.
 
 ## Dependency updates
 
 This repository has its own
-[`update-deps` prompt](../.github/prompts/update-deps.md), so llm-dependabot
+[`update-deps` prompt](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/.github/prompts/update-deps.md), so llm-dependabot
 keeps itself up to date like any other participating repository.
 
 ## Design
 
-[`DESIGN.md`](../DESIGN.md) records the visual identity, shared with
+[`DESIGN.md`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/DESIGN.md) records the visual identity, shared with
 indrapatil.com. Generated documentation figures follow the
-[documentation-illustrations skill](../.agents/skills/documentation-illustrations/SKILL.md),
-with their prompts recorded in [images/README.md](images/README.md).
+[documentation-illustrations skill](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/.agents/skills/documentation-illustrations/SKILL.md),
+with their prompts recorded in [images/README.md](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/docs/images/README.md).
 
 ## Hex sticker and app icon
 
-[`hextools/`](../hextools) holds the sticker artwork and the R script that
-renders both `docs/images/logo.png` and the LLM Dependabot app icon,
-`app/icon.png`. See [its README](../hextools/README.md).
+[`hextools/`](https://github.com/IndrajeetPatil/llm-dependabot/tree/main/hextools) holds the sticker artwork and the R scripts that
+render `docs/images/logo.png`, the LLM Dependabot app icon, `app/icon.png`,
+and the social preview card, `docs/images/social-card.png`. See
+[its README](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/hextools/README.md).

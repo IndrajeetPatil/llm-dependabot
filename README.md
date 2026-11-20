@@ -44,6 +44,9 @@ private repositories to include, and walks you through granting the
 
 ## Documentation
 
+The guides are also published as a website at
+<https://www.indrapatil.com/llm-dependabot/>.
+
 | Guide | Covers |
 | --- | --- |
 | [Setup](docs/setup.md) | Requirements, `make setup`, Full Disk Access, and uninstalling |
@@ -51,3 +54,7 @@ private repositories to include, and walks you through granting the
 | [Usage](docs/usage.md) | Everyday commands, logs, files on disk, and troubleshooting |
 | [Architecture](docs/architecture.md) | How a run works and why it is built this way |
 | [Development](docs/development.md) | Toolchain, checks, git hooks, and the hex sticker |
+
+## License
+
+[MIT](LICENSE)

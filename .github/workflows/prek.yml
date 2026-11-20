@@ -1,0 +1,49 @@
+name: prek
+
+# CI is off for now. Uncomment the triggers below to switch it on; until then
+# the workflow runs only when started by hand.
+# on:
+#   pull_request:
+#     branches: [main]
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prek:
+    name: prek hooks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Restrict to IndrajeetPatil repositories
+        if: github.repository_owner != 'IndrajeetPatil'
+        run: |
+          echo "::error::This workflow is private and only available to repositories under IndrajeetPatil."
+          exit 1
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The private-names hook is a uv script.
+      - name: Install uv
+        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          enable-cache: false
+
+      # A hook that rewrites a file fails the step.
+      - name: Run prek hooks
+        uses: j178/prek-action@7b101f8338a08d2bd6fdb3625e4e7692428763a3 # v3.1.1
+        with:
+          prek-version: latest-known
+          extra-args: --all-files --stage pre-commit
+        env:
+          # qa.yml already runs ruff and ty through `make check`.
+          SKIP: ruff-check,ruff-format,ty

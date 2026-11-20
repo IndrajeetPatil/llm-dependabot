@@ -1,0 +1,8 @@
+# First-party reusable workflows run from @main by design; every third-party
+# action stays pinned to a full commit SHA.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "IndrajeetPatil/*": ref-pin
+        "*": hash-pin
