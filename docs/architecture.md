@@ -16,7 +16,7 @@ intelligence lives in each repository's own prompts.
 | [`config.yaml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/config.yaml) and `private.yaml` | The prompts, their cadences, the schedule, and which repositories take part (see [Configuration](configuration.md)) |
 | [`app/`](https://github.com/IndrajeetPatil/llm-dependabot/tree/main/app) | Sources of the LLM Dependabot app, a tiny launcher that holds the Full Disk Access grant |
 | launchd | macOS's built-in scheduler: one agent per group, plus a cleanup agent |
-| Coding agent | Runs the prompt and opens the pull request; Antigravity CLI (`agy`) by default, configurable in `config.yaml` |
+| Coding agent | Runs the prompt and opens the pull request; any agent with a non-interactive mode, set in `config.yaml` |
 | `gh` and `git` | Discovery, cloning, worktrees, and pull request state |
 
 The script leans on widely used libraries rather than code of its own:

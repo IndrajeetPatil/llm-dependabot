@@ -1,21 +1,24 @@
 # Setup
 
-llm-dependabot runs on macOS only.
+> [!NOTE]
+> llm-dependabot runs on macOS: `launchd` schedules the runs, and a small app
+> holds the permission they need to read your clones.
 
 ## Requirements
 
 - [Homebrew](https://brew.sh), which also installs the Xcode Command Line
   Tools (`git`, `make`, and `clang`).
 
-- A GitHub account that owns the repositories, and an account for the coding
-  agent (Antigravity by default).
+- A GitHub account that owns the repositories.
+
+- A coding agent with a non-interactive mode, and an account for it (see
+  [The coding agent](configuration.md#the-coding-agent)).
 
 - Each participating repository's own toolchain (R, Python, Node.js, and so
   on), so the agent can run its checks.
 
 `make setup` installs everything else from the [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile):
-`uv`, `gh`, `prek`, and the default agent, Antigravity CLI. To use another
-agent, see [The coding agent](configuration.md#the-coding-agent).
+`uv`, `gh`, `prek`, and the coding agent named there.
 
 ## Run the setup
 

@@ -26,8 +26,9 @@ Run `make install` after editing either file.
 
 ## The coding agent
 
-The agent runs once per repository, unattended, inside a fresh worktree. The
-default is Antigravity CLI in YOLO mode:
+The agent runs once per repository and prompt, unattended, inside a fresh
+worktree. Any agent with a non-interactive mode works; the shipped
+`config.yaml` uses Antigravity CLI:
 
 ```yaml
 agent:
@@ -48,15 +49,22 @@ agent:
 | `command` | The command line, one argument per item. An argument that is exactly `"{prompt}"` becomes the prompt's text; without one, the prompt goes to standard input. `{timeout_hours}` becomes `agent_timeout_hours`. |
 | `check` | Optional: a command that succeeds once the agent is installed and signed in. `make setup` waits for it. |
 
-Any agent with a non-interactive mode works. It must be able to edit files,
-run commands, and push without asking, since nobody is there to approve. For
-example (check the flags against your agent's version):
+> [!WARNING]
+> Nobody is there to approve the agent's actions, so it must be able to edit
+> files, run commands, and push without asking. Give it the same trust you
+> give your own terminal session.
+
+Each agent takes the same shape:
 
 | Agent | `command` | `check` |
 | --- | --- | --- |
+| Antigravity CLI | `[agy, --dangerously-skip-permissions, --print-timeout, "{timeout_hours}h", -p, "{prompt}"]` | `[agy, models]` |
 | Claude Code | `[claude, --dangerously-skip-permissions, -p, "{prompt}"]` | `[claude, auth, status]` |
 | Codex CLI | `[codex, exec, --dangerously-bypass-approvals-and-sandbox, "{prompt}"]` | `[codex, login, status]` |
 | GitHub Copilot CLI | `[copilot, --yolo, -p, "{prompt}"]` | — |
+
+> [!TIP]
+> Check the flags against your agent's version; they change between releases.
 
 When switching agents, also replace `antigravity-cli` in the
 [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile) with your agent's package. A run that outlasts

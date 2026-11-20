@@ -52,7 +52,8 @@ prompt run by hand does not run again that month.
 ## Watching a run
 
 In Activity Monitor, choose **View › All Processes, Hierarchically** and search
-for the agent's process (`antigravity` for the default agent). A run looks
+for the agent's process (for example, `antigravity` for Antigravity CLI). A
+run looks
 like this:
 
 ```text
@@ -61,7 +62,7 @@ LLM Dependabot
    └─ uv
       └─ python        llm_dependabot.py run GROUP
          ├─ caffeinate keeps the Mac awake during the run
-         └─ the agent  antigravity by default
+         └─ the agent  whichever config.yaml names
             └─ git, gh, uv, pnpm, Rscript, …  tools the agent runs
 ```
 
