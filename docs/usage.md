@@ -20,6 +20,7 @@ is merged or closed.
 | `make run GROUP=python REPO=my-project` | Run one repository's due prompts now |
 | `make run GROUP=python PROMPT=simplify-codebase` | Run one prompt now, whatever its cadence |
 | `make cleanup` | Clean up after merged or closed pull requests now |
+| `make clean-logs` | Delete logs older than 30 days; set `DAYS=<n>` to change the cut-off |
 | `make install` | Reload the agents after editing the configuration |
 
 Each target wraps `./llm_dependabot.py`, which also works directly
@@ -74,7 +75,7 @@ whole run. Each agent's own output goes to its transcript,
 | Path | Contents |
 | --- | --- |
 | `~/Library/LaunchAgents/com.indrajeetpatil.llm-dependabot.*.plist` | Generated launchd agents |
-| `~/Library/Logs/llm-dependabot/` | One log per group and one for cleanup, plus a folder per run with one agent transcript per repository and prompt |
+| `~/Library/Logs/llm-dependabot/` | One log per group and one for cleanup, plus a folder per run with one agent transcript per repository and prompt; kept until `make clean-logs` deletes them |
 | `~/Library/Application Support/llm-dependabot/state.json` | Pending pull requests, clones to delete later, and when each prompt last ran in each repository |
 | `~/Library/Application Support/llm-dependabot/LLM Dependabot.app` | App holding the Full Disk Access grant |
 | `~/Library/Caches/llm-dependabot/worktrees/` | Worktrees for in-flight pull requests |

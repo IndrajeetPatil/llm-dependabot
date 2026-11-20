@@ -1,7 +1,7 @@
 # hextools
 
-This folder contains the artwork and R script for the hex sticker logo and the
-LLM Dependabot app icon.
+This folder contains the artwork and R scripts for the hex sticker logo, the
+LLM Dependabot app icon, and the GitHub social preview card.
 
 ## Generating the logo
 
@@ -25,3 +25,16 @@ sparkle). To regenerate the images:
    The sticker is written to `docs/images/logo.png`, and the same sticker on a
    square canvas to `app/icon.png`. A new icon rebuilds the app, which then
    needs Full Disk Access granted again.
+
+## Generating the social card
+
+`social-card.R` renders `docs/images/social-card.png`, the 1280 × 640 GitHub
+social preview: the sticker on paper beside the title, tagline, and URL. It
+needs the Fraunces and Hanken Grotesk fonts installed. Run it after
+`script.R` so it picks up the current sticker:
+
+```bash
+Rscript hextools/social-card.R
+```
+
+Upload the image under **Settings → General → Social preview**.
