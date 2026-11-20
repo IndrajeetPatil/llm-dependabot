@@ -82,7 +82,7 @@ prompts:
 
 | Key | Meaning |
 | --- | --- |
-| `name` | Identifies the prompt in `cadence` overrides, branch names, logs, and `make run PROMPT=…` |
+| `name` | Identifies the prompt in `cadence` overrides, branch names, logs, and `make run PROMPT=…`; letters, digits, `.`, `_`, and `-` only |
 | `path` | Path of the prompt inside each repository |
 | `cadence` | `weekly` (the default) or `monthly`; a group can override it |
 
