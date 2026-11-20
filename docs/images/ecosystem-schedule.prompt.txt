@@ -22,3 +22,7 @@ Redesign the figure to include every configured group, including R Packages on M
 Cleanup-meaning edit prompt:
 
 Edit only the note in the final row. Replace “Runs periodically” with “Removes worktrees and local branches after PRs merge or close”. Keep the note in muted grey. Preserve all other wording, composition, symbols, logos, dividers, schedule days and times, typography, spacing, and colours. Do not imply that the tool closes pull requests; cleanup runs after a pull request has been merged or closed.
+
+Reference-style edit prompt:
+
+Restyle the schedule illustration to match the architecture-overview and execution-lifecycle illustrations: warm-paper editorial layout, large elegant serif title, bold Hanken-like sans-serif group labels, regular Hanken-like supporting text, thin flat icons, delicate base-teal #14584d strokes, and fine #e3ded2 dividers. Preserve all labels, schedules, and group ordering. Keep the official R and Python logo colours. Use ink #201d18 for weekdays and muted grey #5d574c for numeric times. Avoid heavy strokes, bright turquoise, shadows, gradients, cards, and decoration.
