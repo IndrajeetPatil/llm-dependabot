@@ -1,8 +1,9 @@
 # Usage
 
 Once set up, nothing needs doing: each group runs on its weekday, running the
-prompts that are due, and pull requests appear in the repositories. Review and merge them as usual; clones
-made for a run are deleted after their pull request is merged.
+prompts that are due, and pull requests appear in the repositories. Review and
+merge them as usual; clones made for a run are deleted once their pull request
+is merged or closed.
 
 ![Using llm-dependabot: check schedule status and project groups, preview or run a Python group or choose one project, then review pull requests before periodic cleanup removes the Git worktree.](images/usage-overview.webp)
 
@@ -12,9 +13,9 @@ made for a run are deleted after their pull request is merged.
 
 | Command | Does |
 | --- | --- |
-| `make status` | Show the schedule, each group's prompt cadences, and pending pull requests |
+| `make status` | Show the schedule, each group's prompt cadences, pending pull requests, and clones awaiting deletion |
 | `make list` | Show which repositories fall into which group, and which prompts each has |
-| `make dry-run GROUP=python` | List the repositories and prompts a group would run, without running anything |
+| `make dry-run GROUP=python` | List the repositories and prompts a group would run, without running anything; add `PROMPT=<name>` to preview one prompt |
 | `make run GROUP=python` | Run a group's due prompts now |
 | `make run GROUP=python REPO=my-project` | Run one repository's due prompts now |
 | `make run GROUP=python PROMPT=simplify-codebase` | Run one prompt now, whatever its cadence |
@@ -65,15 +66,15 @@ LLM Dependabot
 
 The agent's CPU and memory use rise and fall as it edits files and runs each
 repository's checks. Quitting LLM Dependabot, the top process, stops the
-whole run. Each agent's own output is written to its transcript under
-`~/Library/Logs/llm-dependabot/` when it finishes.
+whole run. Each agent's own output goes to its transcript,
+`~/Library/Logs/llm-dependabot/<date>-<time>-<group>/<repository>-<prompt>.log`.
 
 ## Files on disk
 
 | Path | Contents |
 | --- | --- |
 | `~/Library/LaunchAgents/com.indrajeetpatil.llm-dependabot.*.plist` | Generated launchd agents |
-| `~/Library/Logs/llm-dependabot/` | One log per group, plus one agent transcript per repository, prompt, and run |
+| `~/Library/Logs/llm-dependabot/` | One log per group and one for cleanup, plus a folder per run with one agent transcript per repository and prompt |
 | `~/Library/Application Support/llm-dependabot/state.json` | Pending pull requests, clones to delete later, and when each prompt last ran in each repository |
 | `~/Library/Application Support/llm-dependabot/LLM Dependabot.app` | App holding the Full Disk Access grant |
 | `~/Library/Caches/llm-dependabot/worktrees/` | Worktrees for in-flight pull requests |
@@ -85,5 +86,5 @@ whole run. Each agent's own output is written to its transcript under
 | A job's log shows `Operation not permitted` | Grant LLM Dependabot Full Disk Access again; `make install` checks it |
 | A repository is missing from `make list` | Check a configured prompt is on its default branch and, if private, that `private.yaml` lists it |
 | A monthly prompt did not run | `make dry-run GROUP=<group>` shows whether it already ran this month; `make run GROUP=<group> PROMPT=<name>` runs it anyway |
-| A run opened no pull request | Read the agent transcript under `~/Library/Logs/llm-dependabot/` |
+| A run opened no pull request | Read the agent transcript in the run's folder under `~/Library/Logs/llm-dependabot/` |
 | `make install` says a job is running | Wait until it finishes; `make status` shows the schedule |

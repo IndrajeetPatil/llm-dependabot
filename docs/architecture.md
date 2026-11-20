@@ -1,8 +1,8 @@
 # Architecture
 
-llm-dependabot is a scheduler, not an agent. It decides when, where, and which prompt
-the agent runs, isolates its work, and cleans up afterwards. The intelligence
-lives in each repository's own prompts.
+llm-dependabot is a scheduler, not an agent. It decides when, where, and
+which prompt the agent runs, isolates its work, and cleans up afterwards. The
+intelligence lives in each repository's own prompts.
 
 ![Execution lifecycle and isolation: three bands show the Full Disk Access process boundary, safe Git worktree isolation, and coordinated pull-request tracking and cleanup.](images/execution-lifecycle.webp)
 
@@ -67,9 +67,12 @@ configuration and state, [PyYAML](https://pyyaml.org) to read the YAML, and
 
 ## Cleanup
 
-A clone that did not exist before the run is deleted once its pull request is
-merged or closed. It is kept, and retried at the next cleanup, if it has
-uncommitted changes, other worktrees, or unpushed commits.
+Cleanup runs at the end of every run and on its own schedule. Once a pull
+request is merged or closed, its worktree and local branch are removed. A
+clone that did not exist before the run is then deleted, unless it has
+uncommitted changes, other worktrees, or unpushed commits; it is kept and
+retried at the next cleanup. A scheduled cleanup that finds a run in progress
+skips that turn.
 
 ## State
 
