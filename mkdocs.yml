@@ -117,3 +117,8 @@ validation:
   absolute_links: error
   unrecognized_links: error
   anchors: error
+
+extra:
+  analytics:
+    provider: google
+    property: G-3BQ49J7KYH
