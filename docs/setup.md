@@ -7,13 +7,15 @@ llm-dependabot runs on macOS only.
 - [Homebrew](https://brew.sh), which also installs the Xcode Command Line
   Tools (`git`, `make`, and `clang`).
 
-- A GitHub account that owns the repositories, and an Antigravity account.
+- A GitHub account that owns the repositories, and an account for the coding
+  agent (Antigravity by default).
 
 - Each participating repository's own toolchain (R, Python, Node.js, and so
   on), so the agent can run its checks.
 
 `make setup` installs everything else from the [`Brewfile`](../Brewfile):
-`uv`, `gh`, `prek`, and Antigravity CLI.
+`uv`, `gh`, `prek`, and the default agent, Antigravity CLI. To use another
+agent, see [The coding agent](configuration.md#the-coding-agent).
 
 ## Run the setup
 
@@ -29,7 +31,7 @@ to fix whatever is missing:
 | Step | What happens |
 | --- | --- |
 | Tools | Installs missing [`Brewfile`](../Brewfile) packages with `brew bundle` |
-| Sign-ins | Runs `gh auth login` if needed and waits until `agy` is signed in |
+| Sign-ins | Runs `gh auth login` if needed and waits until the agent's `check` command succeeds |
 | Owner | Offers to set `owner` in `config.yaml` to your GitHub account |
 | Clone directory | Creates `clone_root` if it does not exist |
 | Private repositories | Asks about each private repository that has the prompt and writes `private.yaml` |

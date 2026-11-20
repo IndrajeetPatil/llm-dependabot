@@ -3,8 +3,10 @@
 Dependabot, but an LLM agent does the updating.
 
 Once a week, on your own Mac, llm-dependabot runs each repository's
-dependency-update prompt with [Antigravity CLI](https://antigravity.google)
-(`agy`) in YOLO mode, and the agent opens a pull request with the updates.
+dependency-update prompt with a coding agent in YOLO mode, and the agent opens
+a pull request with the updates. The agent and how it is called are
+configurable; the default is [Antigravity CLI](https://antigravity.google)
+(`agy`).
 Unlike Dependabot, it can follow a project's own conventions, fix the breakage
 an upgrade causes, and batch related bumps into one reviewable change.
 
@@ -14,7 +16,7 @@ an upgrade causes, and batch related bumps into one reviewable change.
 - **Staggered by ecosystem:** R on Monday, other repositories on Tuesday,
   Python on Wednesday, and web projects on Thursday.
 
-- **Local only:** `launchd` starts the jobs, and `agy`, `gh`, and `git` use
+- **Local only:** `launchd` starts the jobs, and the agent, `gh`, and `git` use
   the credentials already on the Mac. There is no CI and no secrets.
 
 - **Tidy:** the agent works in a separate git worktree, and clones made just

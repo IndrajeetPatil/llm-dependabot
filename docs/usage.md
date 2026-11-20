@@ -37,6 +37,27 @@ Each target wraps `./llm_dependabot.py`, which also works directly
 
 - A notification summarises each run when it finishes.
 
+## Watching a run
+
+In Activity Monitor, choose **View › All Processes, Hierarchically** and search
+for the agent's process (`antigravity` for the default agent). A run looks
+like this:
+
+```text
+LLM Dependabot
+└─ zsh
+   └─ uv
+      └─ python        llm_dependabot.py run GROUP
+         ├─ caffeinate keeps the Mac awake during the run
+         └─ the agent  antigravity by default
+            └─ git, gh, uv, pnpm, Rscript, …  tools the agent runs
+```
+
+The agent's CPU and memory use rise and fall as it edits files and runs each
+repository's checks. Quitting LLM Dependabot, the top process, stops the
+whole run. Each agent's own output is written to its transcript under
+`~/Library/Logs/llm-dependabot/` when it finishes.
+
 ## Files on disk
 
 | Path | Contents |

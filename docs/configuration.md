@@ -6,7 +6,7 @@ misconfiguration.
 
 | File | Committed | Contents |
 | --- | --- | --- |
-| [`config.yaml`](../config.yaml) | yes | Owner, prompt path, clone directory, timeouts, and the schedule |
+| [`config.yaml`](../config.yaml) | yes | Owner, prompt path, clone directory, coding agent, timeouts, and the schedule |
 | `private.yaml` | no (git-ignored) | Private repositories to include, by name |
 
 Run `make install` after editing either file.
@@ -18,9 +18,49 @@ Run `make install` after editing either file.
 | `owner` | GitHub account whose repositories are considered |
 | `prompt_path` | Path of the prompt inside each repository |
 | `clone_root` | Where existing clones are found and missing ones are cloned |
+| `agent` | The coding agent and how to call it (see below) |
 | `agent_timeout_hours` | Upper bound for one repository's agent run |
 | `cleanup_interval_hours` | How often finished pull requests are cleaned up |
 | `groups` | The weekly schedule (see below) |
+
+## The coding agent
+
+The agent runs once per repository, unattended, inside a fresh worktree. The
+default is Antigravity CLI in YOLO mode:
+
+```yaml
+agent:
+  name: Antigravity CLI
+  command:
+    - agy
+    - --dangerously-skip-permissions
+    - --print-timeout
+    - "{timeout_hours}h"
+    - -p
+    - "{prompt}"
+  check: [agy, models]
+```
+
+| Key | Meaning |
+| --- | --- |
+| `name` | Shown by `make setup` |
+| `command` | The command line, one argument per item. An argument that is exactly `"{prompt}"` becomes the prompt's text; without one, the prompt goes to standard input. `{timeout_hours}` becomes `agent_timeout_hours`. |
+| `check` | Optional: a command that succeeds once the agent is installed and signed in. `make setup` waits for it. |
+
+Any agent with a non-interactive mode works. It must be able to edit files,
+run commands, and push without asking, since nobody is there to approve. For
+example (check the flags against your agent's version):
+
+| Agent | `command` | `check` |
+| --- | --- | --- |
+| Claude Code | `[claude, --dangerously-skip-permissions, -p, "{prompt}"]` | `[claude, auth, status]` |
+| Codex CLI | `[codex, exec, --dangerously-bypass-approvals-and-sandbox, "{prompt}"]` | `[codex, login, status]` |
+| GitHub Copilot CLI | `[copilot, --yolo, -p, "{prompt}"]` | — |
+
+When switching agents, also replace `antigravity-cli` in the
+[`Brewfile`](../Brewfile) with your agent's package. A run that outlasts
+`agent_timeout_hours` by ten minutes is stopped, so agents without a timeout
+of their own are bounded too.
 
 ## Groups and the schedule
 

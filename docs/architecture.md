@@ -14,7 +14,7 @@ in each repository's own prompt.
 | [`config.yaml`](../config.yaml) and `private.yaml` | The schedule and which repositories take part (see [Configuration](configuration.md)) |
 | [`app/`](../app) | Sources of the LLM Dependabot app, a tiny launcher that holds the Full Disk Access grant |
 | launchd | macOS's built-in scheduler: one agent per group, plus a cleanup agent |
-| `agy` | Antigravity CLI, which runs the prompt and opens the pull request |
+| Coding agent | Runs the prompt and opens the pull request; Antigravity CLI (`agy`) by default, configurable in `config.yaml` |
 | `gh` and `git` | Discovery, cloning, worktrees, and pull request state |
 
 The script leans on widely used libraries rather than code of its own:

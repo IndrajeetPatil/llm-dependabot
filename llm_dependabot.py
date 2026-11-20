@@ -8,8 +8,9 @@
 #   "typer>=0.29.2",
 # ]
 # ///
-"""Run each repository's update-deps prompt with Antigravity CLI every week."""
+"""Run each repository's update-deps prompt with a coding agent every week."""
 
+import contextlib
 import datetime as dt
 import json
 import os
@@ -93,12 +94,41 @@ class Group(BaseModel):
         return f"{BUNDLE_ID}.{self.name}"
 
 
+PROMPT = "{prompt}"
+TIMEOUT_HOURS = "{timeout_hours}"
+
+
+class Agent(BaseModel):
+    """The coding agent that runs each prompt, and how to call it."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    name: str
+    command: list[str] = Field(min_length=1)
+    check: list[str] | None = None
+
+    def argv(self, prompt: str, timeout_hours: float) -> tuple[list[str], bool]:
+        """Return the command line, and whether the prompt goes to stdin.
+
+        An argument that is exactly {prompt} becomes the prompt's text; without
+        one, the prompt is written to the agent's standard input instead.
+        """
+        argv = [
+            prompt
+            if arg == PROMPT
+            else arg.replace(TIMEOUT_HOURS, f"{timeout_hours:g}")
+            for arg in self.command
+        ]
+        return argv, PROMPT not in self.command
+
+
 class Config(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     owner: str
     prompt_path: str
     clone_root: Path
+    agent: Agent
     agent_timeout_hours: PositiveFloat
     cleanup_interval_hours: PositiveFloat
     groups: list[Group]
@@ -467,26 +497,26 @@ def cleanup_finished(state: State) -> None:
 # --------------------------------------------------------------------------- #
 
 
-def run_agent(worktree: Path, prompt: str, log_path: Path, timeout_hours: float) -> int:
-    command = [
-        "agy",
-        "--dangerously-skip-permissions",
-        "--print-timeout",
-        f"{timeout_hours}h",
-        "-p",
-        prompt,
-    ]
+def run_agent(
+    agent: Agent, worktree: Path, prompt: str, log_path: Path, timeout_hours: float
+) -> int:
+    argv, via_stdin = agent.argv(prompt, timeout_hours)
     with log_path.open("w") as out:
         proc = subprocess.Popen(
-            command,
+            argv,
             cwd=worktree,
-            stdin=subprocess.DEVNULL,
+            stdin=subprocess.PIPE if via_stdin else subprocess.DEVNULL,
             stdout=out,
             stderr=subprocess.STDOUT,
             start_new_session=True,
+            text=True,
         )
+        if proc.stdin:
+            with contextlib.suppress(BrokenPipeError):
+                proc.stdin.write(prompt)
+            proc.stdin.close()
         try:
-            # Backstop in case the CLI's own --print-timeout does not fire.
+            # Agents with a timeout of their own stop first; this stops the rest.
             return proc.wait(timeout=timeout_hours * 3600 + 600)
         except subprocess.TimeoutExpired:
             os.killpg(proc.pid, signal.SIGTERM)
@@ -514,7 +544,11 @@ def process_repo(repo: Repo, config: Config, state: State, run_dir: Path) -> str
         prompt = (checkout.worktree / config.prompt_path).read_text()
         log(f"{repo.name}: running agent in {checkout.worktree} (log: {checkout.log})")
         code = run_agent(
-            checkout.worktree, prompt, checkout.log, config.agent_timeout_hours
+            config.agent,
+            checkout.worktree,
+            prompt,
+            checkout.log,
+            config.agent_timeout_hours,
         )
         log(f"{repo.name}: agent exited with code {code}")
         current = sh(
@@ -562,7 +596,7 @@ def plist_for(label: str, shell_command: str, schedule: dict, log_name: str) -> 
         "AssociatedBundleIdentifiers": [BUNDLE_ID],
         # The app's launcher holds the Full Disk Access grant (see
         # app/launcher.c). A login, interactive zsh picks up the same PATH
-        # (Homebrew, uv, pnpm, agy, gh) and keychain-backed credentials as a
+        # (Homebrew, uv, pnpm, the agent, gh) and keychain-backed credentials as a
         # terminal session.
         "ProgramArguments": [
             str(LAUNCHER),
@@ -874,7 +908,7 @@ def ensure_brew_bundle() -> None:
     typer.echo("installed")
 
 
-def ensure_signed_in() -> None:
+def ensure_signed_in(config: Config) -> None:
     step("GitHub CLI sign-in")
     while not succeeds("gh", "auth", "status"):
         if not typer.confirm(
@@ -884,9 +918,21 @@ def ensure_signed_in() -> None:
         interactive("gh", "auth", "login")
     typer.echo("signed in")
 
-    step("Antigravity CLI sign-in")
-    while not succeeds("agy", "models"):
-        typer.echo("agy is not signed in. Run `agy` in another terminal and sign in.")
+    agent = config.agent
+    step(f"{agent.name} sign-in")
+    if not shutil.which(agent.command[0]):
+        fail(
+            f"{agent.command[0]} is not installed; add its package to the Brewfile"
+            " and rerun `make setup`"
+        )
+    if agent.check is None:
+        typer.echo(f"no sign-in check configured; make sure {agent.name} is signed in")
+        return
+    while not succeeds(*agent.check):
+        typer.echo(
+            f"`{' '.join(agent.check)}` failed. Run `{agent.command[0]}` in another"
+            " terminal and sign in."
+        )
         pause("Once signed in, come back here.")
     typer.echo("signed in")
 
@@ -977,7 +1023,7 @@ def setup() -> None:
         fail("setup is interactive; run it from a terminal")
     config = load_config()
     ensure_brew_bundle()
-    ensure_signed_in()
+    ensure_signed_in(config)
     check_owner(config)
     ensure_clone_root(config)
     choose_private_repos(config)

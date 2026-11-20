@@ -16,6 +16,23 @@ prompt_path: .github/prompts/update-deps.md
 # deleted again once their pull request is merged or closed.
 clone_root: ~/Documents/GitHub
 
+# The coding agent that runs each repository's prompt, unattended, in a fresh
+# worktree. In `command`, an argument that is exactly "{prompt}" becomes the
+# prompt's text (without one, the prompt goes to standard input), and
+# "{timeout_hours}" becomes agent_timeout_hours. `check` must succeed once the
+# agent is installed and signed in; `make setup` waits for it. See
+# docs/configuration.md for other agents.
+agent:
+  name: Antigravity CLI
+  command:
+    - agy
+    - --dangerously-skip-permissions
+    - --print-timeout
+    - "{timeout_hours}h"
+    - -p
+    - "{prompt}"
+  check: [agy, models]
+
 # Upper bound for one repository's agent run.
 agent_timeout_hours: 4
 

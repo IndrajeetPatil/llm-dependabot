@@ -5,7 +5,8 @@ Guidance for AI coding agents working in this repository.
 ## Overview
 
 `llm-dependabot` runs each of the owner's repositories' `update-deps` prompt
-with Antigravity CLI (`agy`) on a weekly `launchd` schedule (macOS only). See
+with a configurable coding agent (Antigravity CLI, `agy`, by default) on a
+weekly `launchd` schedule (macOS only). See
 [README.md](README.md) for an overview and [docs/](docs) for details, notably
 [docs/architecture.md](docs/architecture.md).
 
@@ -69,8 +70,9 @@ owner's Mac.
 - Changing anything under `app/` rebuilds the app and invalidates its Full
   Disk Access grant, so the user must grant it again; avoid needless changes.
 
-- Do not hard-code the owner, clone root, or schedule in code; they belong in
-  `config.yaml`.
+- Do not hard-code the owner, clone root, schedule, or agent in code; they
+  belong in `config.yaml`. Keep code and docs agent-neutral, naming
+  Antigravity CLI only as the default.
 
 - Never name a private repository in any committed file, commit message, or
   pull request; private repositories are listed only in `private.yaml`.
