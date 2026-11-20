@@ -1,7 +1,8 @@
 # Copy to private.yaml (git-ignored) to include private repositories.
 #
-# Only the repositories listed here are considered; each still needs the
-# update-deps prompt and is grouped by its primary language like a public one.
+# Only the repositories listed here are considered; each still needs at least
+# one of the prompts in config.yaml and is grouped by its primary language like
+# a public one.
 
 repos:
   - my-private-app

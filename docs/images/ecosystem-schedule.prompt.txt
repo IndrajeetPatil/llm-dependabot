@@ -1,28 +1,17 @@
-Create a landscape 3:2 editorial documentation infographic for llm-dependabot using warm paper #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, sparse teal #14584d, a Fraunces-like serif title, and Hanken-like sans labels. Use flat line icons, generous whitespace, and no shadows, gradients, texture, 3D, emoji, cards, or decorative footer. Title “Configured project groups and weekly cadence”; subtitle “Each group runs once a week”.
+Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot, a macOS tool that runs repository-owned coding prompts on a schedule. Revise the supplied schedule infographic to reflect the current configuration while preserving its warm-paper editorial style, generous whitespace, serif title, clear sans-serif labels, and fine row dividers. Landscape 3:2. Use background #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, and teal #14584d for technology icons. Preserve the authentic R and Python logos in their official colours. No shadows, gradients, texture, 3D, cards, emoji, decorative footer, invented facts, or private repository names.
 
-Show four evenly spaced rows for all configured groups, in weekday order: “R Packages” with note “R projects” and schedule “Monday · 11:00”; “Other / default” with note “Unmatched project types” and schedule “Tuesday · 11:00”; “Python” with note “Python projects” and schedule “Wednesday · 14:30”; “Web Applications” with note “Astro · TypeScript” and schedule “Thursday · 11:00”. Use the authentic R logo in official colours beside R Packages, workflow nodes for Other / default, the official Python logo in correct blue and yellow for Python, and a browser/code icon for Web Applications. Add a separate final row “Pull-request cleanup” with note “Removes worktrees and local branches after PRs merge or close”. Do not show private repository names, project counts, configuration names, or exact cleanup intervals.
+Title: “Configured project groups and prompt cadence”
+Subtitle: “Each group starts weekly; prompts run when due”
 
-Align all vertical dividers between the left icon and the text column to the same horizontal position. Keep the cleanup row label and padding aligned with the other rows. Ensure all labels and scheduled weekdays and times are legible and exact.
+Show five aligned rows with these exact labels and details, in weekday order:
+- “Web Applications”, note “TypeScript · JavaScript · Astro · Svelte · Vue · HTML · CSS”, schedule “Monday · 11:00”, cadence “update-deps weekly · simplify-codebase monthly”. Use a teal browser/code icon.
+- “Python”, note “Python”, schedule “Tuesday · 11:00”, cadence “update-deps weekly · simplify-codebase monthly”. Use the official Python logo in its blue and yellow.
+- “Sundry”, note “Unmatched project types”, schedule “Wednesday · 11:00”, cadence “update-deps weekly · simplify-codebase monthly”. Use a teal mixed-collection icon such as a simple toolkit with varied file symbols.
+- “R Packages”, note “R projects”, schedule “Thursday · 11:00”, cadence “update-deps monthly · simplify-codebase monthly”. Use the authentic R logo in its official colours.
+- “Pull-request cleanup”, note “Removes worktrees and local branches after PRs merge or close”. Use a teal pruning brush or pruning shears icon, visibly distinct from the Sundry mixed-collection icon. Do not state a cleanup interval.
 
-Edit prompt:
+Keep every row aligned with consistent dividers and margins. Keep the weekday and time text legible. Keep technology icons teal #14584d, with the R and Python logos as official-colour exceptions. Spell all labels exactly as written. British English.
 
-Show every configured group, including R Packages on Monday · 11:00, and label the browser group “Web Applications”. Keep the project-type notes at a high level, use accurate language logos, and align every vertical divider including the cleanup row.
+**Follow-up edit prompt:** Replace the internal group labels “web” and “workflows” with reader-facing labels “Web Applications” and “Sundry”; use “Unmatched project types” as the Sundry note. Keep all schedules, cadence labels, colours, and layout unchanged. Replace the Sundry branching icon with a teal mixed-collection/toolkit icon and replace the Pull-request cleanup branching icon with teal pruning shears, clearly distinguishing the two. Keep the R and Python logos in official colours.
 
-Palette correction edit prompt:
-
-Edit this exact figure. Preserve composition, text, icons, divider alignment, and warm-paper background. Correct the colour palette to the light-mode design token: every teal icon stroke and teal mark must use base accent #14584d (RGB 20, 88, 77), not brighter turquoise or teal. Keep anti-aliasing as blends between #14584d and the paper background, but solid stroke interiors must be #14584d. Headings stay ink #201d18; summaries stay muted ink #5d574c; divider rules stay #e3ded2. The Python logo is an official-colour exception: preserve its blue and yellow, do not recolour it. Do not add or remove text, lines, or elements.
-Schedule-time hierarchy edit prompt:
-
-Make one focused edit to this illustration. Preserve the title, project rows, icons, divider positions, schedule days, wording, layout, and all other colours. In the four schedule labels, keep each weekday and separator dot in ink #201d18, but render each numeric time value (“11:00”, “11:00”, “14:30”, “11:00”) in muted ink grey #5d574c for a subtle visual hierarchy. Leave the cleanup note and all other text colours unchanged. Do not change the base teal icons (#14584d), the R logo’s official colours, or the Python logo’s official colours. Ensure all text stays legible and the divider alignment remains exact.
-
-Configured-groups edit prompt:
-
-Redesign the figure to include every configured group, including R Packages on Monday · 11:00, rename “Web” to “Web Applications”, and make clear that it shows configured groups, including groups with no current repository assignments. Use the authentic R logo in official colours and preserve the official Python logo colours. Keep the other/default, Python, and Web Applications schedules and the pull-request cleanup note accurate. Preserve the light-mode design tokens, align every divider, and keep weekday labels dark with time values in muted grey.
-
-Cleanup-meaning edit prompt:
-
-Edit only the note in the final row. Replace “Runs periodically” with “Removes worktrees and local branches after PRs merge or close”. Keep the note in muted grey. Preserve all other wording, composition, symbols, logos, dividers, schedule days and times, typography, spacing, and colours. Do not imply that the tool closes pull requests; cleanup runs after a pull request has been merged or closed.
-
-Reference-style edit prompt:
-
-Restyle the schedule illustration to match the architecture-overview and execution-lifecycle illustrations: warm-paper editorial layout, large elegant serif title, bold Hanken-like sans-serif group labels, regular Hanken-like supporting text, thin flat icons, delicate base-teal #14584d strokes, and fine #e3ded2 dividers. Preserve all labels, schedules, and group ordering. Keep the official R and Python logo colours. Use ink #201d18 for weekdays and muted grey #5d574c for numeric times. Avoid heavy strokes, bright turquoise, shadows, gradients, cards, and decoration.
+**Capitalisation edit prompt:** Change only lowercase “python” to “Python” in the group label. Preserve every other text, logo, icon, colour, spacing, and layout element.

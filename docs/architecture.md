@@ -1,8 +1,8 @@
 # Architecture
 
-llm-dependabot is a scheduler, not an agent. It decides when and where the
-agent runs, isolates its work, and cleans up afterwards. The intelligence lives
-in each repository's own prompt.
+llm-dependabot is a scheduler, not an agent. It decides when, where, and which prompt
+the agent runs, isolates its work, and cleans up afterwards. The intelligence
+lives in each repository's own prompts.
 
 ![Execution lifecycle and isolation: three bands show the Full Disk Access process boundary, safe Git worktree isolation, and coordinated pull-request tracking and cleanup.](images/execution-lifecycle.webp)
 
@@ -11,7 +11,7 @@ in each repository's own prompt.
 | Component | Role |
 | --- | --- |
 | [`llm_dependabot.py`](../llm_dependabot.py) | The CLI: a single-file uv script that discovers repositories, runs the agent, tracks pull requests, and writes the launchd agents |
-| [`config.yaml`](../config.yaml) and `private.yaml` | The schedule and which repositories take part (see [Configuration](configuration.md)) |
+| [`config.yaml`](../config.yaml) and `private.yaml` | The prompts, their cadences, the schedule, and which repositories take part (see [Configuration](configuration.md)) |
 | [`app/`](../app) | Sources of the LLM Dependabot app, a tiny launcher that holds the Full Disk Access grant |
 | launchd | macOS's built-in scheduler: one agent per group, plus a cleanup agent |
 | Coding agent | Runs the prompt and opens the pull request; Antigravity CLI (`agy`) by default, configurable in `config.yaml` |
@@ -38,18 +38,29 @@ configuration and state, [PyYAML](https://pyyaml.org) to read the YAML, and
 ## A run
 
 - **Discovery** lists the owner's repositories with `gh` and checks each for
-  the prompt through the GitHub API, so repositories need not be cloned
-  first.
+  the configured prompts through the GitHub API, so repositories need not be
+  cloned first.
 
-- **Isolation:** the agent works in a separate git worktree, so an existing
-  clone's checked-out branch and uncommitted work are never touched.
+- **Cadence:** a run takes every weekly prompt a repository has, plus each
+  monthly one that has not yet run there this calendar month, according to
+  the last runs recorded in `state.json`. Launchd starts every group weekly;
+  the script decides what is due, so a missed monthly run catches up the
+  following week.
+
+- **Isolation:** each prompt runs in its own git worktree and branch, so an
+  existing clone's checked-out branch and uncommitted work are never touched,
+  and each prompt opens its own pull request.
 
 - **Pull request detection** looks for a pull request from the run's branch,
   falling back to one opened by you since the run started, in case the agent
   chose its own branch name.
 
-- **Repositories run one after another.** A failure in one is logged and the
-  run moves on.
+- **Repositories and prompts run one after another.** A failure in one is
+  logged, and the run moves on. A failed run is not recorded, so it is
+  retried at the next scheduled run.
+
+- **Weekends:** with `skip_weekends`, scheduled runs and cleanups started on a
+  Saturday or Sunday exit without doing anything.
 
 - **A timeout** bounds each agent run, backed by a hard stop in case the CLI's
   own timeout does not fire.
@@ -62,6 +73,7 @@ uncommitted changes, other worktrees, or unpushed commits.
 
 ## State
 
-`state.json` records pending pull requests (with their worktree and branch)
-and the clones llm-dependabot created. It is written atomically, and a lock
+`state.json` records pending pull requests (with their worktree and branch),
+the clones llm-dependabot created, and the date each prompt last ran in each
+repository. It is written atomically, and a lock
 keeps a scheduled run and a cleanup from changing it at the same time.

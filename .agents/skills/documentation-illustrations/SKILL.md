@@ -61,8 +61,8 @@ apply.
 
 ```text
 Use case: infographic-diagram. Asset type: documentation diagram for
-llm-dependabot, a macOS tool that runs an AI coding agent weekly to update
-dependencies. Landscape 3:2, flat canvas [bg], ink [text], muted ink
+llm-dependabot, a macOS tool that runs an AI coding agent on a schedule to
+update dependencies and simplify code. Landscape 3:2, flat canvas [bg], ink [text], muted ink
 [text-muted], fine hairlines [border], sparse accent [accent] for [the path
 being explained], muted rust [chip-rust] only for [failures]. Fraunces-like
 serif title and band headings, Hanken-like sans labels, generous whitespace,

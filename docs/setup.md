@@ -34,7 +34,7 @@ to fix whatever is missing:
 | Sign-ins | Runs `gh auth login` if needed and waits until the agent's `check` command succeeds |
 | Owner | Offers to set `owner` in `config.yaml` to your GitHub account |
 | Clone directory | Creates `clone_root` if it does not exist |
-| Private repositories | Asks about each private repository that has the prompt and writes `private.yaml` |
+| Private repositories | Asks about each private repository that has a configured prompt and writes `private.yaml` |
 | Git hooks | Installs the prek hooks |
 | App and agents | Builds the LLM Dependabot app, loads the launchd agents, and waits until the app can read your clones |
 

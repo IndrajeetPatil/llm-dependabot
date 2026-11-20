@@ -1,8 +1,9 @@
-# Weekly dependency-update schedule, shared by public and private repositories.
+# Which prompts run, where, and when; shared by public and private repositories.
 #
 # Every non-archived, non-fork public repository owned by `owner` that contains
-# `prompt_path` is picked up automatically. Private repositories are opt-in:
-# list them in private.yaml (git-ignored; see private.example.yaml).
+# at least one of the `prompts` is picked up automatically. Private
+# repositories are opt-in: list them in private.yaml (git-ignored; see
+# private.example.yaml).
 #
 # Each repository joins the first group whose `languages` include its GitHub
 # primary language; the group with `languages: ["*"]` takes the rest. Times are
@@ -10,7 +11,19 @@
 # either file so launchd picks up the change.
 
 owner: IndrajeetPatil
-prompt_path: .github/prompts/update-deps.md
+
+# Prompts that repositories opt into by committing them at `path`. A weekly
+# prompt runs at every scheduled run of its repository's group; a monthly one at
+# the group's first scheduled run of each calendar month. Groups can override
+# `cadence` per prompt.
+prompts:
+  - name: update-deps
+    path: .github/prompts/update-deps.md
+    cadence: weekly
+
+  - name: simplify-codebase
+    path: .github/prompts/simplify-codebase.md
+    cadence: monthly
 
 # Existing clones are reused from here; missing ones are cloned here and
 # deleted again once their pull request is merged or closed.
@@ -39,23 +52,31 @@ agent_timeout_hours: 4
 # How often to check pending pull requests and clean up after merged ones.
 cleanup_interval_hours: 3
 
-groups:
-  - name: r
-    languages: [R]
-    weekday: Monday
-    time: "11:00"
+# Scheduled runs and cleanups do nothing on Saturdays and Sundays, including
+# jobs that launchd catches up on after the Mac wakes. Groups cannot be
+# scheduled on a weekend while this is on.
+skip_weekends: true
 
-  - name: workflows
-    languages: ["*"]
-    weekday: Tuesday
+groups:
+  - name: web
+    languages: [TypeScript, JavaScript, Astro, Svelte, Vue, HTML, CSS]
+    weekday: Monday
     time: "11:00"
 
   - name: python
     languages: [Python]
-    weekday: Wednesday
-    time: "14:30"
+    weekday: Tuesday
+    time: "11:00"
 
-  - name: web
-    languages: [TypeScript, JavaScript, Astro, Svelte, Vue, HTML, CSS]
+  - name: workflows
+    languages: ["*"]
+    weekday: Wednesday
+    time: "11:00"
+
+  # R packages update monthly, so they run on the first Thursday of the month.
+  - name: r
+    languages: [R]
     weekday: Thursday
     time: "11:00"
+    cadence:
+      update-deps: monthly

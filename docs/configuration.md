@@ -6,7 +6,7 @@ misconfiguration.
 
 | File | Committed | Contents |
 | --- | --- | --- |
-| [`config.yaml`](../config.yaml) | yes | Owner, prompt path, clone directory, coding agent, timeouts, and the schedule |
+| [`config.yaml`](../config.yaml) | yes | Owner, prompts and their cadences, clone directory, coding agent, timeouts, and the schedule |
 | `private.yaml` | no (git-ignored) | Private repositories to include, by name |
 
 Run `make install` after editing either file.
@@ -16,12 +16,13 @@ Run `make install` after editing either file.
 | Key | Meaning |
 | --- | --- |
 | `owner` | GitHub account whose repositories are considered |
-| `prompt_path` | Path of the prompt inside each repository |
+| `prompts` | The prompts repositories can opt into, and how often each runs (see below) |
 | `clone_root` | Where existing clones are found and missing ones are cloned |
 | `agent` | The coding agent and how to call it (see below) |
 | `agent_timeout_hours` | Upper bound for one repository's agent run |
 | `cleanup_interval_hours` | How often finished pull requests are cleaned up |
-| `groups` | The weekly schedule (see below) |
+| `skip_weekends` | Whether scheduled jobs do nothing on Saturdays and Sundays (default `true`) |
+| `groups` | The schedule (see below) |
 
 ## The coding agent
 
@@ -62,44 +63,81 @@ When switching agents, also replace `antigravity-cli` in the
 `agent_timeout_hours` by ten minutes is stopped, so agents without a timeout
 of their own are bounded too.
 
+## Prompts and cadence
+
+Each prompt is a file that repositories opt into by committing it at `path`.
+It runs verbatim, in its own worktree and branch (`chore/<name>-<timestamp>`),
+so each prompt opens its own pull request.
+
+```yaml
+prompts:
+  - name: update-deps
+    path: .github/prompts/update-deps.md
+    cadence: weekly
+
+  - name: simplify-codebase
+    path: .github/prompts/simplify-codebase.md
+    cadence: monthly
+```
+
+| Key | Meaning |
+| --- | --- |
+| `name` | Identifies the prompt in `cadence` overrides, branch names, logs, and `make run PROMPT=…` |
+| `path` | Path of the prompt inside each repository |
+| `cadence` | `weekly` (the default) or `monthly`; a group can override it |
+
+- **Weekly** prompts run at every scheduled run of the repository's group.
+
+- **Monthly** prompts run at the group's first scheduled run in each calendar
+  month. `state.json` records when each prompt last ran in each repository,
+  so a monthly prompt whose run was missed, skipped, or failed runs at the
+  group's next scheduled run instead of waiting a month.
+
+![One schedule, multiple prompts: each due repository prompt gets its own Git worktree and branch, coding-agent run, and pull request, processed one at a time.](images/multiple-prompts.webp)
+
 ## Groups and the schedule
 
-![Configured project groups and weekly cadence: R packages run Monday at 11:00, other/default projects Tuesday at 11:00, Python projects Wednesday at 14:30, and Astro and TypeScript web applications Thursday at 11:00 local time; cleanup removes local worktrees and branches after pull requests are merged or closed.](images/ecosystem-schedule.webp)
-
-The figure shows every configured group and its weekly schedule, including
-groups with no current repository assignments. The table below lists the
-language matches for each group.
-
-Each group runs once a week at a local wall-clock time:
+Each group runs at a local wall-clock time on one weekday, and may override a
+prompt's cadence:
 
 ```yaml
 groups:
-  - name: python
-    languages: [Python]
-    weekday: Wednesday
-    time: "14:30"
+  - name: r
+    languages: [R]
+    weekday: Thursday
+    time: "11:00"
+    cadence:
+      update-deps: monthly
 ```
 
 A repository joins the first group whose `languages` include its GitHub
 primary language. The group with `languages: ["*"]` takes everything else.
-The default schedule:
+The default schedule, with nothing on Fridays or at weekends:
 
-| Group | Languages | When |
-| --- | --- | --- |
-| `r` | R | Monday 11:00 |
-| `workflows` | anything not matched by another group | Tuesday 11:00 |
-| `python` | Python | Wednesday 14:30 |
-| `web` | TypeScript, JavaScript, Astro, Svelte, Vue, HTML, and CSS | Thursday 11:00 |
+| Group | Languages | Day | `update-deps` | `simplify-codebase` |
+| --- | --- | --- | --- | --- |
+| `web` | TypeScript, JavaScript, Astro, Svelte, Vue, HTML, and CSS | Monday 11:00 | weekly | first Monday of the month |
+| `python` | Python | Tuesday 11:00 | weekly | first Tuesday of the month |
+| `workflows` | anything not matched by another group | Wednesday 11:00 | weekly | first Wednesday of the month |
+| `r` | R | Thursday 11:00 | first Thursday of the month | first Thursday of the month |
+
+![Configured project groups and prompt cadence: Web Applications run Monday at 11:00, Python Tuesday at 11:00, Sundry Wednesday at 11:00, and R Packages Thursday at 11:00; weekly and monthly prompt cadence is shown for each group, followed by pull-request cleanup.](images/ecosystem-schedule.webp)
+
+With `skip_weekends: true`, groups cannot be scheduled on a Saturday or
+Sunday, and a scheduled job that launchd starts late at a weekend (for
+example, after the Mac wakes) does nothing. Weekly prompts then wait for the
+following week, and monthly ones for the group's next scheduled run.
 
 ## Which repositories take part
 
 - **Public:** every non-archived, non-fork public repository owned by `owner`
-  that contains the prompt, found automatically at run time.
+  that contains at least one of the prompts, found automatically at run time.
 
 - **Private:** only those listed in `private.yaml`, so their names never reach
-  version control. Each still needs the prompt.
+  version control. Each still needs at least one of the prompts.
 
-A repository that gains the prompt joins its group the following week.
+A repository runs only the prompts it contains. One that gains a prompt picks
+it up at its group's next scheduled run that finds the prompt due.
 `make list` shows the current assignment.
 
 ## `private.yaml`

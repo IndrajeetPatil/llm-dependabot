@@ -4,9 +4,10 @@ Guidance for AI coding agents working in this repository.
 
 ## Overview
 
-`llm-dependabot` runs each of the owner's repositories' `update-deps` prompt
-with a configurable coding agent (Antigravity CLI, `agy`, by default) on a
-weekly `launchd` schedule (macOS only). See
+`llm-dependabot` runs the owner's repositories' committed prompts (such as
+`update-deps` and `simplify-codebase`) with a configurable coding agent
+(Antigravity CLI, `agy`, by default) on a weekly or monthly `launchd` schedule
+(macOS only). See
 [README.md](README.md) for an overview and [docs/](docs) for details, notably
 [docs/architecture.md](docs/architecture.md).
 
@@ -16,7 +17,7 @@ weekly `launchd` schedule (macOS only). See
 | --- | --- |
 | `llm_dependabot.py` | The whole CLI: a single-file `uv` script (Python 3.15+) |
 | `llm_dependabot.py.lock` | Locked versions of the script's dependencies |
-| `config.yaml` | Shared settings and the source of truth for groups, weekdays, and times |
+| `config.yaml` | Shared settings and the source of truth for prompts, cadences, groups, weekdays, and times |
 | `private.example.yaml` | Template for the git-ignored `private.yaml` listing private repositories |
 | `app/` | Sources of the LLM Dependabot app (`launcher.c`, `icon.png`), which holds the Full Disk Access grant |
 | `docs/` | User and developer documentation; `docs/images/logo.png` is the hex sticker |

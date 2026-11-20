@@ -8,9 +8,10 @@
 #   "typer>=0.29.2",
 # ]
 # ///
-"""Run each repository's update-deps prompt with a coding agent every week."""
+"""Run each repository's prompts with a coding agent on a weekly or monthly cadence."""
 
 import contextlib
+import dataclasses
 import datetime as dt
 import json
 import os
@@ -19,7 +20,6 @@ import shutil
 import signal
 import subprocess
 import time
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated, Any, Literal, NoReturn, get_args
 lazy import hashlib
@@ -35,6 +35,7 @@ from pydantic import (
     PositiveFloat,
     ValidationError,
     field_validator,
+    model_validator,
 )
 lazy import filelock
 lazy import yaml
@@ -67,6 +68,9 @@ type Weekday = Literal[
     "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
 ]
 WEEKDAYS: tuple[str, ...] = get_args(Weekday.__value__)  # launchd: Sunday is 0
+WEEKEND = frozenset({"Saturday", "Sunday"})
+
+type Cadence = Literal["weekly", "monthly"]
 
 app = typer.Typer(
     help=__doc__,
@@ -81,6 +85,16 @@ app = typer.Typer(
 # --------------------------------------------------------------------------- #
 
 
+class Prompt(BaseModel):
+    """A prompt that repositories opt into by committing it at `path`."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    name: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+    path: str
+    cadence: Cadence = "weekly"
+
+
 class Group(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -88,6 +102,8 @@ class Group(BaseModel):
     languages: list[str]
     weekday: Weekday
     time: dt.time
+    # Per-prompt cadence overrides for this group, by prompt name.
+    cadence: dict[str, Cadence] = {}
 
     @property
     def label(self) -> str:
@@ -126,11 +142,12 @@ class Config(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     owner: str
-    prompt_path: str
+    prompts: list[Prompt] = Field(min_length=1)
     clone_root: Path
     agent: Agent
     agent_timeout_hours: PositiveFloat
     cleanup_interval_hours: PositiveFloat
+    skip_weekends: bool = True
     groups: list[Group]
     # Filled in from private.yaml, never from config.yaml.
     private_repos: frozenset[str] = Field(default=frozenset(), exclude=True)
@@ -140,14 +157,40 @@ class Config(BaseModel):
     def _expand(cls, value: Path) -> Path:
         return value.expanduser()
 
-    @field_validator("groups")
-    @classmethod
-    def _unique(cls, groups: list[Group]) -> list[Group]:
-        names = [g.name for g in groups]
-        if len(names) != len(set(names)):
-            msg = "group names must be unique"
-            raise ValueError(msg)
-        return groups
+    @model_validator(mode="after")
+    def _consistent(self) -> Config:
+        for kind, names in (
+            ("group", [g.name for g in self.groups]),
+            ("prompt", [p.name for p in self.prompts]),
+        ):
+            if len(names) != len(set(names)):
+                msg = f"{kind} names must be unique"
+                raise ValueError(msg)
+        known = {p.name for p in self.prompts}
+        for group in self.groups:
+            if unknown := set(group.cadence) - known:
+                msg = (
+                    f"group {group.name!r} sets a cadence for unknown prompts"
+                    f" {sorted(unknown)}"
+                )
+                raise ValueError(msg)
+            if self.skip_weekends and group.weekday in WEEKEND:
+                msg = (
+                    f"group {group.name!r} is scheduled on a {group.weekday},"
+                    " but skip_weekends is on"
+                )
+                raise ValueError(msg)
+        return self
+
+    def cadence(self, group: Group, prompt: Prompt) -> Cadence:
+        return group.cadence.get(prompt.name, prompt.cadence)
+
+    def prompt(self, name: str) -> Prompt:
+        prompt = next((p for p in self.prompts if p.name == name), None)
+        if prompt is None:
+            choices = [p.name for p in self.prompts]
+            fail(f"unknown prompt {name!r}; choose from {choices}")
+        return prompt
 
     def group(self, name: str) -> Group:
         group = next((g for g in self.groups if g.name == name), None)
@@ -185,13 +228,34 @@ class Pending(Checkout):
 class State(BaseModel):
     pending: list[Pending] = []
     managed_clones: list[Path] = []
+    # When each prompt last ran in each repository, keyed "prompt owner/repo".
+    last_runs: dict[str, dt.date] = {}
+
+    def is_due(self, prompt: Prompt, repo: Repo, cadence: Cadence) -> bool:
+        """Whether a scheduled run should run the prompt in the repository.
+
+        Weekly prompts run at every scheduled run. Monthly ones run at the
+        first scheduled run of each calendar month, or the next one if that
+        was missed or failed.
+        """
+        if cadence == "weekly":
+            return True
+        last = self.last_runs.get(f"{prompt.name} {repo.full_name}")
+        today = local_today()
+        return last is None or (last.year, last.month) != (today.year, today.month)
+
+    def record_run(self, prompt: Prompt, repo: Repo) -> None:
+        self.last_runs[f"{prompt.name} {repo.full_name}"] = local_today()
+        save_state(self)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Repo:
     owner: str
     name: str
     default_branch: str
+    # Names of the configured prompts the repository carries.
+    prompts: tuple[str, ...] = ()
 
     @property
     def full_name(self) -> str:
@@ -200,6 +264,10 @@ class Repo:
 
 class SkipRepoError(Exception):
     """A repository cannot be processed this run."""
+
+
+def local_today() -> dt.date:
+    return dt.datetime.now().astimezone().date()
 
 
 def fail(message: str) -> NoReturn:
@@ -340,8 +408,13 @@ def owned_repos(config: Config, visibility: str | None = None) -> list[dict]:
     )
 
 
+def prompts_in(repo: Repo, config: Config) -> tuple[str, ...]:
+    """Names of the configured prompts committed to the repository."""
+    return tuple(p.name for p in config.prompts if has_prompt(repo, p.path))
+
+
 def discover(config: Config, group: str | None = None) -> dict[str, list[Repo]]:
-    """Map group name to the repositories in it that carry the prompt.
+    """Map group name to the repositories in it that carry at least one prompt.
 
     Public repositories are included automatically; private ones only when
     private.yaml lists them.
@@ -360,8 +433,8 @@ def discover(config: Config, group: str | None = None) -> dict[str, list[Repo]]:
         if name is None or (group is not None and name != group):
             continue
         repo = Repo(config.owner, item["name"], item["defaultBranchRef"]["name"])
-        if has_prompt(repo, config.prompt_path):
-            grouped[name].append(repo)
+        if prompts := prompts_in(repo, config):
+            grouped[name].append(dataclasses.replace(repo, prompts=prompts))
     return grouped
 
 
@@ -376,7 +449,7 @@ def remote_matches(clone: Path, repo: Repo) -> bool:
 
 
 def prepare_checkout(
-    repo: Repo, config: Config, state: State, log_path: Path
+    repo: Repo, prompt: Prompt, config: Config, state: State, log_path: Path
 ) -> Checkout:
     """Create a worktree on a fresh branch off the default branch.
 
@@ -403,8 +476,8 @@ def prepare_checkout(
     checkout = Checkout(
         repo=repo.full_name,
         clone=clone,
-        worktree=WORKTREE_ROOT / f"{repo.name}-{stamp}",
-        branch=f"chore/update-deps-{stamp}",
+        worktree=WORKTREE_ROOT / f"{repo.name}-{prompt.name}-{stamp}",
+        branch=f"chore/{prompt.name}-{stamp}",
         log=log_path,
         started=started,
     )
@@ -461,7 +534,7 @@ def delete_unused_managed_clones(state: State) -> None:
             continue
         disposable, reason = clone_is_disposable(clone)
         if disposable:
-            log(f"deleting {clone}: it did not exist before its update-deps run")
+            log(f"deleting {clone}: it did not exist before its agent run")
             shutil.rmtree(clone)
         else:
             log(f"keeping {clone} for now: it {reason}")
@@ -537,20 +610,25 @@ def find_pr(repo: Repo, branch: str, started: dt.datetime) -> dict | None:
     return max(prs, key=lambda p: p["number"], default=None)
 
 
-def process_repo(repo: Repo, config: Config, state: State, run_dir: Path) -> str:
-    checkout = prepare_checkout(repo, config, state, run_dir / f"{repo.name}.log")
+def process_repo(
+    repo: Repo, prompt: Prompt, config: Config, state: State, run_dir: Path
+) -> str:
+    """Run one prompt in one repository; return a one-line summary."""
+    label = f"{repo.name} {prompt.name}"
+    log_path = run_dir / f"{repo.name}-{prompt.name}.log"
+    checkout = prepare_checkout(repo, prompt, config, state, log_path)
     try:
         # The prompt is passed verbatim, exactly as committed in the repository.
-        prompt = (checkout.worktree / config.prompt_path).read_text()
-        log(f"{repo.name}: running agent in {checkout.worktree} (log: {checkout.log})")
+        text = (checkout.worktree / prompt.path).read_text()
+        log(f"{label}: running agent in {checkout.worktree} (log: {checkout.log})")
         code = run_agent(
             config.agent,
             checkout.worktree,
-            prompt,
+            text,
             checkout.log,
             config.agent_timeout_hours,
         )
-        log(f"{repo.name}: agent exited with code {code}")
+        log(f"{label}: agent exited with code {code}")
         current = sh(
             "git", "-C", checkout.worktree, "branch", "--show-current", check=False
         )
@@ -561,16 +639,16 @@ def process_repo(repo: Repo, config: Config, state: State, run_dir: Path) -> str
         raise
 
     if pr is None:
-        log(f"{repo.name}: no pull request was opened; removing the worktree")
+        log(f"{label}: no pull request was opened; removing the worktree")
         remove_checkout(checkout)
-        return f"{repo.name}: no PR (exit {code})"
+        return f"{label}: no PR (exit {code})"
 
-    log(f"{repo.name}: {pr['state'].lower()} pull request {pr['url']}")
+    log(f"{label}: {pr['state'].lower()} pull request {pr['url']}")
     state.pending.append(
         Pending(**checkout.model_dump(), pr_number=pr["number"], pr_url=pr["url"])
     )
     save_state(state)
-    return f"{repo.name}: PR #{pr['number']}"
+    return f"{label}: PR #{pr['number']}"
 
 
 # --------------------------------------------------------------------------- #
@@ -623,14 +701,14 @@ def desired_agents(config: Config) -> dict[str, dict]:
         }
         agents[group.label] = plist_for(
             group.label,
-            f"exec {script} run {shlex.quote(group.name)}",
+            f"exec {script} run {shlex.quote(group.name)} --scheduled",
             {"StartCalendarInterval": when},
             f"{group.name}.log",
         )
     label = f"{BUNDLE_ID}.cleanup"
     agents[label] = plist_for(
         label,
-        f"exec {script} cleanup",
+        f"exec {script} cleanup --scheduled",
         {"StartInterval": int(config.cleanup_interval_hours * 3600), "RunAtLoad": True},
         "cleanup.log",
     )
@@ -790,23 +868,57 @@ def install_agents(config: Config) -> None:
 # --------------------------------------------------------------------------- #
 
 
+def is_weekend(config: Config) -> bool:
+    return config.skip_weekends and f"{local_today():%A}" in WEEKEND
+
+
+def planned_runs(
+    config: Config, group: Group, repos: list[Repo], state: State, forced: list[str]
+) -> list[tuple[Repo, Prompt]]:
+    """The (repository, prompt) pairs to run, in order.
+
+    Prompts named with --prompt always run; otherwise each prompt runs when
+    its cadence makes it due.
+    """
+    prompts = [config.prompt(name) for name in forced] or config.prompts
+    return [
+        (repo, prompt)
+        for repo in repos
+        for prompt in prompts
+        if prompt.name in repo.prompts
+        and (forced or state.is_due(prompt, repo, config.cadence(group, prompt)))
+    ]
+
+
 @app.command()
 def run(
     group: str,
     repo: Annotated[
         list[str] | None, typer.Option(help="Limit to this repository.")
     ] = None,
+    prompt: Annotated[
+        list[str] | None,
+        typer.Option(help="Run this prompt whatever its cadence."),
+    ] = None,
     *,
-    dry_run: Annotated[bool, typer.Option(help="Only list the repositories.")] = False,
+    dry_run: Annotated[bool, typer.Option(help="Only list what would run.")] = False,
+    scheduled: Annotated[
+        bool, typer.Option(hidden=True, help="Started by launchd.")
+    ] = False,
 ) -> None:
-    """Run the update-deps prompt for every repository in GROUP."""
+    """Run the prompts that are due in every repository in GROUP."""
     config = load_config()
-    config.group(group)
+    if scheduled and is_weekend(config):
+        log(f"group {group}: skipped, since it is the weekend")
+        return
+    chosen = config.group(group)
     repos = discover(config, group)[group]
     if repo:
         repos = [r for r in repos if r.name in repo]
-    log(f"group {group}: {', '.join(r.name for r in repos) or 'no repositories'}")
-    if dry_run or not repos:
+    plan = planned_runs(config, chosen, repos, load_state(), prompt or [])
+    summary = ", ".join(f"{r.name} {p.name}" for r, p in plan)
+    log(f"group {group}: {summary or 'nothing due'}")
+    if dry_run or not plan:
         return
 
     with run_lock():
@@ -816,16 +928,18 @@ def run(
         run_dir.mkdir(parents=True, exist_ok=True)
         state = load_state()
         results = []
-        for item in repos:
+        for item, task in plan:
+            label = f"{item.name} {task.name}"
             try:
-                results.append(process_repo(item, config, state, run_dir))
+                results.append(process_repo(item, task, config, state, run_dir))
+                state.record_run(task, item)
             except SkipRepoError as exc:
-                log(f"{item.name}: skipped: {exc}")
-                results.append(f"{item.name}: skipped")
+                log(f"{label}: skipped: {exc}")
+                results.append(f"{label}: skipped")
             except Exception as exc:  # noqa: BLE001 - keep going with the other repos
                 detail = getattr(exc, "stderr", "") or exc
-                log(f"{item.name}: failed: {detail}")
-                results.append(f"{item.name}: failed")
+                log(f"{label}: failed: {detail}")
+                results.append(f"{label}: failed")
         cleanup_finished(state)
         caffeinate.terminate()
 
@@ -834,8 +948,16 @@ def run(
 
 
 @app.command()
-def cleanup() -> None:
+def cleanup(
+    *,
+    scheduled: Annotated[
+        bool, typer.Option(hidden=True, help="Started by launchd.")
+    ] = False,
+) -> None:
     """Remove checkouts whose pull requests are merged or closed."""
+    if scheduled and is_weekend(load_config()):
+        log("skipping cleanup, since it is the weekend")
+        return
     try:
         with run_lock().acquire(timeout=0):
             cleanup_finished(load_state())
@@ -845,9 +967,11 @@ def cleanup() -> None:
 
 @app.command(name="list")
 def list_groups() -> None:
-    """Show which repositories fall into which group."""
+    """Show which repositories fall into which group, and their prompts."""
     for name, repos in discover(load_config()).items():
-        typer.echo(f"{name}: {', '.join(r.name for r in repos) or '-'}")
+        typer.echo(f"{name}:" + ("" if repos else " -"))
+        for repo in repos:
+            typer.echo(f"  {repo.name} ({', '.join(repo.prompts)})")
 
 
 @app.command()
@@ -858,6 +982,10 @@ def status() -> None:
     for group in config.groups:
         mark = "loaded" if group.label in loaded else "NOT INSTALLED"
         typer.echo(f"{group.name:<10} {group.weekday:<10} {group.time:%H:%M}  {mark}")
+        for prompt in config.prompts:
+            typer.echo(f"  {prompt.name}: {config.cadence(group, prompt)}")
+    if config.skip_weekends:
+        typer.echo("scheduled jobs skip Saturdays and Sundays")
     state = load_state()
     typer.echo(f"\npending pull requests: {len(state.pending)}")
     for entry in state.pending:
@@ -976,13 +1104,13 @@ def choose_private_repos(config: Config) -> None:
     candidates = [
         item["name"]
         for item in owned_repos(config, "private")
-        if has_prompt(
+        if prompts_in(
             Repo(config.owner, item["name"], item["defaultBranchRef"]["name"]),
-            config.prompt_path,
+            config,
         )
     ]
     if not candidates:
-        typer.echo(f"no private repositories contain {config.prompt_path}")
+        typer.echo("no private repositories contain any of the configured prompts")
     chosen = [
         name
         for name in candidates

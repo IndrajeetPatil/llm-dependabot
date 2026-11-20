@@ -37,13 +37,13 @@ status: ## Show the schedule and pending pull requests
 cleanup: ## Clean up after merged or closed pull requests
 	$(SCRIPT) cleanup
 
-run: ## Run a group now: make run GROUP=python [REPO=name]
-	@test -n "$(GROUP)" || { echo "usage: make run GROUP=<group> [REPO=<name>]"; exit 2; }
-	$(SCRIPT) run $(GROUP) $(if $(REPO),--repo $(REPO))
+run: ## Run a group's due prompts now: make run GROUP=python [REPO=name] [PROMPT=name]
+	@test -n "$(GROUP)" || { echo "usage: make run GROUP=<group> [REPO=<name>] [PROMPT=<name>]"; exit 2; }
+	$(SCRIPT) run $(GROUP) $(if $(REPO),--repo $(REPO)) $(if $(PROMPT),--prompt $(PROMPT))
 
-dry-run: ## List a group's repositories: make dry-run GROUP=python
-	@test -n "$(GROUP)" || { echo "usage: make dry-run GROUP=<group>"; exit 2; }
-	$(SCRIPT) run $(GROUP) --dry-run
+dry-run: ## List what a group would run: make dry-run GROUP=python [PROMPT=name]
+	@test -n "$(GROUP)" || { echo "usage: make dry-run GROUP=<group> [PROMPT=<name>]"; exit 2; }
+	$(SCRIPT) run $(GROUP) --dry-run $(if $(PROMPT),--prompt $(PROMPT))
 
 lint: ## Lint with ruff
 	uvx ruff check
