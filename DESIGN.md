@@ -82,7 +82,7 @@ paper, ink, hairlines, and one accent.
   `accent-light` beside it for the language model.
 - **Frame:** white fill and an accent border, as on the other project stickers.
 - **Type:** the package name in Rubik, ink, centred above the artwork; the
-  repository URL in small grey type along the lower-right edge.
+  documentation site URL in small grey type along the lower-right edge.
 - **Icon:** the same sticker centred on a transparent square, so the app is
   recognisable in Full Disk Access next to the sticker in the README.
 - Keep the drawing flat: no shadows, gradients, texture, or emoji.
@@ -91,7 +91,7 @@ paper, ink, hairlines, and one accent.
 
 - **Layout:** 1280 × 640 on `bg` with a `border` hairline frame; the sticker
   on the right, and on the left the name in Fraunces (`text`), a short accent
-  rule, the tagline in Hanken Grotesk (`text-muted`), and the repository URL
+  rule, the tagline in Hanken Grotesk (`text-muted`), and the documentation site URL
   in the accent.
 - **Source:** `hextools/social-card.R`, which reuses the rendered sticker.
 
