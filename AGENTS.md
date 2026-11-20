@@ -28,7 +28,7 @@ Guidance for AI coding agents working in this repository.
 | `.github/workflows/` | CI workflows: checks on pull requests, docs deployment from `main` |
 | `DESIGN.md` | Visual identity for the sticker, app icon, and documentation figures |
 | `.agents/skills/documentation-illustrations/` | Skill for generating documentation figures |
-| `.github/prompts/update-deps.md` | This repository's own dependency-update prompt |
+| `.github/prompts/` | This repository's own `update-deps` and `simplify-codebase` prompts |
 | `hextools/` | Artwork and R scripts that render the hex sticker, `app/icon.png`, and the social preview card |
 | `hooks/check_private_names.py` | Hook that keeps private repository names out of commits |
 | `prek.toml` | Git hooks, run with `make hooks` |

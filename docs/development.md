@@ -84,11 +84,17 @@ publishes `llms.txt`, `llms-full.txt`, a Markdown copy of every page, and a
   adds structured data and `llms.txt` links to every page, and points the home
   page's edit and view buttons at `README.md`.
 
-## Dependency updates
+## Maintaining llm-dependabot itself
 
-This repository has its own
-[`update-deps` prompt](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/.github/prompts/update-deps.md), so llm-dependabot
-keeps itself up to date like any other participating repository.
+This repository commits its own prompts, so llm-dependabot maintains itself
+like any other participating repository:
+
+- [`update-deps`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/.github/prompts/update-deps.md)
+  upgrades the locked dependencies and prek hooks.
+
+- [`simplify-codebase`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/.github/prompts/simplify-codebase.md)
+  removes custom code that a newer dependency feature or a proven library
+  makes unnecessary.
 
 ## Design
 
