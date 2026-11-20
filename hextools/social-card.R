@@ -36,7 +36,7 @@ card <- image_blank(width, height, color = bg) |>
         location = sprintf("+%d+%d", margin, 186)
     ) |>
     image_annotate(
-        "Dependabot, but an LLM agent\ndoes the updating.",
+        "Your software giga factory.\nYour prompts. Your projects.",
         font = "Hanken Grotesk",
         weight = 400,
         size = 38,
