@@ -26,21 +26,18 @@
 - **[Homebrew](https://brew.sh)** installs the command-line tools listed in
   the [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile).
 
-Every check runs locally. The GitHub Actions workflows in
+Every check runs locally, and the GitHub Actions workflows in
 [`.github/workflows/`](https://github.com/IndrajeetPatil/llm-dependabot/tree/main/.github/workflows)
-mirror them, but their triggers are commented out, so they run only when
-started by hand:
+run them again on each pull request:
 
-| Workflow | Runs | Intended trigger |
+| Workflow | Runs | Trigger |
 | --- | --- | --- |
 | `qa.yml` | `make check` | Pull requests |
 | `prek.yml` | The prek hooks other than Ruff and ty | Pull requests |
 | `security.yml` | Gitleaks over the full history and zizmor over the workflows | Pull requests |
 | `conventional-commits.yml` | Commit messages and the pull-request title | Pull requests |
 | `link-check.yml` | lychee over every link | Pull requests |
-| `docs.yml` | Builds the site; deploys it to GitHub Pages from `main` | Pull requests and `main` |
-
-Uncomment a workflow's `on:` block to switch it on.
+| `docs.yml` | Builds the site; deploys it to GitHub Pages from `main` | Pull requests, `main`, and by hand |
 
 ## Checks
 

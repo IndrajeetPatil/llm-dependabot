@@ -23,7 +23,7 @@ Guidance for AI coding agents working in this repository.
 | `docs/` | User and developer documentation, built into a Zensical site; `docs/images/logo.png` is the hex sticker |
 | `zensical.toml` | Documentation site configuration and navigation |
 | `pyproject.toml`, `uv.lock` | Docs-only uv project that installs Zensical |
-| `.github/workflows/` | CI workflows, with their triggers commented out |
+| `.github/workflows/` | CI workflows: checks on pull requests, docs deployment from `main` |
 | `DESIGN.md` | Visual identity for the sticker, app icon, and documentation figures |
 | `.agents/skills/documentation-illustrations/` | Skill for generating documentation figures |
 | `.github/prompts/update-deps.md` | This repository's own dependency-update prompt |
