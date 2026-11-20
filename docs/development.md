@@ -77,8 +77,9 @@ publishes `llms.txt`, `llms-full.txt`, a Markdown copy of every page, and a
   anything outside `docs/` with its full GitHub URL, since the site only
   contains `docs/`.
 
-- Use GitHub callouts (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`) for asides:
-  GitHub renders them as alerts and the site as admonitions.
+- Use GitHub callouts (`> [!NOTE]`, `> [!TIP]`, `> [!IMPORTANT]`, and
+  `> [!WARNING]`) for asides: GitHub renders them as alerts and the site as
+  admonitions.
 
 - [`overrides/`](https://github.com/IndrajeetPatil/llm-dependabot/tree/main/overrides)
   adds structured data and `llms.txt` links to every page, and points the home
