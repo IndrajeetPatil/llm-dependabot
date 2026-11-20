@@ -11,7 +11,7 @@ The hex sticker is drawn by hand; see [hextools](../../hextools/README.md).
 
 | Figure | Subject | Embedded in |
 | --- | --- | --- |
-| [`architecture-overview.webp`](architecture-overview.webp) | Scheduled trigger, worktree isolation, and agent lifecycle | [architecture.md](../architecture.md) |
+| [`architecture-overview.webp`](architecture-overview.webp) | Scheduled trigger, worktree isolation, and agent lifecycle | [README.md](../../README.md), [architecture.md](../architecture.md) |
 | [`giga-factory.webp`](giga-factory.webp) | The schedule coordinating a software factory inside each project | [README.md](../../README.md) |
 | [`execution-lifecycle.webp`](execution-lifecycle.webp) | Permission boundary, repository isolation, and state locking | [architecture.md](../architecture.md) |
 | [`tech-stack.webp`](tech-stack.webp) | Runtime, dependencies, core libraries, and local QA checks | [development.md](../development.md) |

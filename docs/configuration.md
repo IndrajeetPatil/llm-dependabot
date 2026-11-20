@@ -26,8 +26,9 @@ Run `make install` after editing either file.
 
 ## The coding agent
 
-The agent runs once per repository, unattended, inside a fresh worktree. The
-default is Antigravity CLI in YOLO mode:
+The agent runs once per repository and prompt, unattended, inside a fresh
+worktree. Any agent with a non-interactive mode works; the shipped
+`config.yaml` uses Antigravity CLI:
 
 ```yaml
 agent:
@@ -48,15 +49,22 @@ agent:
 | `command` | The command line, one argument per item. An argument that is exactly `"{prompt}"` becomes the prompt's text; without one, the prompt goes to standard input. `{timeout_hours}` becomes `agent_timeout_hours`. |
 | `check` | Optional: a command that succeeds once the agent is installed and signed in. `make setup` waits for it. |
 
-Any agent with a non-interactive mode works. It must be able to edit files,
-run commands, and push without asking, since nobody is there to approve. For
-example (check the flags against your agent's version):
+> [!WARNING]
+> Nobody is there to approve the agent's actions, so it must be able to edit
+> files, run commands, and push without asking. Give it the same trust you
+> give your own terminal session.
+
+Each agent takes the same shape:
 
 | Agent | `command` | `check` |
 | --- | --- | --- |
+| Antigravity CLI | `[agy, --dangerously-skip-permissions, --print-timeout, "{timeout_hours}h", -p, "{prompt}"]` | `[agy, models]` |
 | Claude Code | `[claude, --dangerously-skip-permissions, -p, "{prompt}"]` | `[claude, auth, status]` |
 | Codex CLI | `[codex, exec, --dangerously-bypass-approvals-and-sandbox, "{prompt}"]` | `[codex, login, status]` |
 | GitHub Copilot CLI | `[copilot, --yolo, -p, "{prompt}"]` | — |
+
+> [!TIP]
+> Check the flags against your agent's version; they change between releases.
 
 When switching agents, also replace `antigravity-cli` in the
 [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile) with your agent's package. A run that outlasts
@@ -153,3 +161,36 @@ repos:
 
 Without `private.yaml`, only public repositories run. A git hook rejects any
 commit that adds this file or names one of its repositories.
+
+## Forking and adapting
+
+llm-dependabot is a template: fork it and change what differs for you.
+
+| To change | Edit |
+| --- | --- |
+| Whose repositories take part | `owner` in `config.yaml` (`make setup` offers to set it), and `private.yaml` |
+| Which prompts run, and how often | `prompts`, and per-group `cadence`, in `config.yaml` |
+| The schedule | `groups` in `config.yaml` |
+| The coding agent | `agent` in `config.yaml`, and its package in the `Brewfile` |
+| Where clones live | `clone_root` in `config.yaml` |
+
+> [!IMPORTANT]
+> The agent can only be as good as what each repository gives it: a
+> committed prompt for each kind of maintenance, guidance such as an
+> `AGENTS.md`, and checks (tests, linters, and CI) that it can run to verify
+> its changes. A repository without a prompt is never touched.
+
+### Another operating system
+
+The scheduling and the tooling are macOS's. Everything else (discovery,
+worktrees, running the agent, pull-request tracking, and cleanup) is plain
+`git`, `gh`, and Python. To run elsewhere, replace these parts of
+[`llm_dependabot.py`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/llm_dependabot.py):
+
+| macOS part | Role | Replace with, for example |
+| --- | --- | --- |
+| `launchd` agents (`launchctl`) | Start each group's run and the cleanup on schedule | systemd timers or cron on Linux, Task Scheduler on Windows |
+| The LLM Dependabot app (`app/`) | Holds the Full Disk Access grant | Nothing, where the OS has no such protection |
+| `caffeinate` | Keeps the machine awake during a run | `systemd-inhibit` on Linux |
+| `osascript` notifications | Summarise each run | `notify-send` on Linux, or nothing |
+| Homebrew and the `Brewfile` | Install the tools | The system's package manager |

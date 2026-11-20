@@ -42,8 +42,7 @@ a choice or an addition below.
 
 The tokens above are the base values unchanged. They live in
 [`hextools/data.svg`](hextools/data.svg), the social card script
-[`hextools/social-card.R`](hextools/social-card.R), the site stylesheet
-[`docs/stylesheets/extra.css`](docs/stylesheets/extra.css), and the prompts in
+[`hextools/social-card.R`](hextools/social-card.R), and the prompts in
 [`docs/images/README.md`](docs/images/README.md), so update those when a token
 changes.
 
@@ -55,7 +54,7 @@ llm-dependabot has no interface of its own. Its visual surfaces are:
 | --- | --- |
 | Hex sticker | `docs/images/logo.png`, shown in the README |
 | Social card | `docs/images/social-card.png`, the repository's GitHub social preview |
-| Documentation site | The Zensical theme, recoloured by `docs/stylesheets/extra.css` |
+| Documentation site | The theme shared with the owner's other documentation sites; only the logo and favicon come from here |
 | App icon | `app/icon.png`, shown for LLM Dependabot in System Settings |
 | Diagrams | Generated figures in `docs/images/`, embedded in `docs/` |
 | Illustration prompts | `docs/images/README.md` |

@@ -21,12 +21,14 @@ Guidance for AI coding agents working in this repository.
 | `private.example.yaml` | Template for the git-ignored `private.yaml` listing private repositories |
 | `app/` | Sources of the LLM Dependabot app (`launcher.c`, `icon.png`), which holds the Full Disk Access grant |
 | `docs/` | User and developer documentation, built into a Zensical site; `docs/images/logo.png` is the hex sticker |
-| `zensical.toml` | Documentation site configuration and navigation |
+| `mkdocs.yml` | Documentation site configuration, navigation, and `llms.txt` sections |
+| `lychee.toml` | Link-check settings for the CI link check |
+| `overrides/` | Site template overrides: structured data, `llms.txt` links, and README edit links |
 | `pyproject.toml`, `uv.lock` | Docs-only uv project that installs Zensical |
 | `.github/workflows/` | CI workflows: checks on pull requests, docs deployment from `main` |
 | `DESIGN.md` | Visual identity for the sticker, app icon, and documentation figures |
 | `.agents/skills/documentation-illustrations/` | Skill for generating documentation figures |
-| `.github/prompts/update-deps.md` | This repository's own dependency-update prompt |
+| `.github/prompts/` | This repository's own `update-deps` and `simplify-codebase` prompts |
 | `hextools/` | Artwork and R scripts that render the hex sticker, `app/icon.png`, and the social preview card |
 | `hooks/check_private_names.py` | Hook that keeps private repository names out of commits |
 | `prek.toml` | Git hooks, run with `make hooks` |
@@ -66,7 +68,14 @@ owner's Mac.
 - Add type annotations everywhere; `ty check` must pass.
 
 - Keep the documentation site building with `make docs`: register new pages
-  in `zensical.toml`, and link outside `docs/` with full GitHub URLs.
+  in `nav` and the `llmstxt` sections of `mkdocs.yml`, and link outside
+  `docs/` with full GitHub URLs.
+
+- The site's home page includes `README.md` verbatim, so give README images
+  and links absolute URLs.
+
+- Use GitHub callouts (`> [!NOTE]`) for asides; the site renders them as
+  admonitions.
 
 - Keep the README short: an overview, the quick start, and links. Put details
   in the matching page under `docs/`, and update it when behaviour, commands,

@@ -2,7 +2,7 @@
 # script (llm_dependabot.py) with its own inline dependencies and lockfile.
 [project]
 name = "llm-dependabot-docs"
-version = "0.0.0"
+version = "0.1.0"
 description = "Documentation site for llm-dependabot"
 requires-python = ">=3.15"
 dependencies = []
