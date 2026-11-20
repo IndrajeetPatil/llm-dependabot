@@ -61,21 +61,28 @@ that adds `private.yaml` itself.
 ## Documentation site
 
 The pages in `docs/` are a [Zensical](https://zensical.org) site configured
-in [`zensical.toml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/zensical.toml),
-published at <https://www.indrapatil.com/llm-dependabot/>. To keep it
-building:
+in [`mkdocs.yml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/mkdocs.yml)
+and published at <https://www.indrapatil.com/llm-dependabot/>. It uses the
+same theme and set-up as the owner's other documentation sites, and also
+publishes `llms.txt`, `llms-full.txt`, a Markdown copy of every page, and a
+`robots.txt` that welcomes AI crawlers. To keep it building:
 
-- Add a new page to `nav` in `zensical.toml`.
+- The home page, `docs/index.md`, only includes `README.md`, so the README
+  and the site's landing page are the same text. Give its images and links
+  absolute URLs, so they work on GitHub and on the site alike.
+
+- Add a new page to `nav`, and to the `llmstxt` sections, in `mkdocs.yml`.
 
 - Link to other pages and images with paths relative to `docs/`; link to
   anything outside `docs/` with its full GitHub URL, since the site only
   contains `docs/`.
 
-- `docs/index.md` is the home page and follows the README; keep the two in
-  step.
+- Use GitHub callouts (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`) for asides:
+  GitHub renders them as alerts and the site as admonitions.
 
-- `docs/stylesheets/extra.css` applies the palette and headings from
-  `DESIGN.md`.
+- [`overrides/`](https://github.com/IndrajeetPatil/llm-dependabot/tree/main/overrides)
+  adds structured data and `llms.txt` links to every page, and points the home
+  page's edit and view buttons at `README.md`.
 
 ## Dependency updates
 

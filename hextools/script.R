@@ -52,3 +52,10 @@ image_read(logo_file) |>
     image_extent("1200x1200", gravity = "center", color = "none") |>
     image_resize("1024x1024") |>
     image_write("app/icon.png")
+
+# The documentation site's favicon: the same square sticker, at icon size.
+image_read(logo_file) |>
+    image_background("none") |>
+    image_extent("1200x1200", gravity = "center", color = "none") |>
+    image_resize("48x48") |>
+    image_write("docs/images/favicon.ico", format = "ico")

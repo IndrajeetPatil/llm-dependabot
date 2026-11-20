@@ -22,8 +22,9 @@ sparkle). To regenerate the images:
    Rscript hextools/script.R
    ```
 
-   The sticker is written to `docs/images/logo.png`, and the same sticker on a
-   square canvas to `app/icon.png`. A new icon rebuilds the app, which then
+   The sticker is written to `docs/images/logo.png`, the same sticker on a
+   square canvas to `app/icon.png`, and a small copy to
+   `docs/images/favicon.ico` for the documentation site. A new icon rebuilds the app, which then
    needs Full Disk Access granted again.
 
 ## Generating the social card
