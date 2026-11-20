@@ -23,8 +23,8 @@ is merged or closed.
 | `make clean-logs` | Delete logs older than 30 days; set `DAYS=<n>` to change the cut-off |
 | `make install` | Reload the agents after editing the configuration |
 
-Each target wraps `./llm_dependabot.py`, which also works directly
-(`./llm_dependabot.py --help`).
+Except for `make clean-logs`, each everyday target wraps `./llm_dependabot.py`,
+which also works directly (`./llm_dependabot.py --help`).
 
 `make run` without `PROMPT` runs what a scheduled run would: every weekly
 prompt, and each monthly prompt that has not yet run in that repository this
@@ -77,8 +77,7 @@ whole run. Each agent's own output goes to its transcript,
 | --- | --- |
 | `~/Library/LaunchAgents/com.indrajeetpatil.llm-dependabot.*.plist` | Generated launchd agents |
 | `~/Library/Logs/llm-dependabot/` | One log per group and one for cleanup, plus a folder per run with one agent transcript per repository and prompt; kept until `make clean-logs` deletes them |
-| `~/Library/Application Support/llm-dependabot/state.json` | Pending pull requests, clones to delete later, and when each prompt last ran in each repository |
-| `~/Library/Application Support/llm-dependabot/LLM Dependabot.app` | App holding the Full Disk Access grant |
+| `~/Library/Application Support/llm-dependabot/` | State (`state.json`), concurrency lock, and the LLM Dependabot app (`LLM Dependabot.app`) |
 | `~/Library/Caches/llm-dependabot/worktrees/` | Worktrees for in-flight pull requests |
 
 ## Troubleshooting
