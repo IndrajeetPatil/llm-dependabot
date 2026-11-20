@@ -11,7 +11,8 @@ The hex sticker is drawn by hand; see [hextools](../../hextools/README.md).
 
 | Figure | Subject | Embedded in |
 | --- | --- | --- |
-| [`architecture-overview.webp`](architecture-overview.webp) | Scheduled trigger, worktree isolation, and agent lifecycle | [README.md](../../README.md) |
+| [`architecture-overview.webp`](architecture-overview.webp) | Scheduled trigger, worktree isolation, and agent lifecycle | [architecture.md](../architecture.md) |
+| [`giga-factory.webp`](giga-factory.webp) | The schedule coordinating a software factory inside each project | [README.md](../../README.md) |
 | [`execution-lifecycle.webp`](execution-lifecycle.webp) | Permission boundary, repository isolation, and state locking | [architecture.md](../architecture.md) |
 | [`tech-stack.webp`](tech-stack.webp) | Runtime, dependencies, core libraries, and local QA checks | [development.md](../development.md) |
 | [`ecosystem-schedule.webp`](ecosystem-schedule.webp) | Configured project-group schedules, prompt cadence, and pull-request cleanup | [configuration.md](../configuration.md) |
@@ -39,6 +40,36 @@ Agent-neutral label edit prompt:
 
 Replace only “Antigravity CLI” with “Coding Agent” so the diagram remains accurate if the default coding agent changes. Preserve every other label, icon, arrow, layout, colour, and style.
 ```
+### Software Giga Factory
+
+- **File:** `docs/images/giga-factory.webp`
+- **Companion:** [`giga-factory.prompt.txt`](giga-factory.prompt.txt)
+
+```text
+Use case: infographic-diagram. Asset type: README overview illustration for llm-dependabot, a scheduler that runs repository-owned coding prompts with an agent. Create a landscape 3:2 editorial diagram titled exactly “Software Giga Factory”. Show a hierarchy: a staggered schedule coordinates many software projects, and each project contains its own software factory. The schedule hub is the Giga Factory; the project-level development and review cycle is a factory repeated independently in each project.
+
+Use the repository design tokens: warm paper #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, and restrained teal #14584d for technology icons and active paths. Use Fraunces-like serif headings, Hanken-like sans labels, flat outline icons, precise arrows, and generous whitespace. Keep official Python and R logos in their official colours. No shadows, gradients, texture, 3D, cards, emoji, decorative footer, or invented statistics. Keep text legible at README width.
+
+Subtitle exactly: “A staggered schedule activates the software factory inside each project”
+
+Top band heading: “A staggered schedule”. Show a calendar/clock icon and four project groups with these exact labels and marks:
+- “Web Applications · Monday” with a browser/code icon
+- “Python · Tuesday” with the official Python logo
+- “Sundry · Wednesday” with a mixed-files icon
+- “R Packages · Thursday” with the authentic R logo
+
+Connect these groups to the project-level factory below. Use a repeated-factory motif with an ellipsis to show that many project repositories each contain their own copy of the same factory.
+
+Lower band heading: “Each project has its own software factory”. Summary exactly: “Prompts drive dependency updates, refactoring, simplification, and more”. Show one enlarged example of the repeated project-local flow, left to right:
+“Committed prompt + project guidance” → “Coding agent in isolated worktree” → “Pull request” → “Project checks” → “Maintainer review + merge” → “Updated project”.
+
+Draw a clear feedback loop from “Project checks” and “Maintainer review” back to “Coding agent”, labelled “Findings”. This represents project-local fixes before merge; do not imply that llm-dependabot approves or merges pull requests. Keep the schedule and project-local factory as separate levels of the illustration.
+
+Footer note exactly: “Weekly group schedules; monthly prompts run when due; one repository and due prompt at a time”. Do not show Mac, Apple, launchd, shell commands, private repository names, credentials, or exact monthly dates. Ensure every label is spelled exactly, arrows are clear, and the repeated project-local software factory is unmistakable. British English.
+
+**Follow-up edit prompt:** Preserve the whole illustration and change only the summary beneath “Each project has its own software factory”. Replace it with exactly: “Prompts drive dependency updates, refactoring, simplification, and more”. Keep all other text and visual elements unchanged.
+```
+
 ### Process and run
 
 - **File:** `docs/images/process-and-run.webp`

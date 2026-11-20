@@ -26,7 +26,7 @@ an upgrade causes, and batch related bumps into one reviewable change.
 - **Tidy:** the agent works in a separate git worktree, and clones made just
   for a run are deleted once their pull request is merged.
 
-![How llm-dependabot works: scheduled jobs start the app and login environment, repositories are prepared in isolated Git worktrees, and the coding agent opens pull requests for later cleanup.](docs/images/architecture-overview.webp)
+![Software Giga Factory: a staggered schedule activates each project’s software factory. Prompts drive dependency updates, refactoring, simplification, and more; each runs in an isolated worktree, opens a pull request, and passes through project checks and maintainer review, with findings returned for fixes. Weekly group schedules, monthly prompts when due, one repository and due prompt at a time.](docs/images/giga-factory.webp)
 
 ## Quick start
 
