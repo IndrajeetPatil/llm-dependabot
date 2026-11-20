@@ -109,6 +109,8 @@ plugins:
           - usage.md
           - architecture.md
           - development.md
+        Integrations:
+          - integrations/llms.md
 
 validation:
   omitted_files: error
