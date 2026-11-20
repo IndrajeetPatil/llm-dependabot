@@ -1,0 +1,22 @@
+name: Conventional Commits
+
+# CI is off for now. Uncomment the triggers below to switch it on; until then
+# the workflow runs only when started by hand.
+# `edited` re-checks a corrected pull-request title.
+# on:
+#   pull_request:
+#     branches: [main]
+#     types: [opened, synchronize, reopened, edited]
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: conventional-commits-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conventional-commits:
+    uses: IndrajeetPatil/workflows/.github/workflows/conventional-commits.yaml@main

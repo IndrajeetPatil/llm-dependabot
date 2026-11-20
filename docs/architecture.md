@@ -4,15 +4,17 @@ llm-dependabot is a scheduler, not an agent. It decides when, where, and
 which prompt the agent runs, isolates its work, and cleans up afterwards. The
 intelligence lives in each repository's own prompts.
 
+![How llm-dependabot works: scheduled jobs start the app and login environment, repositories are prepared in isolated Git worktrees, and the coding agent opens pull requests for later cleanup.](images/architecture-overview.webp)
+
 ![Execution lifecycle and isolation: three bands show the Full Disk Access process boundary, safe Git worktree isolation, and coordinated pull-request tracking and cleanup.](images/execution-lifecycle.webp)
 
 ## Components
 
 | Component | Role |
 | --- | --- |
-| [`llm_dependabot.py`](../llm_dependabot.py) | The CLI: a single-file uv script that discovers repositories, runs the agent, tracks pull requests, and writes the launchd agents |
-| [`config.yaml`](../config.yaml) and `private.yaml` | The prompts, their cadences, the schedule, and which repositories take part (see [Configuration](configuration.md)) |
-| [`app/`](../app) | Sources of the LLM Dependabot app, a tiny launcher that holds the Full Disk Access grant |
+| [`llm_dependabot.py`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/llm_dependabot.py) | The CLI: a single-file uv script that discovers repositories, runs the agent, tracks pull requests, and writes the launchd agents |
+| [`config.yaml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/config.yaml) and `private.yaml` | The prompts, their cadences, the schedule, and which repositories take part (see [Configuration](configuration.md)) |
+| [`app/`](https://github.com/IndrajeetPatil/llm-dependabot/tree/main/app) | Sources of the LLM Dependabot app, a tiny launcher that holds the Full Disk Access grant |
 | launchd | macOS's built-in scheduler: one agent per group, plus a cleanup agent |
 | Coding agent | Runs the prompt and opens the pull request; Antigravity CLI (`agy`) by default, configurable in `config.yaml` |
 | `gh` and `git` | Discovery, cloning, worktrees, and pull request state |

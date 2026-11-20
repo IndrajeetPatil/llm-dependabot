@@ -40,8 +40,10 @@ The visual design of llm-dependabot. It follows the visual identity of
 2026-11-18. Everything in that identity applies here unless this file records
 a choice or an addition below.
 
-The tokens above are the base values unchanged. There is no stylesheet: the
-values live in [`hextools/data.svg`](hextools/data.svg) and in the prompts in
+The tokens above are the base values unchanged. They live in
+[`hextools/data.svg`](hextools/data.svg), the social card script
+[`hextools/social-card.R`](hextools/social-card.R), the site stylesheet
+[`docs/stylesheets/extra.css`](docs/stylesheets/extra.css), and the prompts in
 [`docs/images/README.md`](docs/images/README.md), so update those when a token
 changes.
 
@@ -52,6 +54,8 @@ llm-dependabot has no interface of its own. Its visual surfaces are:
 | Surface | Where |
 | --- | --- |
 | Hex sticker | `docs/images/logo.png`, shown in the README |
+| Social card | `docs/images/social-card.png`, the repository's GitHub social preview |
+| Documentation site | The Zensical theme, recoloured by `docs/stylesheets/extra.css` |
 | App icon | `app/icon.png`, shown for LLM Dependabot in System Settings |
 | Diagrams | Generated figures in `docs/images/`, embedded in `docs/` |
 | Illustration prompts | `docs/images/README.md` |
@@ -83,6 +87,14 @@ paper, ink, hairlines, and one accent.
 - **Icon:** the same sticker centred on a transparent square, so the app is
   recognisable in Full Disk Access next to the sticker in the README.
 - Keep the drawing flat: no shadows, gradients, texture, or emoji.
+
+### Social card
+
+- **Layout:** 1280 × 640 on `bg` with a `border` hairline frame; the sticker
+  on the right, and on the left the name in Fraunces (`text`), a short accent
+  rule, the tagline in Hanken Grotesk (`text-muted`), and the repository URL
+  in the accent.
+- **Source:** `hextools/social-card.R`, which reuses the rendered sticker.
 
 ### Documentation diagrams
 

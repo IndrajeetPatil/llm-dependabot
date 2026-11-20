@@ -20,11 +20,14 @@ Guidance for AI coding agents working in this repository.
 | `config.yaml` | Shared settings and the source of truth for prompts, cadences, groups, weekdays, and times |
 | `private.example.yaml` | Template for the git-ignored `private.yaml` listing private repositories |
 | `app/` | Sources of the LLM Dependabot app (`launcher.c`, `icon.png`), which holds the Full Disk Access grant |
-| `docs/` | User and developer documentation; `docs/images/logo.png` is the hex sticker |
+| `docs/` | User and developer documentation, built into a Zensical site; `docs/images/logo.png` is the hex sticker |
+| `zensical.toml` | Documentation site configuration and navigation |
+| `pyproject.toml`, `uv.lock` | Docs-only uv project that installs Zensical |
+| `.github/workflows/` | CI workflows, with their triggers commented out |
 | `DESIGN.md` | Visual identity for the sticker, app icon, and documentation figures |
 | `.agents/skills/documentation-illustrations/` | Skill for generating documentation figures |
 | `.github/prompts/update-deps.md` | This repository's own dependency-update prompt |
-| `hextools/` | Artwork and R script that render the hex sticker and `app/icon.png` |
+| `hextools/` | Artwork and R scripts that render the hex sticker, `app/icon.png`, and the social preview card |
 | `hooks/check_private_names.py` | Hook that keeps private repository names out of commits |
 | `prek.toml` | Git hooks, run with `make hooks` |
 | `ruff.toml`, `ty.toml` | Lint, format, and type-check configuration |
@@ -43,6 +46,7 @@ make format        # apply ruff formatting
 make update-deps   # upgrade locked dependencies and prek hooks
 make list          # show group assignment (needs gh authenticated)
 make dry-run GROUP=python
+make docs          # build the documentation site strictly
 ```
 
 `make setup`, `make install`, `make uninstall`, `make run`, and `make cleanup`
@@ -60,6 +64,9 @@ owner's Mac.
   and justify any new ignore in a comment in `ruff.toml`.
 
 - Add type annotations everywhere; `ty check` must pass.
+
+- Keep the documentation site building with `make docs`: register new pages
+  in `zensical.toml`, and link outside `docs/` with full GitHub URLs.
 
 - Keep the README short: an overview, the quick start, and links. Put details
   in the matching page under `docs/`, and update it when behaviour, commands,

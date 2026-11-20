@@ -1,0 +1,41 @@
+name: QA
+
+# CI is off for now. Uncomment the triggers below to switch it on; until then
+# the workflow runs only when started by hand.
+# on:
+#   pull_request:
+#     branches: [main]
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, format, type-check, and audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Restrict to IndrajeetPatil repositories
+        if: github.repository_owner != 'IndrajeetPatil'
+        run: |
+          echo "::error::This workflow is private and only available to repositories under IndrajeetPatil."
+          exit 1
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          enable-cache: false
+
+      - name: Run checks
+        run: make check

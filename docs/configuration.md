@@ -6,7 +6,7 @@ misconfiguration.
 
 | File | Committed | Contents |
 | --- | --- | --- |
-| [`config.yaml`](../config.yaml) | yes | Owner, prompts and their cadences, clone directory, coding agent, timeouts, and the schedule |
+| [`config.yaml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/config.yaml) | yes | Owner, prompts and their cadences, clone directory, coding agent, timeouts, and the schedule |
 | `private.yaml` | no (git-ignored) | Private repositories to include, by name |
 
 Run `make install` after editing either file.
@@ -59,7 +59,7 @@ example (check the flags against your agent's version):
 | GitHub Copilot CLI | `[copilot, --yolo, -p, "{prompt}"]` | — |
 
 When switching agents, also replace `antigravity-cli` in the
-[`Brewfile`](../Brewfile) with your agent's package. A run that outlasts
+[`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile) with your agent's package. A run that outlasts
 `agent_timeout_hours` by ten minutes is stopped, so agents without a timeout
 of their own are bounded too.
 
@@ -143,7 +143,7 @@ it up at its group's next scheduled run that finds the prompt due.
 ## `private.yaml`
 
 `make setup` writes it for you. To edit it by hand, copy
-[`private.example.yaml`](../private.example.yaml):
+[`private.example.yaml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/private.example.yaml):
 
 ```yaml
 repos:

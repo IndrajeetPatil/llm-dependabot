@@ -26,7 +26,7 @@ an upgrade causes, and batch related bumps into one reviewable change.
 - **Tidy:** the agent works in a separate git worktree, and clones made just
   for a run are deleted once their pull request is merged.
 
-![How llm-dependabot works: scheduled jobs start the app and login environment, repositories are prepared in isolated Git worktrees, and the coding agent opens pull requests for later cleanup.](docs/images/architecture-overview.webp)
+![Software Giga Factory: a staggered schedule activates each project’s software factory. Prompts drive dependency updates, refactoring, simplification, and more; each runs in an isolated worktree, opens a pull request, and passes through project checks and maintainer review, with findings returned for fixes. Weekly group schedules, monthly prompts when due, one repository and due prompt at a time.](docs/images/giga-factory.webp)
 
 ## Quick start
 
@@ -44,6 +44,9 @@ private repositories to include, and walks you through granting the
 
 ## Documentation
 
+The guides are also published as a website at
+<https://www.indrapatil.com/llm-dependabot/>.
+
 | Guide | Covers |
 | --- | --- |
 | [Setup](docs/setup.md) | Requirements, `make setup`, Full Disk Access, and uninstalling |
@@ -51,3 +54,7 @@ private repositories to include, and walks you through granting the
 | [Usage](docs/usage.md) | Everyday commands, logs, files on disk, and troubleshooting |
 | [Architecture](docs/architecture.md) | How a run works and why it is built this way |
 | [Development](docs/development.md) | Toolchain, checks, git hooks, and the hex sticker |
+
+## License
+
+[MIT](LICENSE)
