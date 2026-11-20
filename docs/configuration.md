@@ -161,3 +161,36 @@ repos:
 
 Without `private.yaml`, only public repositories run. A git hook rejects any
 commit that adds this file or names one of its repositories.
+
+## Forking and adapting
+
+llm-dependabot is a template: fork it and change what differs for you.
+
+| To change | Edit |
+| --- | --- |
+| Whose repositories take part | `owner` in `config.yaml` (`make setup` offers to set it), and `private.yaml` |
+| Which prompts run, and how often | `prompts`, and per-group `cadence`, in `config.yaml` |
+| The schedule | `groups` in `config.yaml` |
+| The coding agent | `agent` in `config.yaml`, and its package in the `Brewfile` |
+| Where clones live | `clone_root` in `config.yaml` |
+
+> [!IMPORTANT]
+> The agent can only be as good as what each repository gives it: a
+> committed prompt for each kind of maintenance, guidance such as an
+> `AGENTS.md`, and checks (tests, linters, and CI) that it can run to verify
+> its changes. A repository without a prompt is never touched.
+
+### Another operating system
+
+The scheduling and the tooling are macOS's. Everything else (discovery,
+worktrees, running the agent, pull-request tracking, and cleanup) is plain
+`git`, `gh`, and Python. To run elsewhere, replace these parts of
+[`llm_dependabot.py`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/llm_dependabot.py):
+
+| macOS part | Role | Replace with, for example |
+| --- | --- | --- |
+| `launchd` agents (`launchctl`) | Start each group's run and the cleanup on schedule | systemd timers or cron on Linux, Task Scheduler on Windows |
+| The LLM Dependabot app (`app/`) | Holds the Full Disk Access grant | Nothing, where the OS has no such protection |
+| `caffeinate` | Keeps the machine awake during a run | `systemd-inhibit` on Linux |
+| `osascript` notifications | Summarise each run | `notify-send` on Linux, or nothing |
+| Homebrew and the `Brewfile` | Install the tools | The system's package manager |

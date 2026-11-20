@@ -22,6 +22,7 @@ Guidance for AI coding agents working in this repository.
 | `app/` | Sources of the LLM Dependabot app (`launcher.c`, `icon.png`), which holds the Full Disk Access grant |
 | `docs/` | User and developer documentation, built into a Zensical site; `docs/images/logo.png` is the hex sticker |
 | `mkdocs.yml` | Documentation site configuration, navigation, and `llms.txt` sections |
+| `lychee.toml` | Link-check settings for the CI link check |
 | `overrides/` | Site template overrides: structured data, `llms.txt` links, and README edit links |
 | `pyproject.toml`, `uv.lock` | Docs-only uv project that installs Zensical |
 | `.github/workflows/` | CI workflows: checks on pull requests, docs deployment from `main` |

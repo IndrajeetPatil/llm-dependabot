@@ -1,0 +1,2 @@
+# Jinja templates in overrides/ hold placeholders, not links.
+exclude_path = ["overrides"]

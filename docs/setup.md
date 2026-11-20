@@ -23,8 +23,8 @@
 ## Run the setup
 
 ```sh
-gh repo clone IndrajeetPatil/llm-dependabot ~/Documents/GitHub/llm-dependabot
-cd ~/Documents/GitHub/llm-dependabot
+gh repo fork IndrajeetPatil/llm-dependabot --clone
+cd llm-dependabot
 make setup
 ```
 
