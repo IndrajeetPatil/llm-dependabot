@@ -44,7 +44,7 @@ fixing what Google Search Console reports, or other repeatable work. The
 prompts define the work, and each project provides its own instructions,
 checks, and review process.
 
-![Software Giga Factory: a staggered schedule activates each project’s software factory. Prompts drive dependency updates, refactoring, simplification, and more; each runs in an isolated worktree, opens a pull request, and passes through project checks and maintainer review, with findings returned for fixes. Weekly group schedules, monthly prompts when due, one repository and due prompt at a time.](https://raw.githubusercontent.com/IndrajeetPatil/llm-dependabot/main/docs/images/giga-factory.webp)
+![Software Giga Factory: a staggered schedule activates each project’s software factory. Prompts drive dependency updates, refactoring, simplification, and more; each runs in an isolated worktree, opens a pull request, and passes through project checks and independent LLM review, with findings returned for fixes. Weekly group schedules, monthly prompts when due, one repository and due prompt at a time.](https://raw.githubusercontent.com/IndrajeetPatil/llm-dependabot/main/docs/images/giga-factory.webp)
 
 - **Opt in per repository and prompt:** a repository takes part in each
   prompt it commits, such as `.github/prompts/update-deps.md` or
