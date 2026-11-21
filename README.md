@@ -122,6 +122,7 @@ The full documentation is at <https://www.indrapatil.com/llm-dependabot/>.
 | [Setup](https://www.indrapatil.com/llm-dependabot/setup/) | Requirements, repository creation, configuration, `make setup`, Full Disk Access, repository onboarding, and verification |
 | [Configuration](https://www.indrapatil.com/llm-dependabot/configuration/) | The coding agent, prompts and their cadences, the schedule, and adapting a fork |
 | [Usage](https://www.indrapatil.com/llm-dependabot/usage/) | Everyday commands, logs, files on disk, and troubleshooting |
+| [Autonomous evolution](https://www.indrapatil.com/llm-dependabot/autonomy/) | Self-healing prompts, strict quality gates, guidance that learns from mistakes, and what a repository needs before its pull requests can merge automatically |
 | [Architecture](https://www.indrapatil.com/llm-dependabot/architecture/) | How a run works and why it is built this way |
 | [Development](https://www.indrapatil.com/llm-dependabot/development/) | Toolchain, checks, CI, and the documentation site |
 | [LLMs](https://www.indrapatil.com/llm-dependabot/integrations/llms/) | The documentation in the `llms.txt` format |
