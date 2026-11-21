@@ -11,14 +11,14 @@ The hex sticker is drawn by hand; see [hextools](../../hextools/README.md).
 
 | Figure | Subject | Embedded in |
 | --- | --- | --- |
-| [`architecture-overview.webp`](architecture-overview.webp) | Scheduled trigger, worktree isolation, and agent lifecycle | [README.md](../../README.md), [architecture.md](../architecture.md) |
+| [`architecture-overview.webp`](architecture-overview.webp) | Scheduled trigger, due-prompt discovery, worktree isolation, and agent lifecycle | [README.md](../../README.md), [architecture.md](../architecture.md) |
 | [`giga-factory.webp`](giga-factory.webp) | The schedule coordinating a software factory inside each project | [README.md](../../README.md) |
 | [`execution-lifecycle.webp`](execution-lifecycle.webp) | Permission boundary, repository isolation, and state locking | [architecture.md](../architecture.md) |
 | [`tech-stack.webp`](tech-stack.webp) | Runtime, dependencies, core libraries, local checks, and CI supply-chain checks | [development.md](../development.md) |
-| [`ecosystem-schedule.webp`](ecosystem-schedule.webp) | Configured project-group schedules, prompt cadence, and pull-request cleanup | [configuration.md](../configuration.md) |
-| [`multiple-prompts.webp`](multiple-prompts.webp) | The same isolated run pattern for each due prompt, with room for more prompts | [configuration.md](../configuration.md) |
-| [`process-and-run.webp`](process-and-run.webp) | Responsible process tree and per-repository run | [architecture.md](../architecture.md) |
-| [`usage-overview.webp`](usage-overview.webp) | Status, on-demand runs, pull requests, and cleanup | [usage.md](../usage.md) |
+| [`ecosystem-schedule.webp`](ecosystem-schedule.webp) | Three shipped prompts across configured project-group schedules and pull-request cleanup | [configuration.md](../configuration.md) |
+| [`multiple-prompts.webp`](multiple-prompts.webp) | The isolated run pattern for update-deps, simplify-codebase, gsc-analysis, and more | [configuration.md](../configuration.md) |
+| [`process-and-run.webp`](process-and-run.webp) | Responsible process tree, prompt cadence decisions, per-prompt worktrees, and run tracking | [architecture.md](../architecture.md) |
+| [`usage-overview.webp`](usage-overview.webp) | Schedule status, on-demand project or prompt runs, transcripts, and cleanup | [usage.md](../usage.md) |
 | [`setup-checklist.webp`](setup-checklist.webp) | Local setup choices, repository opt-in, prompt conventions, and project readiness | [setup.md](../setup.md) |
 | [`autonomous-evolution.webp`](autonomous-evolution.webp) | Signal, prompt, agent, checks, review, merge, production, and feedback | [autonomy.md](../autonomy.md) |
 | [`learn-from-mistakes.webp`](learn-from-mistakes.webp) | Code and guidance fixes converge on the same gates and review | [autonomy.md](../autonomy.md) |
@@ -30,257 +30,205 @@ The hex sticker is drawn by hand; see [hextools](../../hextools/README.md).
 - **File:** `docs/images/autonomous-evolution.webp`
 - **Companion:** [`autonomous-evolution.prompt.txt`](autonomous-evolution.prompt.txt)
 
+
+
 ```text
-Use case: infographic-diagram. Asset type: documentation illustration for the “Autonomous evolution” guide. Input image: use the existing llm-dependabot figure only as a reference for palette, typography, line weight, and restrained editorial style; do not copy its content or layout. Create a new landscape 3:2 editorial diagram showing the autonomous delivery feedback loop. Use warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, and restrained teal #14584d for the main flow. Use a large elegant Fraunces-like serif title, clean Hanken-like sans labels, flat outline icons, thin orthogonal arrows, generous whitespace, and no cards. Title exactly: “Autonomous evolution”. Show a clear left-to-right flow: “Signal” with small note “New releases, code smells, search, or monitoring reports” → “Committed prompt” with note “Due on schedule” → “Coding agent” with note “Isolated worktree” → “Pull request” with note “Evidence included” → “Quality gates” with note “Verification harness”. Then “Independent reviewer”. Show a failure loop from Quality gates back to Coding agent, labelled “Failures”; show a findings loop from Independent reviewer back to Coding agent, labelled “Findings”; show approval from Independent reviewer to “Squash-merge”, labelled “Approval”; then “Production”, with a return loop from Production back to Signal. Make arrows and branches clean and unambiguous, avoid crossing lines where possible. Exact spelling and labels. British English. No shadows, gradients, texture, 3D, emoji, decorative footer, ordinal numbering, extra text, invented facts, or logos.
+Use case: infographic-diagram. Asset type: documentation illustration for the “Autonomous evolution” guide. Create a new landscape 3:2 editorial diagram showing the autonomous delivery feedback loop. Use warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, and restrained teal #14584d for the flow. Use a large Fraunces-like serif title, Hanken-like sans labels, flat outline icons, thin orthogonal arrows, generous whitespace, and no cards, shadows, gradients, texture, 3D, emoji, decorative footer, ordinal numbering, extra text, invented facts, or logos. British English.
 
-Follow-up edit prompt: Use case: precise-object-edit. Asset type: documentation infographic for the “Autonomous evolution” guide. Input image: Image 1 is the edit target. Preserve this exact landscape 3:2 diagram, including every position, line, label, arrow direction, line break, colour, size, spacing, warm-paper background, serif title, and restrained flat editorial style. Make only two icon changes: (1) replace the human outline icon above “Independent reviewer” with a friendly flat outline robot/LLM figure matching the “Coding agent” robot style, but clearly distinguished by simple ink/teal glasses; this communicates that the reviewer is also an LLM. (2) replace the plain cube above “Production” with a clean software-package icon, such as a closed parcel/package box with a small subtle code/package mark, still a flat outline in the same teal stroke weight and visual scale. Preserve all text exactly and legibly, especially “Independent reviewer”, “Production”, “Failures”, “Findings”, and “Approval”. Do not alter any flow, arrows, layout, labels, or any other icon. Keep palette #faf8f4 background, #201d18 ink, #5d574c muted ink, #e3ded2 hairlines, #14584d teal. No extra text, no shadows, gradients, texture, 3D, cards, logos, or watermark.
+Title exactly “Autonomous evolution”.
+
+Show a left-to-right flow: “Signal” (note “New releases, code smells, search, or monitoring reports”) → “Committed prompt” (note “Due on schedule”) → “Coding agent” (note “Isolated worktree”) → “Pull request” (note “Evidence included”) → “Quality gates” (note “Verification harness”) → “Independent reviewer” → “Squash-merge” → “Production”.
+
+Draw a failure loop from Quality gates back to Coding agent labelled “Failures”; a findings loop from Independent reviewer back to Coding agent labelled “Findings”; and an approval arrow from Independent reviewer to Squash-merge labelled “Approval”. Draw a return loop from Production to Signal. Use a friendly flat outline robot for Coding agent and another robot with simple glasses for Independent reviewer. Use a software-package outline icon for Production. Keep arrows distinct and avoid crossings.
 ```
-
 ### Learn from mistakes
 
 - **File:** `docs/images/learn-from-mistakes.webp`
 - **Companion:** [`learn-from-mistakes.prompt.txt`](learn-from-mistakes.prompt.txt)
 
+
+
 ```text
 Use case: infographic-diagram. Asset type: documentation illustration for the “Autonomous evolution” guide. Input image: use the existing llm-dependabot illustration only as reference for its warm-paper palette, editorial typography, fine separators, restrained teal linework, and whitespace. Create a new illustration about learning from mistakes; do not copy the reference content or arrangement. Landscape 3:2. Title exactly: “Learn from mistakes”. Use warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, restrained teal #14584d, large Fraunces-like serif title, Hanken-like sans labels, flat outline icons, fine orthogonal arrows, and no cards. Show this flow: “Failing check, review finding, or regression” → “Trace the cause” → split into two parallel paths: “Fix the code” and “Fix the guidance” (small note: “AGENTS.md, a skill or its assets, or a prompt”). Both paths converge on “Same quality gates and review” → “Later runs avoid the mistake”. Use readable branch and rejoin arrows with no crossed lines; make clear that both code and guidance fixes go through the same quality gates and review before later runs avoid repeating the mistake. Exact wording, spelling, and punctuation as given. British English. No shadows, gradients, texture, 3D, cards, emoji, footer, ordinal numbering, extra text, invented facts, or logos.
 ```
-
 ### Architecture overview
 
 - **File:** `docs/images/architecture-overview.webp`
 - **Companion:** [`architecture-overview.prompt.txt`](architecture-overview.prompt.txt)
 
-```text
-Create a NEW documentation infographic, using the supplied image only as a reference for its warm-paper palette, restrained editorial layout, serif title, precise thin icon strokes, and generous whitespace. It must clearly show this specific llm-dependabot architecture, not copy any existing text or arrangement. Landscape 3:2. Flat warm-paper background #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, restrained teal #14584d only on the active flow. Fraunces-like serif title and band headings, Hanken-like sans labels, generous whitespace, flat outline icons, thin orthogonal arrows. Use an accurate small Apple silhouette to identify the macOS app and an authentic GitHub Octocat silhouette to identify repository discovery. Do not invent or approximate other brand marks; generic icons for scheduler, shell, worktree, coding agent, pull request, and cleanup are fine. Do not include a fake App Store mark. Ensure labels are legible, correctly spelled, exact wording below. Band one heading “Scheduled on your Mac”, summary “Weekly launchd jobs run with your login credentials”: nodes “launchd” → “LLM Dependabot app” (small note “Full Disk Access”) → “Login shell” (small note “zsh · PATH · keychain”). Band two heading “Repositories stay isolated”, summary “Matching prompts start work in a dedicated worktree”: nodes “GitHub discovery” (small note “Checks each repository prompt”) → “Clone or fetch” → “Git worktree” (small note “Fresh branch · checkout untouched”). Band three heading “Agent opens a pull request”, summary “The run is tracked and cleaned up after review”: nodes “Coding Agent” (small note “Runs the repository prompt”) → “Pull request” (small note “Pending state is recorded”) → “Cleanup” (small note “Removes worktree after merge or close”). Thin orthogonal arrows, no crossing, no cards or boxed panels, no shadows, gradients, texture, 3D, emojis, decorative footer, ordinal numbers, or extra text. Keep line breaks and alignment polished. Use British English.
-```
 
-**Palette correction edit prompt:**
+
 
 ```text
-Preserve this architecture infographic’s composition, wording, icons, arrows, and warm-paper editorial design. Harmonize every teal line, symbol, and arrow to the light-mode base accent from the design guide: #14584d (RGB 20, 88, 77). Use no brighter turquoise or accent-light teal. Anti-aliased edge pixels may blend between this teal and the paper, but flat stroke interiors should match #14584d. Keep all headings in ink #201d18, explanatory copy in muted ink #5d574c, and hairlines in #e3ded2. Preserve the Apple and GitHub silhouettes as simple single-colour marks in the same base teal; do not invent brand colours. Make no other changes.
+Use case: infographic-diagram. Asset type: documentation infographic showing how llm-dependabot works. Create a landscape 3:2 illustration with warm paper #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, restrained teal #14584d, Fraunces-like serif title and band headings, Hanken-like sans labels, generous whitespace, and thin orthogonal arrows. Use an accurate Apple silhouette for the macOS app and an authentic GitHub Octocat for discovery; keep marks simple and single-colour teal. Generic outline icons are suitable for scheduler, shell, worktree, agent, pull request, and cleanup. No fake App Store mark, shadows, gradients, texture, 3D, cards, emoji, decorative footer, ordinal numbers, or invented text. British English.
 
-Agent-neutral label edit prompt:
+Title “How llm-dependabot works”.
 
-Replace only “Antigravity CLI” with “Coding Agent” so the diagram remains accurate if the default coding agent changes. Preserve every other label, icon, arrow, layout, colour, and style.
+Band “Scheduled on your Mac”, summary “Weekly launchd jobs run with your login credentials”: “launchd” → “LLM Dependabot app” (note “Full Disk Access”) → “Login shell” (note “zsh · PATH · keychain”).
 
-Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing “How llm-dependabot works” infographic. Preserve the title, first and third bands, all icons, arrows, colours, positions, typography, separators, and warm-paper editorial style. Make one change within the “Repositories stay isolated” band: change the summary to exactly “Each due prompt starts work in its own worktree”, and change the “GitHub discovery” note to exactly “Finds committed prompts and which are due”. Keep the band layout and all other content unchanged. British English.
+Band “Repositories stay isolated”, summary “Each due prompt starts work in its own worktree”: “GitHub discovery” (note “Finds committed prompts and which are due”) → “Clone or fetch” → “Git worktree” (note “Fresh branch · checkout untouched”).
+
+Band “Agent opens a pull request”, summary “The run is tracked and cleaned up after review”: “Coding Agent” (note “Runs the repository prompt”) → “Pull request” (note “Pending state is recorded”) → “Cleanup” (note “Removes worktree after merge or close”).
+
+Keep the three horizontal bands aligned, with summaries left and flows right. Exact text and spelling.
 ```
 ### Software Giga Factory
 
 - **File:** `docs/images/giga-factory.webp`
 - **Companion:** [`giga-factory.prompt.txt`](giga-factory.prompt.txt)
 
+
+
 ```text
 Use case: infographic-diagram. Asset type: README overview illustration for llm-dependabot, a scheduler that runs repository-owned coding prompts with an agent. Create a landscape 3:2 editorial diagram titled exactly “Software Giga Factory”. Show a hierarchy: a staggered schedule coordinates many software projects, and each project contains its own software factory. The schedule hub is the Giga Factory; the project-level development and review cycle is a factory repeated independently in each project.
 
-Use the repository design tokens: warm paper #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, and restrained teal #14584d for technology icons and active paths. Use Fraunces-like serif headings, Hanken-like sans labels, flat outline icons, precise arrows, and generous whitespace. Keep official Python and R logos in their official colours. No shadows, gradients, texture, 3D, cards, emoji, decorative footer, or invented statistics. Keep text legible at README width.
+Use warm paper #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, and restrained teal #14584d for technology icons and active paths. Use Fraunces-like serif headings, Hanken-like sans labels, flat outline icons, precise arrows, and generous whitespace. Keep official Python and R logos in their official colours. No shadows, gradients, texture, 3D, cards, emoji, decorative footer, or invented statistics. Keep text legible at README width. British English.
 
-Subtitle exactly: “A staggered schedule activates the software factory inside each project”
+Subtitle exactly “A staggered schedule activates the software factory inside each project”.
 
-Top band heading: “A staggered schedule”. Show a calendar/clock icon and four project groups with these exact labels and marks:
-- “Web Applications · Monday” with a browser/code icon
-- “Python · Tuesday” with the official Python logo
-- “Sundry · Wednesday” with a mixed-files icon
-- “R Packages · Thursday” with the authentic R logo
+Top band “A staggered schedule”: show a calendar/clock icon and four project groups: “Web Applications · Monday” with a browser/code icon; “Python · Tuesday” with the official Python logo; “Sundry · Wednesday” with a mixed-files icon; and “R Packages · Thursday” with the authentic R logo. Connect these groups to the project-level factory below. Use a repeated-factory motif with an ellipsis to show that many project repositories each contain their own copy of the same factory.
 
-Connect these groups to the project-level factory below. Use a repeated-factory motif with an ellipsis to show that many project repositories each contain their own copy of the same factory.
+Lower band “Each project has its own software factory”, summary exactly “Prompts drive dependency updates, refactoring, simplification, and more”. Show one example of the repeated project-local flow: “Committed prompt + project guidance” → “Coding agent in isolated worktree” → “Pull request” → “Project checks” → “Maintainer review + merge” → “Updated project”. Draw clear feedback loops from Project checks and Maintainer review back to Coding agent, labelled “Findings”. This represents project-local fixes before merge; llm-dependabot does not approve or merge pull requests. Keep the scheduled groups and project-local factory as separate levels.
 
-Lower band heading: “Each project has its own software factory”. Summary exactly: “Prompts drive dependency updates, refactoring, simplification, and more”. Show one enlarged example of the repeated project-local flow, left to right:
-“Committed prompt + project guidance” → “Coding agent in isolated worktree” → “Pull request” → “Project checks” → “Maintainer review + merge” → “Updated project”.
-
-Draw a clear feedback loop from “Project checks” and “Maintainer review” back to “Coding agent”, labelled “Findings”. This represents project-local fixes before merge; do not imply that llm-dependabot approves or merges pull requests. Keep the schedule and project-local factory as separate levels of the illustration.
-
-Footer note exactly: “Weekly group schedules; monthly prompts run when due; one repository and due prompt at a time”. Do not show Mac, Apple, launchd, shell commands, private repository names, credentials, or exact monthly dates. Ensure every label is spelled exactly, arrows are clear, and the repeated project-local software factory is unmistakable. British English.
-
-**Follow-up edit prompt:** Preserve the whole illustration and change only the summary beneath “Each project has its own software factory”. Replace it with exactly: “Prompts drive dependency updates, refactoring, simplification, and more”. Keep all other text and visual elements unchanged.
+Footer note exactly “Weekly group schedules; monthly prompts run when due; one repository and due prompt at a time”. Do not show Mac, Apple, launchd, shell commands, private repository names, credentials, or exact monthly dates. Ensure every label is exact, arrows are clear, and the repeated project-local factory is unmistakable.
 ```
-
 ### Process and run
 
 - **File:** `docs/images/process-and-run.webp`
 - **Companion:** [`process-and-run.prompt.txt`](process-and-run.prompt.txt)
 
-```text
-Create a landscape 3:2 editorial documentation infographic for llm-dependabot. Use warm paper #faf8f4, ink #201d18, muted #5d574c, hairlines #e3ded2, sparse teal #14584d for work paths, and muted rust #9a3d2e for a stop. Use Fraunces-like serif headings, Hanken-like sans labels, flat outline icons, and no cards, shadows, gradients, texture, 3D, emoji, or decorative footer. Title “Process and run”.
-
-In the “Responsible process” band, show “launchd” → “LLM Dependabot app” → “Login shell” → “Update scheduler” → “Coding agent”. Explain Full Disk Access under the app, the user's login environment under the shell, and a separate Git worktree under the coding agent.
-
-In the “One repository run” band, show “Discover repository and prompt” → decision “Project copy exists?” with branches “Yes → Update existing copy” and “No → Prepare a new copy”; both rejoin at “Create Git worktree” → “Run coding agent with a time limit” → decision “Pull request opened?” with branches “Yes → Record pending state” and “No → Remove worktree”. Add “Failures are logged; the next repository still runs”. Keep the arrows and branch directions clear.
-
-Do not use literal commands, CLI names, flags, variables, filenames, or shell syntax. British English.
-```
 
 
-
-**Edit prompts:**
 
 ```text
-Replace all shell and script invocations with the plain-language process labels “Login shell”, “Update scheduler”, and “Coding agent”. Describe the login environment and Git worktree in the supporting notes.
+Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot's process tree and per-repository run. Create a landscape 3:2 editorial infographic with warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, sparse teal #14584d, and muted rust #9a3d2e for the worktree-removal icon. Use Fraunces-like serif title and band headings, Hanken-like sans labels, flat outline icons, and thin orthogonal arrows. Two horizontal bands, no cards, shadows, gradients, texture, 3D, emoji, or decorative footer. British English.
 
-Replace implementation-level repository operations with “Project copy exists?”, “Update existing copy”, “Prepare a new copy”, “Create Git worktree”, and “Run coding agent with a time limit”. Use “Remove worktree” as the no-pull-request outcome. Preserve branch direction and other labels.
+Title exactly “Process and run”.
 
-Clarify the separate checkout as a Git worktree. Use “Runs in a Git worktree”, “Create Git worktree”, and “Remove worktree” for that checkout.
+Top band “Responsible process”: “launchd” → “LLM Dependabot app” (note “Responsible process · Full Disk Access”) → “Login shell” (note “Uses the user's login environment”) → “llm_dependabot.py (uv)” → “Coding agent” (note “Runs in a Git worktree”). Branch from “llm_dependabot.py (uv)” to “caffeinate” with note “keeps the Mac awake”.
 
-Preserve this process infographic’s composition, wording, icons, arrows, branches, and warm-paper editorial design. Harmonize every teal line, symbol, and arrow to the light-mode base accent from the design guide: #14584d (RGB 20, 88, 77). Use no brighter turquoise or accent-light teal. Anti-aliased edge pixels may blend between this teal and the paper, but flat stroke interiors should match #14584d. Keep all headings in ink #201d18, explanatory copy in muted ink #5d574c, and hairlines in #e3ded2. Make no other changes.
-
-Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing “Process and run” infographic. Preserve its title, two-band layout, typography, warm-paper style, colours, existing icons, separators, and overall placement. Make one cohesive change: update the process and run flow to the current documented lifecycle. In “Responsible process”, replace the chain with “launchd” → “LLM Dependabot app” → “Login shell” → “llm_dependabot.py (uv)” → “Coding agent”, and add a side branch from “llm_dependabot.py (uv)” to “caffeinate”, with the note “keeps the Mac awake”. In the run band, after “Discover repository and prompt”, add decision “Prompt due?” with the note “weekly, or monthly not yet run this month”; its “No” branch ends at “Skip”. Continue the “Yes” branch into the existing repository-copy check and worktree/agent flow. Show that this per-prompt flow (worktree → agent → pull-request decision) repeats for each due prompt in the repository. After the “Pull request opened?” decision, put “Record run date” on both outcome branches, after the yes outcome records the pending pull request and after the no outcome removes the worktree. Add the note “Every completed run counts towards the cadence” beside “Record run date”. Replace the footer with exactly “Failures are logged and not recorded; the next prompt or repository still runs”. Keep branches clear and non-crossing. Do not alter unrelated labels or styling. British English.
+Bottom band “One repository run”: “Discover repository and prompt” → decision “Prompt due?” (note “weekly, or monthly not yet run this month”). “No” leads to “Skip”. “Yes” continues to decision “Project copy exists?” with “Yes → Update existing copy” and “No → Prepare a new copy”; rejoin at “Create Git worktree” → “Run coding agent with a time limit” → decision “Pull request opened?”. Yes branch: “Record pending state” → “Record run date”. No branch: “Remove worktree” → “Record run date”. Put the note “Every completed run counts towards the cadence” beside the date outcomes. Mark the segment “Create Git worktree” → agent → pull-request decision as repeating for each due prompt in the repository. Footer exactly “Failures are logged and not recorded; the next prompt or repository still runs”. Make all branches distinct, non-crossing, and legible.
 ```
 ### Usage overview
 
 - **File:** `docs/images/usage-overview.webp`
 - **Companion:** [`usage-overview.prompt.txt`](usage-overview.prompt.txt)
 
-```text
-Create a landscape 3:2 editorial documentation infographic for the llm-dependabot usage guide. Use warm paper #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, and restrained teal #14584d. Use a Fraunces-like serif title, Hanken-like sans labels, generous whitespace, flat outline icons, and no cards, shadows, gradients, texture, 3D, emoji, or decorative footer. Title “Using llm-dependabot”.
-
-Show three sections. “Check the schedule”: “Schedule status” → “Project groups”. “Run work on demand”: “Preview Python group” → “Run Python group” → “Pull request”, with the accurate official Python logo beside both Python group labels. Add the branch “Choose one project” from the run action. “Finish the lifecycle”: “Review and merge or close PR” → “Scheduled cleanup” → “Worktree removed”, with the note “Runs periodically”.
-
-Use a recognizable GitHub mark beside Pull request. No literal commands, parameters, filenames, or configuration keys. Keep labels legible, spelling exact, and the arrows correct. British English.
-```
 
 
-
-**Edit prompts:**
 
 ```text
-Edit the usage infographic to replace literal command and parameter labels with “Preview Python group”, “Run Python group”, “Choose one project”, and “Runs periodically”. Add a small accurate Python logo beside each Python group label.
+Use case: infographic-diagram. Asset type: documentation infographic for the llm-dependabot usage guide. Create a landscape 3:2 editorial infographic with warm paper #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, restrained teal #14584d, Fraunces-like serif headings, Hanken-like sans labels, generous whitespace, flat outline icons, and no cards, shadows, gradients, texture, 3D, emoji, or decorative footer. British English.
 
-Refine the schedule section to use “Schedule status” and “Project groups”. Keep the Python group flow and GitHub mark, preserve the single-project branch, and label the final item “Worktree removed”. Keep the cleanup cadence at the higher level “Runs periodically”. Remove all code syntax and configuration names.
+Title “Using llm-dependabot”. Show three sections:
+- “Check the schedule”, summary “See groups, prompt cadences, and pending pull requests”: “Schedule status” → “Project groups”.
+- “Run work on demand”, summary “Preview first or start a group or repository”: “Preview Python group” → “Run Python group” → “Pull request”. Add branch “Choose one project or one prompt” with muted note “REPO= / PROMPT=”. Place accurate official Python logos beside both Python group labels and a recognizable GitHub mark beside Pull request.
+- “Finish the lifecycle”, summary “Review pull requests; cleanup handles finished work”: “Review and merge or close PR” → “Scheduled cleanup” → “Worktree and run-only clone removed”. Add muted note “Agent transcripts in ~/Library/Logs/llm-dependabot”.
 
-Use “Worktree removed” for the final item because scheduled cleanup removes the isolated Git worktree. Keep “Scheduled cleanup” and “Runs periodically” unchanged.
-
-Preserve the usage infographic’s layout, wording, arrows, all icons, and warm-paper editorial design. Set all teal line icons, arrows, and teal marks to the light-mode base accent #14584d (RGB 20, 88, 77), with no brighter turquoise or accent-light teal. Anti-aliased edges may blend between #14584d and the paper background, but flat stroke interiors should match the base accent. Keep headings in ink #201d18, supporting labels in muted ink #5d574c, and hairlines #e3ded2. Preserve both official Python logos in their correct blue and yellow colours; do not recolour them. Preserve the GitHub mark as a single-colour mark in the base accent. Do not alter any wording, spacing, or content.
-
-Divider-alignment edit prompt:
-
-Align all three thin vertical dividers between the left icon-and-summary column and the right-side flow on the same vertical x-position. Match the top and middle divider positions by moving only the bottom divider horizontally. Preserve divider lengths and vertical placement. Do not change any wording, icons, arrows, spacing elsewhere, colours, typography, or other layout elements.
-
-Bottom-row spacing edit prompt:
-
-Keep all three dividers aligned. In the final row only, shift the complete right-hand flow, including labels, icons, arrows, and subtitle, about 24 pixels right while preserving its content and positions relative to one another. Keep the divider fixed and leave the left title, icon, heading, and summary unchanged. This gives the first flow label more breathing room after the divider. Keep the last node inside the canvas margin.
-
-Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing usage infographic. Preserve its title, three-section layout, all existing icons, arrows, colours, positions, typography, dividers, and warm-paper style. Make one cohesive change: update the on-demand and lifecycle summaries to reflect the current commands and cleanup. In “Run work on demand”, change the branch to “Choose one project or one prompt” and add the muted detail “REPO= / PROMPT=”. In “Finish the lifecycle”, replace “Worktree removed” with “Worktree and run-only clone removed”, and add the muted note “Agent transcripts in ~/Library/Logs/llm-dependabot”. In “Check the schedule”, replace its summary with exactly “See groups, prompt cadences, and pending pull requests”. Keep all other labels and visual elements unchanged; ensure the new copy fits clearly. British English.
+Keep text and arrows exact, legible, and correctly directed.
 ```
 ### Execution lifecycle and isolation
 
 - **File:** `docs/images/execution-lifecycle.webp`
 - **Companion:** [`execution-lifecycle.prompt.txt`](execution-lifecycle.prompt.txt)
 
-```text
-Restyle the first supplied image, “Execution lifecycle and isolation”, to follow the second supplied image, “How llm-dependabot works”. The second image is the visual style reference; the first is the factual content to revise. Match its warm editorial page, exact light palette, large elegant high-contrast serif title, smaller serif section headings, clean Hanken-like sans labels, thin flat line drawings, delicate orthogonal arrows, generous whitespace, and fine hairline separators. Use paper #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, and base teal #14584d only for the path and line icons. No bright turquoise, heavy icons, bold/condensed sans type, shadows, gradients, texture, cards, 3D, or decorative footer. Keep a landscape 3:2 canvas, three horizontal bands, with each band's heading and muted one-line summary on the left and its flow on the right. Keep all text clear at documentation width.
 
-Use this exact content, with no other wording:
-
-Title: “Execution lifecycle and isolation”.
-
-Band 1 heading “Permission boundary”. Summary “Full Disk Access follows the responsible app process”. Flow: “launchd” → “LLM Dependabot app” (note “Full Disk Access”) → “Login shell” (note “Uses your login environment”).
-
-Band 2 heading “Repository isolation”. Summary “Dedicated branches protect existing checkouts”. Flow: “Target repository” (note “Existing checkout or managed clone”) → “Git worktree” (note “Fresh branch from default”) → “Original checkout” (note “Active branch and uncommitted work stay untouched”).
-
-Band 3 heading “Run tracking and cleanup”. Summary “Runs stay coordinated until pull requests finish”. Flow: “Run coordination” (note “Scheduled work does not overlap”) → “Pending pull request” (note “Tracked for review”) → “Automated cleanup” (note “Removes local worktree and run branch after merge or close”).
-
-Use simple elegant outline symbols matching the reference illustration style: clock/scheduler, app shield, terminal, repository, Git branch/worktree, untouched checkout, coordination lock, pending pull request document, and cleanup brush or pruning tool. Preserve clear left-to-right arrows. Use exact spelling and British English. Do not include implementation identifiers such as filelock or state.json.
-```
-
-**Palette correction edit prompt:**
 
 ```text
-Preserve this architecture infographic’s composition, wording, icons, arrows, and warm-paper editorial design. Harmonize every teal line, symbol, and arrow to the light-mode base accent from the design guide: #14584d (RGB 20, 88, 77). Use no brighter turquoise or accent-light teal. Anti-aliased edge pixels may blend between this teal and the paper, but flat stroke interiors should match #14584d. Keep all headings in ink #201d18, explanatory copy in muted ink #5d574c, and hairlines #e3ded2. Make no other changes.
+Use case: infographic-diagram. Asset type: documentation infographic for the architecture guide. Create a landscape 3:2 diagram with warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, and base teal #14584d for path and line icons. Use elegant Fraunces-like serif title and band headings, restrained Hanken-like sans labels, delicate flat outline icons, thin orthogonal arrows, generous whitespace, and three horizontal bands with heading and summary on the left and flow on the right. No bright turquoise, heavy icons, bold or condensed sans type, shadows, gradients, texture, cards, 3D, or decorative footer. Keep labels legible at documentation width. British English.
 
-Style-match edit prompt:
+Title “Execution lifecycle and isolation”.
 
-Restyle the execution-lifecycle illustration to match architecture-overview.webp: elegant serif title and section headings, restrained Hanken-like labels, delicate flat outline icons, warm-paper background, thin hairlines, generous whitespace, and base teal #14584d. Preserve the facts and wording, while using the supplied high-level labels. Do not use the heavier icons or dense technical typography from the earlier rendering.
+Band “Permission boundary”, summary “Full Disk Access follows the responsible app process”: “launchd” → “LLM Dependabot app” (note “Full Disk Access”) → “Login shell” (note “Uses your login environment”).
+
+Band “Repository isolation”, summary “Dedicated branches protect existing checkouts”: “Target repository” (note “Existing checkout or managed clone”) → “Git worktree” (note “Fresh branch from default”) → “Original checkout” (note “Active branch and uncommitted work stay untouched”).
+
+Band “Run tracking and cleanup”, summary “Runs stay coordinated until pull requests finish”: “Run coordination” (note “Scheduled work does not overlap”) → “Pending pull request” (note “Tracked for review”) → “Automated cleanup” (note “Removes local worktree and run branch after merge or close”).
+
+Use a clock, app shield, terminal, repository, Git worktree, untouched checkout, coordination lock, pull-request document, and cleanup brush icons. Preserve the clear left-to-right flow. Do not include implementation identifiers such as filelock or state.json.
 ```
 ### Development toolchain and tech stack
 
 - **File:** `docs/images/tech-stack.webp`
 - **Companion:** [`tech-stack.prompt.txt`](tech-stack.prompt.txt)
 
-```text
-Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot, a macOS tool that runs an AI coding agent weekly to update dependencies. Landscape 3:2, flat canvas warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, deep teal #14584d accent for all step outline icons and connecting arrows, muted rust #9a3d2e only for failure stops. Fraunces-like serif title and band headings, Hanken-like sans labels, generous whitespace, flat outline icons in deep teal #14584d, thin orthogonal teal arrows. Match the reference style of flat warm-paper editorial documentation diagrams from indrapatil.com and python-package-quality-checks.webp. No shadows, gradients, texture, 3D, cards, boxed panels, emoji, decorative footers, ordinal numbering (do not write 'Band 1' or 'Step 1' or 'Tier 1'), or invented statistics.
 
-Title exactly: 'Development toolchain and tech stack'
 
-Layout: Three horizontal bands separated by fine horizontal hairlines (#e3ded2), each band having its heading and a one-line muted summary on the left, and its unboxed step-by-step flow on the right connected by thin orthogonal teal arrows (#14584d).
-
-Band 1 (top):
-- Left heading: 'Runtime & dependencies'
-- Left summary: 'Single-file Python 3.15 script with locked inline dependencies'
-- Right flow (each step with a deep teal #14584d outline icon):
-  'Python 3.15' (underneath note: 'Modern language runtime') →
-  'uv script metadata' (underneath note: 'PEP 723 inline dependencies') →
-  'Locked dependencies' (underneath note: 'llm_dependabot.py.lock · frozen deps')
-
-Band 2 (middle):
-- Left heading: 'Libraries & native app'
-- Left summary: 'Rust-backed validation, CLI tooling, and macOS launcher'
-- Right flow (each step with a deep teal #14584d outline icon):
-  'Typer & PyYAML' (underneath note: 'CLI commands & config parsing') →
-  'Pydantic & filelock' (underneath note: 'Rust-core validation & concurrency gate') →
-  'Native launcher' (underneath note: 'app/launcher.c · Full Disk Access')
-
-Band 3 (bottom):
-- Left heading: 'Hygiene & local checks'
-- Left summary: 'Strict local linting, typing, git hooks, and vulnerability auditing'
-- Right flow (each step with a deep teal #14584d outline icon):
-  'Ruff lint & format' (underneath note: 'select = ["ALL"] · fast Rust linter') →
-  'ty & audit' (underneath note: 'Script type check · uv audit OSV scan') →
-  'prek git hooks' (underneath note: 'Hygiene & private repository name guard')
-```
-
-**Palette correction edit prompt:**
 
 ```text
-Preserve this development infographic’s composition, wording, icons, arrows, bands, and warm-paper editorial design. Harmonize every teal line, icon, and arrow to the light-mode base accent from the design guide: #14584d (RGB 20, 88, 77). Use no brighter turquoise or accent-light teal. Anti-aliased edge pixels may blend between this teal and the paper, but flat stroke interiors should match #14584d. Keep headings in ink #201d18, explanatory copy in muted ink #5d574c, and hairlines #e3ded2. Preserve recognizable third-party brand marks in their official colours where shown. Make no other changes.
+Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot's development toolchain. Create a landscape 3:2 editorial infographic using warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, and sparse teal #14584d. Use Fraunces-like serif title and band headings, Hanken-like sans labels, generous whitespace, flat outline icons, and thin orthogonal arrows. Keep the flow unboxed, with four horizontal bands separated by hairlines. No shadows, gradients, texture, 3D, cards, emoji, decorative footer, ordinal numbering, or invented facts. British English.
 
-Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing development toolchain infographic. Preserve its landscape 3:2 canvas, title, first three bands, their exact wording, positions, icons, arrows, colours, typography, separators, and warm-paper editorial style. Make one change: add a fourth band beneath the existing three, headed “CI and supply chain” with summary “The same checks again on every pull request, with pinned actions”. Its flow is “GitHub Actions workflows” → “actionlint and zizmor” → “Gitleaks” → “actions.lock”. Add muted notes “Zensical docs site” beneath “GitHub Actions workflows”, “zizmor (pedantic)” beneath “actionlint and zizmor”, “Scans the full history” beneath “Gitleaks”, and “gh-actions-lock” beneath “actions.lock”. Also add the small muted note “Homebrew and the Brewfile install tools” beneath the flow. Keep the existing three bands unchanged, and make the new band fit legibly without moving or altering them. Use the existing palette and style. Exact labels and spelling; British English.
+Title exactly: “Development toolchain and tech stack”
+
+Band “Runtime & dependencies”, summary “Single-file Python 3.15 script with locked inline dependencies”: “Python 3.15” (note “Modern language runtime”) → “uv script metadata” (note “PEP 723 inline dependencies”) → “Locked dependencies” (note “llm_dependabot.py.lock · frozen deps”).
+
+Band “Libraries & native app”, summary “Rust-backed validation, CLI tooling, and macOS launcher”: “Typer & PyYAML” (note “CLI commands & config parsing”) → “Pydantic & filelock” (note “Rust-core validation & concurrency gate”) → “Native launcher” (note “app/launcher.c · Full Disk Access”).
+
+Band “Hygiene & local checks”, summary “Strict local linting, typing, git hooks, and vulnerability auditing”: “Ruff lint & format” (note “select = ["ALL"] · fast Rust linter”) → “ty & audit” (note “Script type check · uv audit OSV scan”) → “prek git hooks” (note “Hygiene & private repository name guard”).
+
+Band “CI and supply chain”, summary “The same checks again on every pull request, with pinned actions”: “GitHub Actions workflows” (note “Zensical docs site”) → “actionlint and zizmor” (note “zizmor (pedantic)”) → “Gitleaks” (note “Scans the full history”) → “actions.lock” (note “gh-actions-lock”). Beneath the flow add the muted note “Homebrew and the Brewfile install tools”. Keep every label spelled exactly and legible within the four-band layout.
 ```
 ### Configured project groups and prompt cadence
 
 - **File:** `docs/images/ecosystem-schedule.webp`
 - **Companion:** [`ecosystem-schedule.prompt.txt`](ecosystem-schedule.prompt.txt)
 
+
+
+
 ```text
-Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot, a macOS tool that runs repository-owned coding prompts on a schedule. Revise the supplied schedule infographic to reflect the current configuration while preserving its warm-paper editorial style, generous whitespace, serif title, clear sans-serif labels, and fine row dividers. Landscape 3:2. Use background #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, and teal #14584d for technology icons. Preserve the authentic R and Python logos in their official colours. No shadows, gradients, texture, 3D, cards, emoji, decorative footer, invented facts, or private repository names.
+Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot's configured project-group schedules and prompt cadence. Create a landscape 3:2 editorial infographic with warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, teal #14584d, a Fraunces-like serif title, clear Hanken-like sans labels, and generous whitespace. Use aligned rows and fine dividers. Keep the official Python and R logos in their official colours. No shadows, gradients, texture, 3D, cards, emoji, decorative footer, or invented facts. British English.
 
-Title: “Configured project groups and prompt cadence”
-Subtitle: “Each group starts weekly; prompts run when due”
+Title “Configured project groups and prompt cadence”
+Subtitle “Each group starts weekly; prompts run when due”
 
-Show five aligned rows with these exact labels and details, in weekday order:
-- “Web Applications”, note “TypeScript · JavaScript · Astro · Svelte · Vue · HTML · CSS”, schedule “Monday · 11:00”, cadence “update-deps weekly · simplify-codebase monthly”. Use a teal browser/code icon.
-- “Python”, note “Python”, schedule “Tuesday · 11:00”, cadence “update-deps weekly · simplify-codebase monthly”. Use the official Python logo in its blue and yellow.
-- “Sundry”, note “Unmatched project types”, schedule “Wednesday · 11:00”, cadence “update-deps weekly · simplify-codebase monthly”. Use a teal mixed-collection icon such as a simple toolkit with varied file symbols.
-- “R Packages”, note “R projects”, schedule “Thursday · 11:00”, cadence “update-deps monthly · simplify-codebase monthly”. Use the authentic R logo in its official colours.
-- “Pull-request cleanup”, note “Removes worktrees and local branches after PRs merge or close”. Use a teal pruning brush or pruning shears icon, visibly distinct from the Sundry mixed-collection icon. Do not state a cleanup interval.
+Show five weekday-ordered rows:
+- “Web Applications”, note “TypeScript · JavaScript · Astro · Svelte · Vue · HTML · CSS”, schedule “Monday · 11:00”, cadence “update-deps weekly · simplify-codebase and gsc-analysis monthly”. Teal browser/code icon.
+- “Python”, note “Python”, schedule “Tuesday · 11:00”, cadence “update-deps weekly · simplify-codebase and gsc-analysis monthly”. Official Python logo.
+- “Sundry”, note “Unmatched project types”, schedule “Wednesday · 11:00”, cadence “update-deps weekly · simplify-codebase and gsc-analysis monthly”. Teal mixed-collection/toolkit icon.
+- “R Packages”, note “R projects”, schedule “Thursday · 11:00”, cadence “all prompts monthly”. Authentic R logo.
+- “Pull-request cleanup”, note “Removes worktrees and local branches after PRs merge or close”. Teal pruning shears, visually distinct from the Sundry icon. Do not state a cleanup interval.
 
-Keep every row aligned with consistent dividers and margins. Keep the weekday and time text legible. Keep technology icons teal #14584d, with the R and Python logos as official-colour exceptions. Spell all labels exactly as written. British English.
-
-**Follow-up edit prompt:** Replace the internal group labels “web” and “workflows” with reader-facing labels “Web Applications” and “Sundry”; use “Unmatched project types” as the Sundry note. Keep all schedules, cadence labels, colours, and layout unchanged. Replace the Sundry branching icon with a teal mixed-collection/toolkit icon and replace the Pull-request cleanup branching icon with teal pruning shears, clearly distinguishing the two. Keep the R and Python logos in official colours.
-
-**Capitalisation edit prompt:** Change only lowercase “python” to “Python” in the group label. Preserve every other text, logo, icon, colour, spacing, and layout element.
-
-Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing configured schedule infographic. Preserve its title, subtitle, five-row layout, labels, group icons and logos, schedules, cleanup row, colours, positions, typography, dividers, and warm-paper style. Make one change: update only the cadence line for each of the four project groups to reflect the three shipped prompts. Use exactly “update-deps weekly · simplify-codebase and gsc-analysis monthly” for Web Applications, Python, and Sundry; use exactly “all prompts monthly” for R Packages. Keep the Pull-request cleanup row unchanged. Ensure the cadence text remains legible and fits its existing row. British English.
+Keep all rows aligned, labels legible, exact wording, and logos accurate.
 ```
-
 ### One schedule, multiple prompts
 
 - **File:** `docs/images/multiple-prompts.webp`
 - **Companion:** [`multiple-prompts.prompt.txt`](multiple-prompts.prompt.txt)
 
+
+
+
 ```text
-Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot, a macOS tool that runs repository-owned coding prompts on a schedule. Create a new landscape 3:2 editorial infographic in a warm-paper documentation style: background #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, sparse base teal #14584d for the explained path. Use a Fraunces-like serif title and section headings, Hanken-like sans labels, generous whitespace, flat outline icons, and thin orthogonal arrows. Match the restrained visual language of the llm-dependabot documentation figures. No shadows, gradients, texture, 3D, cards, boxed panels, emoji, decorative footer, ordinal numbering, or invented facts.
+Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot's per-prompt run pattern. Create a landscape 3:2 editorial infographic with warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, sparse teal #14584d, a Fraunces-like serif title and section labels, Hanken-like sans labels, flat outline icons, and generous whitespace. Use thin left-to-right arrows and no cards, shadows, gradients, texture, 3D, emoji, decorative footer, ordinal numbering, or invented facts. British English.
 
-Title exactly: “One schedule, multiple prompts”
-Subtitle exactly: “Each due prompt gets its own isolated run”
+Title exactly “One schedule, multiple prompts”
+Subtitle exactly “Each due prompt gets its own isolated run”
+Context line “At each weekly group run, process prompts present in the repository when due”
+Muted note “One prompt at a time”
 
-Show one short context line below the subtitle: “At each weekly group run, process prompts present in the repository when due” and a small muted note “One prompt at a time”.
+Show four spacious horizontal rows separated by fine hairlines. Every row has its own worktree, agent run, and pull request:
+- “update-deps” (note “Weekly”) → “Own Git worktree + branch” → “Coding agent runs this prompt” → “Its own pull request”
+- “simplify-codebase” (note “Monthly, when due”) → same flow
+- “gsc-analysis” (note “Monthly, when due”) → same flow
+- “…” (note “Other configured prompts”) → same flow
 
-Then show three spacious horizontal rows, separated by fine hairlines. Each row repeats the same clear left-to-right flow with the exact labels and no branching:
-Row one: “update-deps” (small cadence note “Weekly”) → “Own Git worktree + branch” → “Coding agent runs this prompt” → “Its own pull request”
-Row two: “simplify-codebase” (small cadence note “Monthly, when due”) → “Own Git worktree + branch” → “Coding agent runs this prompt” → “Its own pull request”
-Row three: “…” (small note “Other configured prompts”) → “Own Git worktree + branch” → “Coding agent runs this prompt” → “Its own pull request”
+Use document icons for prompt labels, distinct worktree/branch icons, agent/terminal icons, and pull-request branch icons. Make clear every due prompt repeats the flow in sequence; do not imply parallel runs. Preserve the literal ellipsis. Ensure all labels are exact and legible at documentation width.
+```
+### Setup checklist
 
-Use a file/page outline icon for prompt labels, a separate-branch/worktree outline for each worktree, a simple agent/terminal outline, and a pull-request branching icon. Make it visually obvious that every prompt row repeats the same setup and creates a separate pull request. Use thin arrows that do not cross. Do not imply that prompts run in parallel. Preserve the literal ellipsis “…” as shown. Ensure all wording, arrow direction, and spelling are exact and legible at documentation width. British English.
+- **File:** `docs/images/setup-checklist.webp`
+- **Companion:** [`setup-checklist.prompt.txt`](setup-checklist.prompt.txt)
 
-Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing “One schedule, multiple prompts” infographic. Preserve its title, subtitle, context and timing notes, three-row composition, all existing row wording, positions, arrows, icons, colours, typography, dividers, and warm-paper style. Make one change: insert a “gsc-analysis” row with the subtitle “Monthly, when due” between “simplify-codebase” and “…” / “Other configured prompts”. Its flow is identical to the other prompt rows: “Own Git worktree + branch” → “Coding agent runs this prompt” → “Its own pull request”. Do not alter the existing rows or the ellipsis row. Keep all labels legible and do not imply parallel runs. British English.
+
+```text
+Use case: infographic-diagram. Asset type: documentation illustration for llm-dependabot setup. Create a landscape 3:2 editorial checklist matching the warm-paper visual style, refined typography, fine dividers, precise thin outline icons, and generous whitespace. Use background #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, and sparse teal #14584d for icons and the arrow. Use Fraunces-like serif headings and Hanken-like sans labels. No cards, panels, shadows, gradients, texture, 3D, emoji, decorative footer, ordinal numbers, invented facts, or private repository names. Title exactly “Make the template yours”. British English.
+
+Show four evenly spaced horizontal bands, divided by hairlines. Each has a large outline icon and serif heading at left, then exact checklist rows with empty square checkboxes:
+- “Local setup”: “Clone folder”, “Coding agent”, “Groups & schedule”. Use folder, terminal, and calendar symbols.
+- “Choose repositories”: “Public · commit prompts” and “Private · git-ignored private.yaml”. Use a correct small GitHub mark or a generic repository outline, plus globe and lock symbols to distinguish public and private.
+- “Standardise prompts”: “.github/prompts/<name>.md” and “Same path in config.yaml”. Use document and linked file/config symbols.
+- “Prepare each project”: “AGENTS.md”, “Toolchain & checks”, “Protect default branch”. Use guide, wrench, and shield symbols.
+
+At the bottom, connect a compact terminal icon and the exact label “make setup” with a thin teal downward arrow. Leave the icon and label unboxed and centred beneath the arrow. Keep all wording, filenames, checkboxes, and spelling exact and legible.
 ```

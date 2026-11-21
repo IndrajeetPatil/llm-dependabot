@@ -1,15 +1,14 @@
-Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot, a macOS tool that runs repository-owned coding prompts on a schedule. Create a new landscape 3:2 editorial infographic in a warm-paper documentation style: background #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, sparse base teal #14584d for the explained path. Use a Fraunces-like serif title and section headings, Hanken-like sans labels, generous whitespace, flat outline icons, and thin orthogonal arrows. Match the restrained visual language of the llm-dependabot documentation figures. No shadows, gradients, texture, 3D, cards, boxed panels, emoji, decorative footer, ordinal numbering, or invented facts.
+Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot's per-prompt run pattern. Create a landscape 3:2 editorial infographic with warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, sparse teal #14584d, a Fraunces-like serif title and section labels, Hanken-like sans labels, flat outline icons, and generous whitespace. Use thin left-to-right arrows and no cards, shadows, gradients, texture, 3D, emoji, decorative footer, ordinal numbering, or invented facts. British English.
 
-Title exactly: “One schedule, multiple prompts”
-Subtitle exactly: “Each due prompt gets its own isolated run”
+Title exactly “One schedule, multiple prompts”
+Subtitle exactly “Each due prompt gets its own isolated run”
+Context line “At each weekly group run, process prompts present in the repository when due”
+Muted note “One prompt at a time”
 
-Show one short context line below the subtitle: “At each weekly group run, process prompts present in the repository when due” and a small muted note “One prompt at a time”.
+Show four spacious horizontal rows separated by fine hairlines. Every row has its own worktree, agent run, and pull request:
+- “update-deps” (note “Weekly”) → “Own Git worktree + branch” → “Coding agent runs this prompt” → “Its own pull request”
+- “simplify-codebase” (note “Monthly, when due”) → same flow
+- “gsc-analysis” (note “Monthly, when due”) → same flow
+- “…” (note “Other configured prompts”) → same flow
 
-Then show three spacious horizontal rows, separated by fine hairlines. Each row repeats the same clear left-to-right flow with the exact labels and no branching:
-Row one: “update-deps” (small cadence note “Weekly”) → “Own Git worktree + branch” → “Coding agent runs this prompt” → “Its own pull request”
-Row two: “simplify-codebase” (small cadence note “Monthly, when due”) → “Own Git worktree + branch” → “Coding agent runs this prompt” → “Its own pull request”
-Row three: “…” (small note “Other configured prompts”) → “Own Git worktree + branch” → “Coding agent runs this prompt” → “Its own pull request”
-
-Use a file/page outline icon for prompt labels, a separate-branch/worktree outline for each worktree, a simple agent/terminal outline, and a pull-request branching icon. Make it visually obvious that every prompt row repeats the same setup and creates a separate pull request. Use thin arrows that do not cross. Do not imply that prompts run in parallel. Preserve the literal ellipsis “…” as shown. Ensure all wording, arrow direction, and spelling are exact and legible at documentation width. British English.
-
-Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing “One schedule, multiple prompts” infographic. Preserve its title, subtitle, context and timing notes, three-row composition, all existing row wording, positions, arrows, icons, colours, typography, dividers, and warm-paper style. Make one change: insert a “gsc-analysis” row with the subtitle “Monthly, when due” between “simplify-codebase” and “…” / “Other configured prompts”. Its flow is identical to the other prompt rows: “Own Git worktree + branch” → “Coding agent runs this prompt” → “Its own pull request”. Do not alter the existing rows or the ellipsis row. Keep all labels legible and do not imply parallel runs. British English.
+Use document icons for prompt labels, distinct worktree/branch icons, agent/terminal icons, and pull-request branch icons. Make clear every due prompt repeats the flow in sequence; do not imply parallel runs. Preserve the literal ellipsis. Ensure all labels are exact and legible at documentation width.
