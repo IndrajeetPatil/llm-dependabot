@@ -21,7 +21,9 @@
 
 `make setup` automatically installs missing command-line tools from the
 [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile):
-`uv`, `gh`, `prek`, and the default coding agent.
+`uv`, `gh`, `prek`, `gitleaks`, and the default coding agent. It also
+installs the pinned [`gh-actions-lock`](https://github.com/github/gh-actions-lock)
+extension that the workflow lockfile hook needs.
 
 ## 1. Create your repository
 
@@ -110,6 +112,7 @@ check and offers to install or fix whatever is missing:
 | Private repositories | Scans your private repositories for committed prompts and writes `private.yaml` |
 | Git hooks | Installs the `prek` git hooks (`pre-commit` and `commit-msg`) |
 | App and agents | Builds the LLM Dependabot launcher app, writes and loads the `launchd` agents, and tests Full Disk Access |
+| Lockfile extension | Installs the pinned `gh-actions-lock` extension (`make actions-lock-install`) |
 
 ## 4. Full Disk Access
 

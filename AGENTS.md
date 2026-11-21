@@ -26,6 +26,8 @@ Guidance for AI coding agents working in this repository.
 | `overrides/` | Site template overrides: structured data, `llms.txt` links, and README edit links |
 | `pyproject.toml`, `uv.lock` | Docs uv project that installs Zensical, and Ruff and ty configuration |
 | `.github/workflows/` | CI workflows: checks on pull requests, docs deployment from `main` |
+| `.github/workflows/actions.lock` | Generated lockfile of every workflow's direct and transitive actions |
+| `.github/zizmor.yml` | zizmor policy that requires full-SHA action pins |
 | `DESIGN.md` | Visual identity for the sticker, app icon, and documentation figures |
 | `.agents/skills/documentation-illustrations/` | Skill for generating documentation figures |
 | `.github/prompts/` | This repository's own `update-deps` and `simplify-codebase` prompts |
@@ -45,6 +47,7 @@ make check         # lint, format check, type check, and dependency audit
 make hooks         # every prek hook on all files; must pass before committing
 make format        # apply ruff formatting
 make update-deps   # upgrade locked dependencies and prek hooks
+make actions-lock  # regenerate .github/workflows/actions.lock after action changes
 make list          # show group assignment (needs gh authenticated)
 make dry-run GROUP=python
 make docs          # build the documentation site strictly
@@ -92,5 +95,46 @@ owner's Mac.
 
 - Never name a private repository in any committed file, commit message, or
   pull request; private repositories are listed only in `private.yaml`.
+
+## Workflows
+
+Template users inherit these workflows, so keep them secure by default:
+
+- Trigger checks on pull requests to `main` only; only `docs.yml` also runs
+  on `main` and by hand, to deploy the site.
+
+- Pin every action to a full commit SHA with its most specific release in an
+  inline comment (`# v7.0.1`), never a sliding tag such as `v7`.
+
+- Regenerate `.github/workflows/actions.lock` with `make actions-lock`
+  whenever a `uses:` line changes; never edit it by hand. It records
+  transitive actions and each source repository's identity, and the prek
+  `actions-lock-verify` hook rejects drift.
+
+- Default `GITHUB_TOKEN` to `contents: read` at the workflow level, and grant
+  write scopes only to the job that needs them, with a comment saying why.
+
+- Set `persist-credentials: false` on every checkout, a finite
+  `timeout-minutes` on every job, and a `concurrency` group on every
+  workflow.
+
+- Pass event data and inputs to scripts through `env:`, never by
+  interpolating `${{ }}` into `run:`.
+
+- Prefer runner-provided tools over additional actions. Install a standalone
+  binary only at a pinned version with a pinned SHA-256 checksum of the
+  archive, verified before extraction, and update both together.
+
+- Keep the security gate fail-closed: Gitleaks scans the complete history,
+  and zizmor audits every workflow in pedantic mode. Fix findings rather than
+  suppressing them.
+
+- Keep tool versions that CI and prek share in step: zizmor in `security.yml`
+  and `prek.toml`, and conventional-pre-commit and its commit types in
+  `conventional-commits.yml` and `prek.toml`.
+
+- Keep the workflow table and the list of actions in `docs/development.md`
+  current when a workflow, or the set of actions it uses, changes: template
+  users whose Actions policy allows only selected actions copy that list.
 
 - Use British English in prose.
