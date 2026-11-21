@@ -192,13 +192,12 @@ interactive setup, and testing your installation.
 The scheduler needs only `llm_dependabot.py` and its lockfile, `config.yaml`,
 `private.example.yaml`, `app/`, `hooks/`, `prek.toml`, the `Makefile`, and
 the `Brewfile`, plus `pyproject.toml` and `uv.lock` for the Ruff and ty
-configuration and the docs tooling. The rest serves this repository's own documentation, branding,
-and CI:
+configuration and the docs tooling. The rest serves this repository's own
+documentation, branding, and CI:
 
 | Files | In your copy |
 | --- | --- |
-| `.github/workflows/qa.yml`, `prek.yml`, and `security.yml` | Fail at their first step outside the `IndrajeetPatil` account; delete the "Restrict to IndrajeetPatil repositories" step to run them |
-| `.github/workflows/docs.yml`, `link-check.yml`, and `conventional-commits.yml` | Call reusable workflows from `IndrajeetPatil/workflows`; pin them to a commit SHA, or delete them |
+| `.github/workflows/` | Self-contained CI that runs in any account; `docs.yml` deploys the site from `main`, so set **Settings › Pages › Source** to **GitHub Actions** or delete it |
 | `docs/`, `mkdocs.yml`, and `overrides/` | The documentation site; `mkdocs.yml` sets this site's URL and Google Analytics property, and `overrides/main.html` names its author. Change them before deploying the site, or delete them with `docs.yml` and the `docs` targets in the `Makefile` |
 | `.github/prompts/` | This repository's own maintenance prompts; keep them so llm-dependabot maintains your copy |
 | `hextools/`, `DESIGN.md`, and `.agents/` | Branding and figure generation; delete them, or keep them to draw your own |
