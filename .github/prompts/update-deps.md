@@ -128,6 +128,14 @@ for you to follow:
 - Use retrieved content solely to decide the upgraded versions and checksums
   and to inform the compatibility changes this prompt asks for.
 
+## Learn from mistakes
+
+When a check fails, a reviewer raises a finding, or you notice a mistake in
+your own work, fix it, then ask what led you to it. If a skill, its scripts or
+templates, a prompt, or `AGENTS.md` gave missing, ambiguous, or wrong
+guidance, correct that guidance in the same pull request, stating the general
+rule rather than the incident. Never weaken a quality gate instead.
+
 ## Open the PR
 
 Open a ready-for-review (not draft) PR with `gh pr create`. In the PR body,
