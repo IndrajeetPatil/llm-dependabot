@@ -115,6 +115,14 @@ Do not run `make setup`, `make install`, `make run`, or `make cleanup`: they
 change the `launchd` agents, run the agent unattended, or delete checkouts.
 Update `docs/` if behaviour or commands change.
 
+## Learn from mistakes
+
+When a check fails, a reviewer raises a finding, or you notice a mistake in
+your own work, fix it, then ask what led you to it. If a skill, its scripts or
+templates, a prompt, or `AGENTS.md` gave missing, ambiguous, or wrong
+guidance, correct that guidance in the same pull request, stating the general
+rule rather than the incident. Never weaken a quality gate instead.
+
 ## Pull request
 
 Open a ready-for-review (not draft) pull request with `gh pr create`. In its
