@@ -9,71 +9,160 @@ cooldown_days = 0
 
 [[repos]]
 repo = "meta"
-hooks = [
-  { id = "check-hooks-apply" },
-  { id = "check-useless-excludes" },
-]
+
+[[repos.hooks]]
+id = "check-hooks-apply"
+
+[[repos.hooks]]
+id = "check-useless-excludes"
 
 [[repos]]
 repo = "https://github.com/astral-sh/ruff-pre-commit"
-rev = "ef6cf06c079dd6b299dfc720b0f14400c9d168e1"  # frozen: v0.17.5
-hooks = [
-  { id = "ruff-check", args = ["--fix"] },
-  { id = "ruff-format" },
-]
+rev = "ef6cf06c079dd6b299dfc720b0f14400c9d168e1" # frozen: v0.17.5
+
+[[repos.hooks]]
+id = "ruff-check"
+args = ["--fix"]
+
+[[repos.hooks]]
+id = "ruff-format"
 
 [[repos]]
 repo = "https://github.com/rhysd/actionlint"
 rev = "914e7df21a07ef503a81201c76d2b11c789d3fca" # frozen: v1.7.12
-hooks = [{ id = "actionlint" }]
+
+[[repos.hooks]]
+id = "actionlint"
 
 [[repos]]
 repo = "https://github.com/zizmorcore/zizmor-pre-commit"
 rev = "06a39750ec31860bb44f2acf67182c40016cd1e7" # frozen: v1.32.0
+
 # Matches the pedantic audit in security.yml, which CI runs instead.
-hooks = [{ id = "zizmor", args = ["--pedantic"] }]
+[[repos.hooks]]
+id = "zizmor"
+args = ["--pedantic"]
 
 [[repos]]
 repo = "https://github.com/compilerla/conventional-pre-commit"
 rev = "33b50eb042bee26eac0ee96ad84aa9c1b4dccdd8" # frozen: v4.5.0
-hooks = [
-  # The same types and strict mode as conventional-commits.yml; strict mode
-  # also rejects fixup! and merge commit messages.
-  { id = "conventional-pre-commit", stages = ["commit-msg"], args = ["--strict", "--verbose", "build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor", "revert", "style", "test"] },
+
+# The same types and strict mode as conventional-commits.yml; strict mode
+# also rejects fixup! and merge commit messages.
+[[repos.hooks]]
+id = "conventional-pre-commit"
+stages = ["commit-msg"]
+args = [
+  "--strict",
+  "--verbose",
+  "build",
+  "chore",
+  "ci",
+  "docs",
+  "feat",
+  "fix",
+  "perf",
+  "refactor",
+  "revert",
+  "style",
+  "test",
 ]
 
 [[repos]]
 repo = "local"
-hooks = [
-  # Staged-diff secret scan with the Brewfile's gitleaks; CI scans the
-  # complete history in security.yml instead.
-  { id = "gitleaks", name = "gitleaks (staged secret scan)", entry = "gitleaks git --pre-commit --redact --staged --verbose", language = "system", pass_filenames = false },
-  # Needs the gh-actions-lock extension, so CI skips it.
-  { id = "actions-lock-verify", name = "actions.lock matches workflow dependencies", entry = "make actions-lock-verify", language = "system", files = "^\\.github/workflows/", pass_filenames = false },
-  { id = "forbid-submodules", name = "forbid submodules", entry = "submodules are not allowed in this repository:", language = "fail", types = ["directory"] },
-  # ty runs in the script's own environment, which holds its dependencies.
-  { id = "ty", name = "ty", entry = "make typecheck", language = "system", pass_filenames = false, files = "\\.py$" },
-  # Keep private repository names out of files and commit messages.
-  { id = "private-names", name = "no private repository names", entry = "hooks/check_private_names.py", language = "system", stages = ["pre-commit", "commit-msg"] },
-]
+
+# Staged-diff secret scan with the Brewfile's gitleaks; CI scans the
+# complete history in security.yml instead.
+[[repos.hooks]]
+id = "gitleaks"
+name = "gitleaks (staged secret scan)"
+entry = "gitleaks git --pre-commit --redact --staged --verbose"
+language = "system"
+pass_filenames = false
+
+# Needs the gh-actions-lock extension, so CI skips it.
+[[repos.hooks]]
+id = "actions-lock-verify"
+name = "actions.lock matches workflow dependencies"
+entry = "make actions-lock-verify"
+language = "system"
+files = "^\\.github/workflows/"
+pass_filenames = false
+
+[[repos.hooks]]
+id = "forbid-submodules"
+name = "forbid submodules"
+entry = "submodules are not allowed in this repository:"
+language = "fail"
+types = ["directory"]
+
+# ty runs in the script's own environment, which holds its dependencies.
+[[repos.hooks]]
+id = "ty"
+name = "ty"
+entry = "make typecheck"
+language = "system"
+files = "\\.py$"
+pass_filenames = false
+
+# Keep private repository names out of files and commit messages.
+[[repos.hooks]]
+id = "private-names"
+name = "no private repository names"
+entry = "hooks/check_private_names.py"
+language = "system"
+stages = ["pre-commit", "commit-msg"]
 
 [[repos]]
 repo = "builtin"
-hooks = [
-  { id = "trailing-whitespace" },
-  { id = "end-of-file-fixer" },
-  { id = "check-yaml" },
-  { id = "check-toml" },
-  { id = "check-merge-conflict" },
-  { id = "mixed-line-ending", args = ["--fix=lf"] },
-  { id = "check-added-large-files", args = ["--enforce-all"] },
-  { id = "detect-private-key" },
-  { id = "fix-byte-order-marker" },
-  { id = "check-case-conflict" },
-  { id = "check-illegal-windows-names" },
-  { id = "destroyed-symlinks" },
-  { id = "check-executables-have-shebangs" },
-  { id = "check-shebang-scripts-are-executable" },
-  { id = "check-vcs-permalinks" },
-  { id = "no-commit-to-branch", args = ["--branch=main"] },
-]
+
+[[repos.hooks]]
+id = "trailing-whitespace"
+
+[[repos.hooks]]
+id = "end-of-file-fixer"
+
+[[repos.hooks]]
+id = "check-yaml"
+
+[[repos.hooks]]
+id = "check-toml"
+
+[[repos.hooks]]
+id = "check-merge-conflict"
+
+[[repos.hooks]]
+id = "mixed-line-ending"
+args = ["--fix=lf"]
+
+[[repos.hooks]]
+id = "check-added-large-files"
+args = ["--enforce-all"]
+
+[[repos.hooks]]
+id = "detect-private-key"
+
+[[repos.hooks]]
+id = "fix-byte-order-marker"
+
+[[repos.hooks]]
+id = "check-case-conflict"
+
+[[repos.hooks]]
+id = "check-illegal-windows-names"
+
+[[repos.hooks]]
+id = "destroyed-symlinks"
+
+[[repos.hooks]]
+id = "check-executables-have-shebangs"
+
+[[repos.hooks]]
+id = "check-shebang-scripts-are-executable"
+
+[[repos.hooks]]
+id = "check-vcs-permalinks"
+
+[[repos.hooks]]
+id = "no-commit-to-branch"
+args = ["--branch=main"]
