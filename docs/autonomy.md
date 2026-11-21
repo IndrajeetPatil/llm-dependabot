@@ -6,23 +6,7 @@ the repository's checks and review. Once green checks and an approving review
 are enough evidence to merge, the loop closes on its own, and the codebase
 keeps itself healthy and current with little day-to-day human intervention.
 
-```mermaid
-flowchart LR
-    signal["Signal: new releases, code smells, search, or monitoring reports"]
-    prompt["Committed prompt, due on schedule"]
-    agent["Coding agent in an isolated worktree"]
-    pr["Pull request with evidence"]
-    gates["Quality gates and verification harness"]
-    review["Independent reviewer"]
-    merge["Squash-merge"]
-    prod["Production"]
-
-    signal --> prompt --> agent --> pr --> gates
-    gates -- failures --> agent
-    gates --> review
-    review -- findings --> agent
-    review -- approval --> merge --> prod --> signal
-```
+![Autonomous delivery loop: a signal starts a scheduled prompt; an isolated coding agent opens a pull request with evidence; quality gates and an independent reviewer send failures or findings back to the agent; approval leads to squash-merge and production, which creates the next signal.](images/autonomous-evolution.webp)
 
 ## Self-healing beyond dependencies
 
@@ -203,20 +187,7 @@ notices in its own work is a defect in two places: the code, and the guidance
 that let the mistake happen. Fixing only the code leaves the next run free to
 repeat it. Prompts can tell the agent to fix both:
 
-```mermaid
-flowchart LR
-    mistake["Failing check, review finding, or regression"]
-    cause["Trace the cause"]
-    code["Fix the code"]
-    guidance["Fix the guidance: AGENTS.md, a skill or its assets, or a prompt"]
-    checks["Same quality gates and review"]
-    next["Later runs avoid the mistake"]
-
-    mistake --> cause
-    cause --> code --> checks
-    cause --> guidance --> checks
-    checks --> next
-```
+![Learning loop: trace a failing check, review finding, or regression to its cause, fix both code and guidance, run the same quality gates and review, and help later runs avoid the mistake.](images/learn-from-mistakes.webp)
 
 For example, a closing section that every prompt shares:
 
