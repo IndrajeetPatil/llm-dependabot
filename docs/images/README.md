@@ -19,6 +19,7 @@ The hex sticker is drawn by hand; see [hextools](../../hextools/README.md).
 | [`multiple-prompts.webp`](multiple-prompts.webp) | The same isolated run pattern for each due prompt, with room for more prompts | [configuration.md](../configuration.md) |
 | [`process-and-run.webp`](process-and-run.webp) | Responsible process tree and per-repository run | [architecture.md](../architecture.md) |
 | [`usage-overview.webp`](usage-overview.webp) | Status, on-demand runs, pull requests, and cleanup | [usage.md](../usage.md) |
+| [`setup-checklist.webp`](setup-checklist.webp) | Local setup choices, repository opt-in, prompt conventions, and project readiness | [setup.md](../setup.md) |
 
 ## Prompts
 
