@@ -146,7 +146,9 @@ following week, and monthly ones for the group's next scheduled run.
 
 A repository runs only the prompts it contains. One that gains a prompt picks
 it up at its group's next scheduled run that finds the prompt due.
-`make list` shows the current assignment.
+`make list` shows the current assignment. See
+[Prepare your repositories](setup.md#5-prepare-your-repositories) for
+guidance on committing prompts and onboarding projects.
 
 ## `private.yaml`
 
@@ -164,7 +166,8 @@ commit that adds this file or names one of its repositories.
 
 ## Forking and adapting
 
-llm-dependabot is a template: fork it and change what differs for you.
+llm-dependabot is designed as a template: create a new repository from it or
+fork it, and adapt the configuration for your own projects.
 
 | To change | Edit |
 | --- | --- |
@@ -179,6 +182,10 @@ llm-dependabot is a template: fork it and change what differs for you.
 > committed prompt for each kind of maintenance, guidance such as an
 > `AGENTS.md`, and checks (tests, linters, and CI) that it can run to verify
 > its changes. A repository without a prompt is never touched.
+
+See [Setup](setup.md) for the end-to-end walkthrough on initialising the
+repository, configuring your coding agent and clone directory, running
+interactive setup, and testing your installation.
 
 ### Another operating system
 

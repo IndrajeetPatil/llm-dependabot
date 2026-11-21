@@ -6,53 +6,120 @@
 
 ## Requirements
 
+- macOS 14 (Sonoma) or newer.
+
 - [Homebrew](https://brew.sh), which also installs the Xcode Command Line
   Tools (`git`, `make`, and `clang`).
 
-- A GitHub account that owns the repositories.
+- A GitHub account and the [GitHub CLI](https://cli.github.com) (`gh`).
 
-- A coding agent with a non-interactive mode, and an account for it (see
-  [The coding agent](configuration.md#the-coding-agent)).
+- A coding agent with a non-interactive mode (Antigravity CLI is the default;
+  Claude Code, Codex CLI, and GitHub Copilot CLI are also supported).
 
-- Each participating repository's own toolchain (R, Python, Node.js, and so
-  on), so the agent can run its checks.
+- Each participating repository's own toolchain (Python, Node.js, Rust, R,
+  and so on), so the agent can execute tests, linters, and builds.
 
-`make setup` installs everything else from the [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile):
-`uv`, `gh`, `prek`, and the coding agent named there.
+`make setup` automatically installs missing command-line tools from the
+[`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile):
+`uv`, `gh`, `prek`, and the default coding agent.
 
-## Run the setup
+## 1. Create your repository
+
+You can create your own maintenance repository from the template or fork it:
+
+- **Create from template (recommended):** creates a standalone repository
+  with a clean git history:
+
+  ```sh
+  gh repo create my-dependabot --template IndrajeetPatil/llm-dependabot --clone
+  cd my-dependabot
+  ```
+
+  You can also click **Use this template › Create a new repository** on GitHub.
+
+- **Fork:** creates a fork tracking this repository:
+
+  ```sh
+  gh repo fork IndrajeetPatil/llm-dependabot --clone
+  cd llm-dependabot
+  ```
+
+  Forking makes it straightforward to pull upstream enhancements and template
+  fixes in the future.
+
+## 2. Review configuration before setup
+
+Before running `make setup`, review [`config.yaml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/config.yaml)
+and [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile)
+to ensure they match your local environment and preferred agent:
+
+- **The coding agent:** `make setup` installs Antigravity CLI (`agy`) by default
+  via Homebrew and waits for you to sign in. If you want to use Claude Code,
+  Codex CLI, or GitHub Copilot CLI instead:
+
+    1. Update `agent` in `config.yaml` to specify your agent's command and check
+       syntax (see [The coding agent](configuration.md#the-coding-agent)).
+
+    2. In [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile),
+       replace `cask "antigravity-cli"` with your agent's package, or remove the
+       line if your agent is already installed by another package manager (such
+       as `npm`).
+
+- **Where clones live (`clone_root`):** defaults to `~/Documents/GitHub`. If
+  your local checkouts live elsewhere (such as `~/code`, `~/Developer`, or
+  `~/projects`), update `clone_root` in `config.yaml` now. This ensures setup
+  validates permissions for your actual projects directory and prevents
+  unnecessary re-cloning.
+
+- **Language groups and schedule (`groups`):** review the default groups
+  (`web`, `python`, `workflows`, and `r`). If your repositories use other
+  languages (such as Rust, Go, Swift, or Ruby) or you prefer different run
+  times, adjust the groups in `config.yaml` (see [Groups and the schedule](configuration.md#groups-and-the-schedule)).
+
+- **Repository owner (`owner`):** you do not need to change this manually;
+  `make setup` detects your authenticated GitHub account and offers to update
+  `owner` in `config.yaml` automatically.
+
+## 3. Run the interactive setup
 
 ```sh
-gh repo fork IndrajeetPatil/llm-dependabot --clone
-cd llm-dependabot
 make setup
 ```
 
-Setup is interactive and safe to rerun. It walks through each step and offers
-to fix whatever is missing:
+Setup is interactive, safe to rerun, and idempotent. It steps through each
+check and offers to install or fix whatever is missing:
 
 | Step | What happens |
 | --- | --- |
-| Tools | Installs missing [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile) packages with `brew bundle` |
-| Sign-ins | Runs `gh auth login` if needed and waits until the agent's `check` command succeeds |
-| Owner | Offers to set `owner` in `config.yaml` to your GitHub account |
-| Clone directory | Creates `clone_root` if it does not exist |
-| Private repositories | Asks about each private repository that has a configured prompt and writes `private.yaml` |
-| Git hooks | Installs the prek hooks |
-| App and agents | Builds the LLM Dependabot app, loads the launchd agents, and waits until the app can read your clones |
+| Tools | Installs missing [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile) packages using `brew bundle` |
+| Sign-ins | Verifies `gh auth login` and waits until your coding agent's sign-in check command succeeds |
+| Owner | Detects your GitHub login and offers to update `owner` in `config.yaml` |
+| Clone directory | Verifies `clone_root` exists or prompts to create it |
+| Private repositories | Scans your private repositories for committed prompts and writes `private.yaml` |
+| Git hooks | Installs the `prek` git hooks (`pre-commit` and `commit-msg`) |
+| App and agents | Builds the LLM Dependabot launcher app, writes and loads the `launchd` agents, and tests Full Disk Access |
 
-## Full Disk Access
+## 4. Full Disk Access
 
-macOS privacy protection blocks launchd jobs from reading `~/Documents`, where
-the clones live, even when your terminal has Full Disk Access. The jobs
-therefore start through a tiny app, **LLM Dependabot**, which setup builds
-into `~/Library/Application Support/llm-dependabot/`.
+macOS privacy protection blocks background `launchd` jobs from reading
+`~/Documents` and protected user folders, even when your terminal emulator
+already has Full Disk Access.
 
-Setup opens **System Settings › Privacy & Security › Full Disk Access** and
-reveals the app in Finder. If LLM Dependabot is already listed, switch it on;
-otherwise drag it into the list (or click **+** and choose it) first. Setup
-then confirms the grant by starting a throwaway launchd job and continues once
-that job can read your clones.
+The scheduled jobs therefore start through a tiny app, **LLM Dependabot**,
+which setup builds into `~/Library/Application Support/llm-dependabot/`.
+
+During setup, the script opens **System Settings › Privacy & Security › Full Disk Access**
+and reveals the app in Finder:
+
+1. If **LLM Dependabot** is already listed in the settings pane, toggle its
+   switch on.
+
+2. If it is not listed, drag the highlighted app from Finder into the Full
+   Disk Access list (or click **+** and select it).
+
+3. Return to the terminal and press Enter. Setup validates the grant by
+   starting a throwaway launchd job and proceeds once that job can read your
+   clones.
 
 <img src="images/full-disk-access.webp" width="560" alt="System Settings, Full Disk Access pane, with LLM Dependabot listed and switched on" />
 
@@ -60,16 +127,137 @@ macOS may already list the app, switched off: it adds any program that tries
 to read protected data, which the app does the first time a job runs.
 
 > [!NOTE]
-> Only the LLM Dependabot app gets the permission, not `/bin/zsh`. It needs
-> granting again only when its sources (`app/`) change, since macOS ties the
-> grant to the app's code signature.
+> Only the LLM Dependabot helper app receives this permission, not `/bin/zsh`
+> or your whole terminal. It needs granting again only when its sources
+> (`app/`) change, since macOS ties the grant to the app's code signature.
+
+## 5. Prepare your repositories
+
+For llm-dependabot to discover and maintain a repository, the repository must
+carry what the agent needs to perform work and verify its changes.
+
+### Add maintenance prompts
+
+A repository opts into maintenance by committing prompt files to its default
+branch (`main`). The default configuration recognises:
+
+- `.github/prompts/update-deps.md` (runs weekly by default)
+- `.github/prompts/simplify-codebase.md` (runs monthly by default)
+
+A prompt file should contain:
+
+- **Frontmatter:** YAML metadata defining `name` and `description`.
+
+- **Instructions:** exact commands to run to update dependencies (such as
+  `uv lock --upgrade`, `pnpm update`, or `cargo update`) or the refactoring
+  goals to target.
+
+- **Quality gate:** explicit commands the agent must iterate on until
+  everything passes cleanly (linters, type checkers, unit tests, and build
+  commands).
+
+- **Pull request directions:** instructions to create a branch, open a
+  ready-for-review (non-draft) pull request via `gh pr create`, and summarise
+  changes in the pull request description.
+
+> [!TIP]
+> Use this repository's own committed prompts as templates for your projects:
+> [`.github/prompts/update-deps.md`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/.github/prompts/update-deps.md)
+> and
+> [`.github/prompts/simplify-codebase.md`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/.github/prompts/simplify-codebase.md).
+
+### Provide repository guidance (`AGENTS.md`)
+
+Place an `AGENTS.md` (or equivalent instructions) in each project's root.
+Guidance should outline project architecture, coding standards, commit message
+formats (such as Conventional Commits), and commands for running tests and
+linters. This keeps the agent aligned with your conventions.
+
+### Install project toolchains
+
+The agent runs locally on your Mac within fresh git worktrees. Ensure the
+relevant language toolchains and package managers (for example Python with
+`uv`, Node.js with `pnpm`, Rust with `cargo`, or R with `Rscript`) are
+installed and available on your system `PATH`.
+
+Ensure tests and linters pass on the default branch before the agent runs, so
+it begins from a known green baseline.
+
+### Include private repositories
+
+Public repositories with committed prompts are discovered automatically at run
+time. Private repositories require opt-in to keep private repository names out
+of version control:
+
+- If your private repositories already contain prompts during `make setup`,
+  setup prompts you to include each one and writes `private.yaml`.
+
+- If you add prompts to private repositories later, either rerun `make setup`
+  or copy [`private.example.yaml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/private.example.yaml)
+  to `private.yaml`, list the repository names, and run `make install`.
+
+- A git hook prevents `private.yaml` or any named private repositories from
+  being committed.
+
+## 6. Verify the setup
+
+After setup finishes, run these commands to verify that your configuration,
+permissions, and repository discoveries are working as expected:
+
+1. **Check schedule status and permissions:**
+
+   ```sh
+   make status
+   ```
+
+   Verifies that the `launchd` agents are loaded and displays the active
+   schedule and pending pull requests.
+
+2. **Verify repository and prompt discovery:**
+
+   ```sh
+   make list
+   ```
+
+   Lists all participating repositories grouped by ecosystem alongside their
+   detected prompts. If a repository is missing, confirm that its prompt file is
+   committed to its default branch and that private repositories are listed in
+   `private.yaml`.
+
+3. **Dry-run an ecosystem group:**
+
+   ```sh
+   make dry-run GROUP=python
+   ```
+
+   Previews which repositories and prompts are due to run without invoking the
+   agent or modifying any files.
+
+4. **Test a single repository run:**
+
+   ```sh
+   make run GROUP=python REPO=my-project PROMPT=update-deps
+   ```
+
+   Executes an end-to-end test on one repository. Watch the agent create an
+   isolated worktree, execute the prompt, run the repository's quality gate,
+   and open a pull request on GitHub.
 
 ## After editing the configuration
 
-Run `make install` after changing `config.yaml` or `private.yaml`. It refuses
-to reload while a job is running, since unloading would stop it.
+Whenever you modify `config.yaml` or `private.yaml`, reload the `launchd`
+agents:
+
+```sh
+make install
+```
+
+`make install` revalidates the configuration and updates your schedules. It
+safely refuses to reload if an agent run is currently in progress.
 
 ## Uninstall
+
+To remove the scheduled `launchd` jobs:
 
 ```sh
 make uninstall

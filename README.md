@@ -90,15 +90,28 @@ for what to change.
 > As configured here, llm-dependabot runs on macOS.
 
 ```sh
+# Create from the template (recommended):
+gh repo create my-dependabot --template IndrajeetPatil/llm-dependabot --clone
+cd my-dependabot
+
+# Or by forking:
 gh repo fork IndrajeetPatil/llm-dependabot --clone
 cd llm-dependabot
+
+# Run interactive setup:
 make setup
 ```
 
-`make setup` interactively installs what is missing, signs you in to GitHub
-and your coding agent, sets the account whose repositories it maintains, asks
-which private repositories to include, and loads the schedule. See
-[Setup](https://www.indrapatil.com/llm-dependabot/setup/) for the details.
+`make setup` interactively installs what is missing from Homebrew, signs you in
+to GitHub and your coding agent, sets the account whose repositories it
+maintains, asks which private repositories to include, and loads the schedule.
+
+If you wish to use a coding agent other than Antigravity CLI, or your
+repositories live outside `~/Documents/GitHub`, update `config.yaml` and the
+`Brewfile` before running setup. See
+[Setup](https://www.indrapatil.com/llm-dependabot/setup/) for the step-by-step
+guide to configuring the template, onboarding your repositories, and verifying
+the installation.
 
 ## Documentation
 
@@ -106,7 +119,7 @@ The full documentation is at <https://www.indrapatil.com/llm-dependabot/>.
 
 | Guide | Covers |
 | --- | --- |
-| [Setup](https://www.indrapatil.com/llm-dependabot/setup/) | Requirements, `make setup`, Full Disk Access, and uninstalling |
+| [Setup](https://www.indrapatil.com/llm-dependabot/setup/) | Requirements, repository creation, configuration, `make setup`, Full Disk Access, repository onboarding, and verification |
 | [Configuration](https://www.indrapatil.com/llm-dependabot/configuration/) | The coding agent, prompts and their cadences, the schedule, and adapting a fork |
 | [Usage](https://www.indrapatil.com/llm-dependabot/usage/) | Everyday commands, logs, files on disk, and troubleshooting |
 | [Architecture](https://www.indrapatil.com/llm-dependabot/architecture/) | How a run works and why it is built this way |
