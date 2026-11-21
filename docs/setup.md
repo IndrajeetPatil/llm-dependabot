@@ -194,8 +194,9 @@ fresh worktree. A good prompt contains:
 > [`.github/prompts/simplify-codebase.md`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/.github/prompts/simplify-codebase.md).
 
 Add any other recurring work as a prompt of its own in `config.yaml`; see
-[Autonomous evolution](autonomy.md) for examples, and for what a repository
-needs before its pull requests can merge without a human in the loop.
+[Autonomous evolution](autonomy.md) for examples, and for
+[what a repository needs](autonomy.md#what-a-repository-needs) before its own
+software factory can run without anyone watching.
 
 ### Provide repository guidance (`AGENTS.md`)
 

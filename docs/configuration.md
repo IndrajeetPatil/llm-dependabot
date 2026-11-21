@@ -186,6 +186,8 @@ fork it, and adapt the configuration for your own projects.
 > committed prompt for each kind of maintenance, guidance such as an
 > `AGENTS.md`, and checks (tests, linters, and CI) that it can run to verify
 > its changes. A repository without a prompt is never touched.
+> The giga factory is only as reliable as each repository's own software
+> factory; see [what a repository needs](autonomy.md#what-a-repository-needs).
 
 See [Setup](setup.md) for the end-to-end walkthrough on initialising the
 repository, configuring your coding agent and clone directory, running

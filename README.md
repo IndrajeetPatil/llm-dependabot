@@ -86,6 +86,8 @@ llm-dependabot is meant to be forked and configured to suit you:
 > The repositories you maintain must carry what the agent needs: a committed
 > prompt for each kind of maintenance, guidance such as an `AGENTS.md`, and
 > checks (tests, linters, and CI) that it can run to verify its changes.
+> The giga factory is only as reliable as each repository's own software
+> factory; see [what a repository needs](https://www.indrapatil.com/llm-dependabot/autonomy/#what-a-repository-needs).
 
 See [Forking and adapting](https://www.indrapatil.com/llm-dependabot/configuration/#forking-and-adapting)
 for what to change.
@@ -128,7 +130,7 @@ The full documentation is at <https://www.indrapatil.com/llm-dependabot/>.
 | [Setup](https://www.indrapatil.com/llm-dependabot/setup/) | Requirements, repository creation, configuration, `make setup`, Full Disk Access, repository onboarding, and verification |
 | [Configuration](https://www.indrapatil.com/llm-dependabot/configuration/) | The coding agent, prompts and their cadences, the schedule, and adapting a fork |
 | [Usage](https://www.indrapatil.com/llm-dependabot/usage/) | Everyday commands, logs, files on disk, and troubleshooting |
-| [Autonomous evolution](https://www.indrapatil.com/llm-dependabot/autonomy/) | Self-healing prompts, strict quality gates, guidance that learns from mistakes, and what a repository needs before its pull requests can merge automatically |
+| [Autonomous evolution](https://www.indrapatil.com/llm-dependabot/autonomy/) | Self-healing prompts, strict quality gates, guidance that learns from mistakes, and what a repository's own software factory needs before it can take part |
 | [Architecture](https://www.indrapatil.com/llm-dependabot/architecture/) | How a run works and why it is built this way |
 | [Development](https://www.indrapatil.com/llm-dependabot/development/) | Toolchain, checks, CI, and the documentation site |
 | [LLMs](https://www.indrapatil.com/llm-dependabot/integrations/llms/) | The documentation in the `llms.txt` format |
