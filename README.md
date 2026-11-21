@@ -95,7 +95,12 @@ for what to change.
 ## Quick start
 
 > [!NOTE]
-> As configured here, llm-dependabot runs on macOS.
+> As configured here, llm-dependabot runs locally and on macOS only, by
+> design. Running agents on your own machine is safer: they reuse your
+> existing sign-ins, so no credentials need to be stored in CI. And as a
+> personal project, it targets the only machine I develop on. Fork the
+> template to adapt it to another operating system, or even to run in the
+> cloud.
 
 ```sh
 # Create from the template (recommended):
