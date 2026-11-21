@@ -16,6 +16,13 @@
 
 - **[prek](https://prek.j178.dev)** runs the git hooks.
 
+- **[actionlint](https://github.com/rhysd/actionlint)**,
+  **[zizmor](https://docs.zizmor.sh)**, and
+  **[Gitleaks](https://github.com/gitleaks/gitleaks)** lint and audit the
+  workflows and scan for secrets, and the
+  [`gh-actions-lock`](https://github.com/github/gh-actions-lock) extension
+  maintains the workflow dependency lockfile.
+
 - **`uv audit`** checks the locked dependencies of both scripts and the docs
   project against the OSV vulnerability database.
 
@@ -39,6 +46,43 @@ run them again on each pull request:
 | `link-check.yml` | lychee over every link | Pull requests |
 | `docs.yml` | Builds the site; deploys it to GitHub Pages from `main` | Pull requests, `main`, and by hand |
 
+### Workflow security
+
+The workflows follow the same hardening rules, which `AGENTS.md` records for
+agents changing them:
+
+- Every action is pinned to a full commit SHA with its release in an inline
+  comment, and [`.github/zizmor.yml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/.github/zizmor.yml)
+  makes zizmor reject any other pin.
+
+- `actions.lock` in
+  [`.github/workflows/`](https://github.com/IndrajeetPatil/llm-dependabot/tree/main/.github/workflows)
+  is a machine-generated
+  [workflow dependency lockfile](https://docs.github.com/en/actions/concepts/security/workflow-dependency-lockfiles)
+  (in public preview). It records every direct and transitive action with its
+  commit and source repository identity. Run `make actions-lock` after
+  changing a `uses:` line; the `actions-lock-verify` hook fails a commit
+  whose lockfile is stale.
+
+- The default `GITHUB_TOKEN` is read-only; only the Pages deployment job can
+  write, and checkouts never keep the token.
+
+- Every job has a timeout, every workflow cancels superseded runs, and event
+  data reaches scripts only through environment variables.
+
+- Gitleaks is installed from a release archive pinned by version and SHA-256
+  checksum. It scans the complete history in CI and the staged diff on every
+  commit.
+
+If your account allows only selected actions, allow these:
+
+- `actions/checkout`, `actions/upload-pages-artifact`, and
+  `actions/deploy-pages` (and the `actions/upload-artifact` they use)
+- `astral-sh/setup-uv`
+- `j178/prek-action`
+- `lycheeverse/lychee-action`
+- `zizmorcore/zizmor-action` (and the `github/codeql-action` it uses)
+
 ## Checks
 
 ```sh
@@ -48,14 +92,20 @@ make audit           # check locked dependencies for known vulnerabilities
 make format          # apply ruff formatting
 make hooks           # run every prek hook on all files
 make update-deps     # upgrade locked dependencies and prek hook revisions
+make actions-lock    # regenerate the workflow dependency lockfile
+make actions-lock-verify  # check the lockfile against the workflows
 make docs            # build the documentation site, failing on any warning
 make docs-serve      # preview the documentation site locally
 ```
 
-The hooks in [`prek.toml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/prek.toml) run Ruff and ty, tidy whitespace, verify VCS
-permalinks and hook applicability, block direct commits to `main`, and
-guard against case conflicts, illegal Windows filenames, destroyed
-symlinks, private keys, large files, and merge-conflict markers. A local
+The hooks in [`prek.toml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/prek.toml) run Ruff and ty, lint the workflows
+with actionlint and audit them with zizmor, verify the workflow lockfile,
+scan staged changes with Gitleaks, check commit messages against
+Conventional Commits, tidy whitespace, verify VCS permalinks and hook
+applicability, block direct commits to `main` and submodules, and guard
+against case conflicts, illegal Windows filenames, destroyed symlinks,
+private keys, large files, and merge-conflict markers. CI skips the hooks
+that another workflow already runs or that need local tools. A local
 hook,
 [`hooks/check_private_names.py`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/hooks/check_private_names.py), fails any
 commit whose files or message name a repository listed in `private.yaml`, or

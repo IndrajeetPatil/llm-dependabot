@@ -35,5 +35,9 @@ jobs:
           prek-version: latest-known
           extra-args: --all-files --stage pre-commit
         env:
-          # qa.yml already runs ruff and ty through `make check`.
-          SKIP: ruff-check,ruff-format,ty
+          # qa.yml already runs ruff and ty through `make check`, and
+          # security.yml scans the complete history with Gitleaks and audits
+          # the workflows with zizmor. The lock check needs the gh-actions-lock
+          # extension. no-commit-to-branch guards local commits only, so CI
+          # never fails on main if this workflow gains a push trigger.
+          SKIP: ruff-check,ruff-format,ty,gitleaks,zizmor,actions-lock-verify,no-commit-to-branch
