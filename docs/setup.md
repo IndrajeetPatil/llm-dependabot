@@ -25,6 +25,8 @@
 installs the pinned [`gh-actions-lock`](https://github.com/github/gh-actions-lock)
 extension that the workflow lockfile hook needs.
 
+![Setup checklist covering the local clone folder, coding agent, schedule, repository opt-in, standard prompt paths, project guidance and checks, branch protection, and make setup](images/setup-checklist.webp)
+
 ## 1. Create your repository
 
 You can create your own maintenance repository from the template or fork it:
