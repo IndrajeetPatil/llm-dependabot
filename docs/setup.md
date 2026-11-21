@@ -159,7 +159,11 @@ A repository opts into maintenance by committing prompt files to its default
 branch. The default configuration recognises:
 
 - `.github/prompts/update-deps.md` (runs weekly by default)
+
 - `.github/prompts/simplify-codebase.md` (runs monthly by default)
+
+- `.github/prompts/gsc-analysis.md` (runs monthly by default; for websites
+  registered in Google Search Console)
 
 The agent receives the file verbatim, as its only instruction, from inside a
 fresh worktree. A good prompt contains:
@@ -188,6 +192,10 @@ fresh worktree. A good prompt contains:
 > [`.github/prompts/update-deps.md`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/.github/prompts/update-deps.md)
 > and
 > [`.github/prompts/simplify-codebase.md`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/.github/prompts/simplify-codebase.md).
+
+Add any other recurring work as a prompt of its own in `config.yaml`; see
+[Autonomous evolution](autonomy.md) for examples, and for what a repository
+needs before its pull requests can merge without a human in the loop.
 
 ### Provide repository guidance (`AGENTS.md`)
 

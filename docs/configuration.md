@@ -86,6 +86,10 @@ prompts:
   - name: simplify-codebase
     path: .github/prompts/simplify-codebase.md
     cadence: monthly
+
+  - name: gsc-analysis
+    path: .github/prompts/gsc-analysis.md
+    cadence: monthly
 ```
 
 | Key | Meaning |
@@ -122,7 +126,7 @@ A repository joins the first group whose `languages` include its GitHub
 primary language. The group with `languages: ["*"]` takes everything else.
 The default schedule, with nothing on Fridays or at weekends:
 
-| Group | Languages | Day | `update-deps` | `simplify-codebase` |
+| Group | Languages | Day | `update-deps` | `simplify-codebase` and `gsc-analysis` |
 | --- | --- | --- | --- | --- |
 | `web` | TypeScript, JavaScript, Astro, Svelte, Vue, HTML, and CSS | Monday 11:00 | weekly | first Monday of the month |
 | `python` | Python | Tuesday 11:00 | weekly | first Tuesday of the month |
