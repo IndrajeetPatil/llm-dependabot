@@ -52,8 +52,11 @@ make docs            # build the documentation site, failing on any warning
 make docs-serve      # preview the documentation site locally
 ```
 
-The hooks in [`prek.toml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/prek.toml) run Ruff and ty, tidy whitespace, and
-block private keys, large files, and merge-conflict markers. A local hook,
+The hooks in [`prek.toml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/prek.toml) run Ruff and ty, tidy whitespace, verify VCS
+permalinks and hook applicability, block direct commits to `main`, and
+guard against case conflicts, illegal Windows filenames, destroyed
+symlinks, private keys, large files, and merge-conflict markers. A local
+hook,
 [`hooks/check_private_names.py`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/hooks/check_private_names.py), fails any
 commit whose files or message name a repository listed in `private.yaml`, or
 that adds `private.yaml` itself.

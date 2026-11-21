@@ -21,7 +21,7 @@ import signal
 import subprocess
 import time
 from pathlib import Path
-from typing import Annotated, Any, Literal, NoReturn, get_args
+from typing import Annotated, Any, Literal, NoReturn, cast, get_args
 lazy import hashlib
 lazy import plistlib
 lazy import shlex
@@ -67,7 +67,9 @@ BREWFILE = ROOT / "Brewfile"
 type Weekday = Literal[
     "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
 ]
-WEEKDAYS: tuple[str, ...] = get_args(Weekday.__value__)  # launchd: Sunday is 0
+WEEKDAYS: tuple[str, ...] = cast(
+    "tuple[str, ...]", get_args(Weekday.__value__)
+)  # launchd: Sunday is 0
 WEEKEND = frozenset({"Saturday", "Sunday"})
 
 type Cadence = Literal["weekly", "monthly"]
@@ -387,9 +389,9 @@ def has_prompt(repo: Repo, prompt_path: str) -> bool:
     )
 
 
-def owned_repos(config: Config, visibility: str | None = None) -> list[dict]:
-    args = ["--visibility", visibility] if visibility else []
-    listing: list[dict] = gh_json(
+def owned_repos(config: Config, visibility: str | None = None) -> list[dict[str, Any]]:
+    args = ["--visibility", visibility] if visibility is not None else []
+    listing: list[dict[str, Any]] = gh_json(
         "repo",
         "list",
         config.owner,
@@ -597,13 +599,15 @@ def run_agent(
             return -1
 
 
-def find_pr(repo: Repo, branch: str, started: dt.datetime) -> dict | None:
+def find_pr(repo: Repo, branch: str, started: dt.datetime) -> dict[str, Any] | None:
     fields = "number,url,state,createdAt,headRefName"
     base = ["pr", "list", "-R", repo.full_name, "--state", "all", "--json", fields]
-    prs: list[dict] = gh_json(*base, "--head", branch)
+    prs: list[dict[str, Any]] = gh_json(*base, "--head", branch)
     if not prs:
         # The agent may have pushed to a branch of its own choosing.
-        recent: list[dict] = gh_json(*base, "--author", "@me", "--limit", "20")
+        recent: list[dict[str, Any]] = gh_json(
+            *base, "--author", "@me", "--limit", "20"
+        )
         prs = [
             p for p in recent if dt.datetime.fromisoformat(p["createdAt"]) >= started
         ]
@@ -656,7 +660,7 @@ def process_repo(
 # --------------------------------------------------------------------------- #
 
 
-def launchctl(*args: str) -> subprocess.CompletedProcess:
+def launchctl(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["launchctl", *args], capture_output=True, text=True, check=False
     )
@@ -666,7 +670,9 @@ def gui_domain() -> str:
     return f"gui/{os.getuid()}"
 
 
-def plist_for(label: str, shell_command: str, schedule: dict, log_name: str) -> dict:
+def plist_for(
+    label: str, shell_command: str, schedule: dict[str, Any], log_name: str
+) -> dict[str, Any]:
     return {
         "Label": label,
         # Shows the jobs as "LLM Dependabot" in System Settings > General >
@@ -690,7 +696,7 @@ def plist_for(label: str, shell_command: str, schedule: dict, log_name: str) -> 
     }
 
 
-def desired_agents(config: Config) -> dict[str, dict]:
+def desired_agents(config: Config) -> dict[str, dict[str, Any]]:
     script = shlex.quote(str(SCRIPT))
     agents = {}
     for group in config.groups:
@@ -737,7 +743,7 @@ def running_jobs() -> list[str]:
     ]
 
 
-def app_info() -> dict:
+def app_info() -> dict[str, Any]:
     return {
         "CFBundleName": APP_NAME,
         "CFBundleDisplayName": APP_NAME,
@@ -913,7 +919,7 @@ def run(
         return
     chosen = config.group(group)
     repos = discover(config, group)[group]
-    if repo:
+    if repo is not None:
         repos = [r for r in repos if r.name in repo]
     plan = planned_runs(config, chosen, repos, load_state(), prompt or [])
     summary = ", ".join(f"{r.name} {p.name}" for r, p in plan)
@@ -1048,7 +1054,7 @@ def ensure_signed_in(config: Config) -> None:
 
     agent = config.agent
     step(f"{agent.name} sign-in")
-    if not shutil.which(agent.command[0]):
+    if shutil.which(agent.command[0]) is None:
         fail(
             f"{agent.command[0]} is not installed; add its package to the Brewfile"
             " and rerun `make setup`"
