@@ -25,6 +25,12 @@ prompts:
     path: .github/prompts/simplify-codebase.md
     cadence: monthly
 
+  # Websites can commit a Google Search Console review that fixes newly
+  # reported indexing, structured-data, or sitemap issues.
+  - name: gsc-analysis
+    path: .github/prompts/gsc-analysis.md
+    cadence: monthly
+
 # Existing clones are reused from here; missing ones are cloned here and
 # deleted again once their pull request is merged or closed.
 clone_root: ~/Documents/GitHub

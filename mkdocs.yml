@@ -13,6 +13,7 @@ nav:
   - Setup: setup.md
   - Configuration: configuration.md
   - Usage: usage.md
+  - Autonomous evolution: autonomy.md
   - Architecture: architecture.md
   - Development: development.md
   - Integrations:
@@ -107,6 +108,7 @@ plugins:
           - setup.md
           - configuration.md
           - usage.md
+          - autonomy.md
           - architecture.md
           - development.md
         Integrations:

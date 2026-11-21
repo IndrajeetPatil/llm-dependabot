@@ -20,8 +20,28 @@ The hex sticker is drawn by hand; see [hextools](../../hextools/README.md).
 | [`process-and-run.webp`](process-and-run.webp) | Responsible process tree and per-repository run | [architecture.md](../architecture.md) |
 | [`usage-overview.webp`](usage-overview.webp) | Status, on-demand runs, pull requests, and cleanup | [usage.md](../usage.md) |
 | [`setup-checklist.webp`](setup-checklist.webp) | Local setup choices, repository opt-in, prompt conventions, and project readiness | [setup.md](../setup.md) |
+| [`autonomous-evolution.webp`](autonomous-evolution.webp) | Signal, prompt, agent, checks, review, merge, production, and feedback | [autonomy.md](../autonomy.md) |
+| [`learn-from-mistakes.webp`](learn-from-mistakes.webp) | Code and guidance fixes converge on the same gates and review | [autonomy.md](../autonomy.md) |
 
 ## Prompts
+
+### Autonomous evolution
+
+- **File:** `docs/images/autonomous-evolution.webp`
+- **Companion:** [`autonomous-evolution.prompt.txt`](autonomous-evolution.prompt.txt)
+
+```text
+Use case: infographic-diagram. Asset type: documentation illustration for the “Autonomous evolution” guide. Input image: use the existing llm-dependabot figure only as a reference for palette, typography, line weight, and restrained editorial style; do not copy its content or layout. Create a new landscape 3:2 editorial diagram showing the autonomous delivery feedback loop. Use warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, and restrained teal #14584d for the main flow. Use a large elegant Fraunces-like serif title, clean Hanken-like sans labels, flat outline icons, thin orthogonal arrows, generous whitespace, and no cards. Title exactly: “Autonomous evolution”. Show a clear left-to-right flow: “Signal” with small note “New releases, code smells, search, or monitoring reports” → “Committed prompt” with note “Due on schedule” → “Coding agent” with note “Isolated worktree” → “Pull request” with note “Evidence included” → “Quality gates” with note “Verification harness”. Then “Independent reviewer”. Show a failure loop from Quality gates back to Coding agent, labelled “Failures”; show a findings loop from Independent reviewer back to Coding agent, labelled “Findings”; show approval from Independent reviewer to “Squash-merge”, labelled “Approval”; then “Production”, with a return loop from Production back to Signal. Make arrows and branches clean and unambiguous, avoid crossing lines where possible. Exact spelling and labels. British English. No shadows, gradients, texture, 3D, emoji, decorative footer, ordinal numbering, extra text, invented facts, or logos.
+```
+
+### Learn from mistakes
+
+- **File:** `docs/images/learn-from-mistakes.webp`
+- **Companion:** [`learn-from-mistakes.prompt.txt`](learn-from-mistakes.prompt.txt)
+
+```text
+Use case: infographic-diagram. Asset type: documentation illustration for the “Autonomous evolution” guide. Input image: use the existing llm-dependabot illustration only as reference for its warm-paper palette, editorial typography, fine separators, restrained teal linework, and whitespace. Create a new illustration about learning from mistakes; do not copy the reference content or arrangement. Landscape 3:2. Title exactly: “Learn from mistakes”. Use warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, restrained teal #14584d, large Fraunces-like serif title, Hanken-like sans labels, flat outline icons, fine orthogonal arrows, and no cards. Show this flow: “Failing check, review finding, or regression” → “Trace the cause” → split into two parallel paths: “Fix the code” and “Fix the guidance” (small note: “AGENTS.md, a skill or its assets, or a prompt”). Both paths converge on “Same quality gates and review” → “Later runs avoid the mistake”. Use readable branch and rejoin arrows with no crossed lines; make clear that both code and guidance fixes go through the same quality gates and review before later runs avoid repeating the mistake. Exact wording, spelling, and punctuation as given. British English. No shadows, gradients, texture, 3D, cards, emoji, footer, ordinal numbering, extra text, invented facts, or logos.
+```
 
 ### Architecture overview
 

@@ -18,8 +18,13 @@ Every package, project, and application you maintain ages on its own:
   your own code simpler, but with little time to spare, those improvements
   are never adopted.
 
+- **Production keeps reporting new faults.** A website's Google Search
+  Console flags new indexing, canonical, structured-data, and sitemap issues
+  every month, and each needs someone to triage and fix it.
+
 Bots like Dependabot bump version numbers, but they cannot fix the breakage
-an upgrade causes or rewrite code to use what the new version offers. The
+an upgrade causes, rewrite code to use what the new version offers, or act
+on what production reports. The
 more repositories you maintain, the further this work falls behind.
 
 ## The solution
@@ -35,7 +40,7 @@ The giga factory is the layer coordinating those project-level factories:
 it decides which repositories and prompts are due, prepares isolated
 worktrees, and invokes your chosen agent. Dependency updates are one use
 case; repository-owned prompts can also cover refactoring, documentation,
-or other repeatable work. The prompts define the work, and each project
+fixing what Google Search Console reports, or other repeatable work. The prompts define the work, and each project
 provides its own instructions, checks, and review process.
 
 - **Opt in per repository and prompt:** a repository takes part in each
@@ -58,8 +63,9 @@ provides its own instructions, checks, and review process.
 
 I use it to maintain my own open-source repositories: web applications,
 Python and R packages, and everything else. They receive dependency updates
-every week (every month for R packages), and once a month a pass that
-simplifies the code with what the updated dependencies now offer.
+every week (every month for R packages), once a month a pass that
+simplifies the code with what the updated dependencies now offer, and, for
+websites, a monthly pass that fixes what Google Search Console reports.
 
 ## Build your own
 
@@ -122,6 +128,7 @@ The full documentation is at <https://www.indrapatil.com/llm-dependabot/>.
 | [Setup](https://www.indrapatil.com/llm-dependabot/setup/) | Requirements, repository creation, configuration, `make setup`, Full Disk Access, repository onboarding, and verification |
 | [Configuration](https://www.indrapatil.com/llm-dependabot/configuration/) | The coding agent, prompts and their cadences, the schedule, and adapting a fork |
 | [Usage](https://www.indrapatil.com/llm-dependabot/usage/) | Everyday commands, logs, files on disk, and troubleshooting |
+| [Autonomous evolution](https://www.indrapatil.com/llm-dependabot/autonomy/) | Self-healing prompts, strict quality gates, guidance that learns from mistakes, and what a repository needs before its pull requests can merge automatically |
 | [Architecture](https://www.indrapatil.com/llm-dependabot/architecture/) | How a run works and why it is built this way |
 | [Development](https://www.indrapatil.com/llm-dependabot/development/) | Toolchain, checks, CI, and the documentation site |
 | [LLMs](https://www.indrapatil.com/llm-dependabot/integrations/llms/) | The documentation in the `llms.txt` format |
