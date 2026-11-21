@@ -22,7 +22,9 @@ PRIVATE_FILE = Path(__file__).resolve().parent.parent / "private.yaml"
 def main(paths: list[str]) -> int:
     if not PRIVATE_FILE.exists():
         return 0
-    names = (yaml.safe_load(PRIVATE_FILE.read_text()) or {}).get("repos") or []
+    names = (yaml.safe_load(PRIVATE_FILE.read_text(encoding="utf-8")) or {}).get(
+        "repos"
+    ) or []
     if not names:
         return 0
     alternation = "|".join(re.escape(n) for n in sorted(names, key=len, reverse=True))
@@ -35,7 +37,7 @@ def main(paths: list[str]) -> int:
             failed = True
             continue
         try:
-            lines = path.read_text().splitlines()
+            lines = path.read_text(encoding="utf-8").splitlines()
         except UnicodeDecodeError, FileNotFoundError:
             continue
         for number, line in enumerate(lines, start=1):

@@ -24,7 +24,7 @@ Guidance for AI coding agents working in this repository.
 | `mkdocs.yml` | Documentation site configuration, navigation, and `llms.txt` sections |
 | `lychee.toml` | Link-check settings for the CI link check |
 | `overrides/` | Site template overrides: structured data, `llms.txt` links, and README edit links |
-| `pyproject.toml`, `uv.lock` | Docs-only uv project that installs Zensical |
+| `pyproject.toml`, `uv.lock` | Docs uv project that installs Zensical, and Ruff and ty configuration |
 | `.github/workflows/` | CI workflows: checks on pull requests, docs deployment from `main` |
 | `DESIGN.md` | Visual identity for the sticker, app icon, and documentation figures |
 | `.agents/skills/documentation-illustrations/` | Skill for generating documentation figures |
@@ -32,7 +32,6 @@ Guidance for AI coding agents working in this repository.
 | `hextools/` | Artwork and R scripts that render the hex sticker, `app/icon.png`, and the social preview card |
 | `hooks/check_private_names.py` | Hook that keeps private repository names out of commits |
 | `prek.toml` | Git hooks, run with `make hooks` |
-| `ruff.toml`, `ty.toml` | Lint, format, and type-check configuration |
 | `Makefile` | Entry points for common operations (`make help`) |
 | `Brewfile` | Command-line tools that `make setup` installs with `brew bundle` |
 
@@ -63,7 +62,7 @@ owner's Mac.
   the current ones are Typer, pydantic, PyYAML, and filelock.
 
 - Ruff runs with `select = ["ALL"]`; fix findings rather than adding ignores,
-  and justify any new ignore in a comment in `ruff.toml`.
+  and justify any new ignore in a comment in `pyproject.toml`.
 
 - Add type annotations everywhere; `ty check` must pass.
 

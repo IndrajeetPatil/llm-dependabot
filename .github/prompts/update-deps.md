@@ -32,7 +32,7 @@ to its latest tag but records the resolved commit SHA in `rev` with a
 tag.
 
 If the `requires-python` floor is no longer the latest stable CPython, raise it
-in both scripts and in `ruff.toml` and `ty.toml`, and adopt the new version's
+in both scripts and in `pyproject.toml`, and adopt the new version's
 features where they simplify the code.
 
 Do not change anything under `app/`: rebuilding the LLM Dependabot app
