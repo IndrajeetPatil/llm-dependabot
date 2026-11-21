@@ -47,6 +47,16 @@ You can create your own maintenance repository from the template or fork it:
   Forking makes it straightforward to pull upstream enhancements and template
   fixes in the future.
 
+Either way, the copy brings along files specific to this repository, such as
+its documentation site and CI guards; see
+[What comes with the template](configuration.md#what-comes-with-the-template)
+for what to keep, change, or delete.
+
+> [!NOTE]
+> Discovery skips forks, so a fork's own committed prompts never run and it
+> does not maintain itself the way a repository created from the template
+> does. A fork of a public repository also stays public.
+
 ## 2. Review configuration before setup
 
 Before running `make setup`, review [`config.yaml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/config.yaml)
@@ -57,8 +67,8 @@ to ensure they match your local environment and preferred agent:
   via Homebrew and waits for you to sign in. If you want to use Claude Code,
   Codex CLI, or GitHub Copilot CLI instead:
 
-    1. Update `agent` in `config.yaml` to specify your agent's command and check
-       syntax (see [The coding agent](configuration.md#the-coding-agent)).
+    1. Update `agent` in `config.yaml` with your agent's `command` and its
+       sign-in `check` (see [The coding agent](configuration.md#the-coding-agent)).
 
     2. In [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile),
        replace `cask "antigravity-cli"` with your agent's package, or remove the
@@ -69,7 +79,9 @@ to ensure they match your local environment and preferred agent:
   your local checkouts live elsewhere (such as `~/code`, `~/Developer`, or
   `~/projects`), update `clone_root` in `config.yaml` now. This ensures setup
   validates permissions for your actual projects directory and prevents
-  unnecessary re-cloning.
+  unnecessary re-cloning. An existing clone is reused only at
+  `<clone_root>/<repository name>` with a matching `origin`; a repository
+  whose directory there holds something else is skipped.
 
 - **Language groups and schedule (`groups`):** review the default groups
   (`web`, `python`, `workflows`, and `r`). If your repositories use other
@@ -139,14 +151,17 @@ carry what the agent needs to perform work and verify its changes.
 ### Add maintenance prompts
 
 A repository opts into maintenance by committing prompt files to its default
-branch (`main`). The default configuration recognises:
+branch. The default configuration recognises:
 
 - `.github/prompts/update-deps.md` (runs weekly by default)
 - `.github/prompts/simplify-codebase.md` (runs monthly by default)
 
-A prompt file should contain:
+The agent receives the file verbatim, as its only instruction, from inside a
+fresh worktree. A good prompt contains:
 
-- **Frontmatter:** YAML metadata defining `name` and `description`.
+- **Frontmatter (optional):** YAML metadata such as `name` and `description`.
+  llm-dependabot does not read it; it only describes the prompt to the agent
+  and to people browsing the repository.
 
 - **Instructions:** exact commands to run to update dependencies (such as
   `uv lock --upgrade`, `pnpm update`, or `cargo update`) or the refactoring
@@ -156,9 +171,12 @@ A prompt file should contain:
   everything passes cleanly (linters, type checkers, unit tests, and build
   commands).
 
-- **Pull request directions:** instructions to create a branch, open a
-  ready-for-review (non-draft) pull request via `gh pr create`, and summarise
-  changes in the pull request description.
+- **Pull request directions:** instructions to commit to the branch already
+  checked out (`chore/<prompt>-<timestamp>`, created by llm-dependabot), push
+  it, open a ready-for-review (non-draft) pull request with `gh pr create`,
+  and summarise the changes in its description. When there is nothing to
+  change, the agent can stop without opening one; the run then removes its
+  worktree.
 
 > [!TIP]
 > Use this repository's own committed prompts as templates for your projects:
@@ -178,10 +196,19 @@ linters. This keeps the agent aligned with your conventions.
 The agent runs locally on your Mac within fresh git worktrees. Ensure the
 relevant language toolchains and package managers (for example Python with
 `uv`, Node.js with `pnpm`, Rust with `cargo`, or R with `Rscript`) are
-installed and available on your system `PATH`.
+installed and on the `PATH` of a new terminal window: scheduled jobs start a
+login, interactive zsh, so they see what `~/.zprofile` and `~/.zshrc` set up,
+including version managers such as `nvm` or `pyenv`.
 
 Ensure tests and linters pass on the default branch before the agent runs, so
 it begins from a known green baseline.
+
+### Protect the default branch
+
+The agent runs without asking for approval and with your `gh` and `git`
+credentials. Protect each participating repository's default branch (require
+pull requests and passing checks), so every change has to arrive as a pull
+request you review, even if the agent tries to push directly.
 
 ### Include private repositories
 
@@ -204,14 +231,14 @@ of version control:
 After setup finishes, run these commands to verify that your configuration,
 permissions, and repository discoveries are working as expected:
 
-1. **Check schedule status and permissions:**
+1. **Check the schedule:**
 
    ```sh
    make status
    ```
 
-   Verifies that the `launchd` agents are loaded and displays the active
-   schedule and pending pull requests.
+   Shows whether each group's `launchd` agent is loaded, the prompt cadences,
+   and pending pull requests. Setup has already confirmed Full Disk Access.
 
 2. **Verify repository and prompt discovery:**
 
@@ -231,7 +258,7 @@ permissions, and repository discoveries are working as expected:
    ```
 
    Previews which repositories and prompts are due to run without invoking the
-   agent or modifying any files.
+   agent or modifying any files. Use any group name from `config.yaml`.
 
 4. **Test a single repository run:**
 
@@ -242,6 +269,10 @@ permissions, and repository discoveries are working as expected:
    Executes an end-to-end test on one repository. Watch the agent create an
    isolated worktree, execute the prompt, run the repository's quality gate,
    and open a pull request on GitHub.
+
+   > [!WARNING]
+   > This is a real run: the agent works unattended and opens a real pull
+   > request. Try it first on a repository where that is harmless.
 
 ## After editing the configuration
 
