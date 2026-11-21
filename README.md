@@ -24,24 +24,27 @@ Every package, project, and application you maintain ages on its own:
 
 Bots like Dependabot bump version numbers, but they cannot fix the breakage
 an upgrade causes, rewrite code to use what the new version offers, or act
-on what production reports. The
-more repositories you maintain, the further this work falls behind.
+on what production reports. The more repositories you maintain, the further
+this work falls behind.
 
 ## The solution
 
 llm-dependabot coordinates a software factory in each of your projects.
-Each repository commits
-prompts describing its own maintenance (updating dependencies, simplifying
-the codebase, or anything else), and on a schedule, llm-dependabot runs each
-due prompt with the agent. The agent opens a pull request, which goes through
-the project's own checks and your review like any other.
+Each repository commits prompts describing its own maintenance (updating
+dependencies, simplifying the codebase, or anything else), and on a
+schedule, llm-dependabot runs each due prompt with the agent. The agent
+opens a pull request, which goes through the project's own checks and your
+review like any other.
 
 The giga factory is the layer coordinating those project-level factories:
 it decides which repositories and prompts are due, prepares isolated
 worktrees, and invokes your chosen agent. Dependency updates are one use
 case; repository-owned prompts can also cover refactoring, documentation,
-fixing what Google Search Console reports, or other repeatable work. The prompts define the work, and each project
-provides its own instructions, checks, and review process.
+fixing what Google Search Console reports, or other repeatable work. The
+prompts define the work, and each project provides its own instructions,
+checks, and review process.
+
+![Software Giga Factory: a staggered schedule activates each project’s software factory. Prompts drive dependency updates, refactoring, simplification, and more; each runs in an isolated worktree, opens a pull request, and passes through project checks and maintainer review, with findings returned for fixes. Weekly group schedules, monthly prompts when due, one repository and due prompt at a time.](https://raw.githubusercontent.com/IndrajeetPatil/llm-dependabot/main/docs/images/giga-factory.webp)
 
 - **Opt in per repository and prompt:** a repository takes part in each
   prompt it commits, such as `.github/prompts/update-deps.md` or
@@ -56,8 +59,6 @@ provides its own instructions, checks, and review process.
 
 - **Your machine, your credentials:** the agent, `gh`, and `git` use the
   sign-ins you already have; there is no hosted service and no stored secret.
-
-![Software Giga Factory: a staggered schedule activates each project’s software factory. Prompts drive dependency updates, refactoring, simplification, and more; each runs in an isolated worktree, opens a pull request, and passes through project checks and maintainer review, with findings returned for fixes. Weekly group schedules, monthly prompts when due, one repository and due prompt at a time.](https://raw.githubusercontent.com/IndrajeetPatil/llm-dependabot/main/docs/images/giga-factory.webp)
 
 ![How llm-dependabot works: launchd starts the app and login shell; repository discovery finds committed prompts and those due to run, then each due prompt gets its own worktree, agent run, pull request, and cleanup.](https://raw.githubusercontent.com/IndrajeetPatil/llm-dependabot/main/docs/images/architecture-overview.webp)
 
@@ -95,7 +96,12 @@ for what to change.
 ## Quick start
 
 > [!NOTE]
-> As configured here, llm-dependabot runs on macOS.
+> As configured here, llm-dependabot runs locally and on macOS only, by
+> design. Running agents on your own machine is safer: they reuse your
+> existing sign-ins, so no credentials need to be stored in CI. And as a
+> personal project, it targets the only machine I develop on. Fork the
+> template to adapt it to another operating system, or even to run in the
+> cloud.
 
 ```sh
 # Create from the template (recommended):
