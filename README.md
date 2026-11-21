@@ -24,24 +24,24 @@ Every package, project, and application you maintain ages on its own:
 
 Bots like Dependabot bump version numbers, but they cannot fix the breakage
 an upgrade causes, rewrite code to use what the new version offers, or act
-on what production reports. The
-more repositories you maintain, the further this work falls behind.
+on what production reports. The more repositories you maintain, the further
+this work falls behind.
 
 ## The solution
 
 llm-dependabot coordinates a software factory in each of your projects.
-Each repository commits
-prompts describing its own maintenance (updating dependencies, simplifying
-the codebase, or anything else), and on a schedule, llm-dependabot runs each
-due prompt with the agent. The agent opens a pull request, which goes through
+Each repository commits prompts describing its own maintenance (updating
+dependencies, simplifying the codebase, or anything else), and on a
+schedule, llm-dependabot runs each due prompt with the agent. The agent opens a pull request, which goes through
 the project's own checks and your review like any other.
 
 The giga factory is the layer coordinating those project-level factories:
 it decides which repositories and prompts are due, prepares isolated
 worktrees, and invokes your chosen agent. Dependency updates are one use
 case; repository-owned prompts can also cover refactoring, documentation,
-fixing what Google Search Console reports, or other repeatable work. The prompts define the work, and each project
-provides its own instructions, checks, and review process.
+fixing what Google Search Console reports, or other repeatable work. The
+prompts define the work, and each project provides its own instructions,
+checks, and review process.
 
 - **Opt in per repository and prompt:** a repository takes part in each
   prompt it commits, such as `.github/prompts/update-deps.md` or
