@@ -4,6 +4,8 @@ Show three sections. “Check the schedule”: “Schedule status” → “Proj
 
 Use a recognizable GitHub mark beside Pull request. No literal commands, parameters, filenames, or configuration keys. Keep labels legible, spelling exact, and the arrows correct. British English.
 
+Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing usage infographic. Preserve its title, three-section layout, all existing icons, arrows, colours, positions, typography, dividers, and warm-paper style. Make one cohesive change: update the on-demand and lifecycle summaries to reflect the current commands and cleanup. In “Run work on demand”, change the branch to “Choose one project or one prompt” and add the muted detail “REPO= / PROMPT=”. In “Finish the lifecycle”, replace “Worktree removed” with “Worktree and run-only clone removed”, and add the muted note “Agent transcripts in ~/Library/Logs/llm-dependabot”. In “Check the schedule”, replace its summary with exactly “See groups, prompt cadences, and pending pull requests”. Keep all other labels and visual elements unchanged; ensure the new copy fits clearly. British English.
+
 Edit prompts:
 
 Edit the usage infographic to replace literal command and parameter labels with “Preview Python group”, “Run Python group”, “Choose one project”, and “Runs periodically”. Add a small accurate Python logo beside each Python group label.

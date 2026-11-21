@@ -14,7 +14,7 @@ The hex sticker is drawn by hand; see [hextools](../../hextools/README.md).
 | [`architecture-overview.webp`](architecture-overview.webp) | Scheduled trigger, worktree isolation, and agent lifecycle | [README.md](../../README.md), [architecture.md](../architecture.md) |
 | [`giga-factory.webp`](giga-factory.webp) | The schedule coordinating a software factory inside each project | [README.md](../../README.md) |
 | [`execution-lifecycle.webp`](execution-lifecycle.webp) | Permission boundary, repository isolation, and state locking | [architecture.md](../architecture.md) |
-| [`tech-stack.webp`](tech-stack.webp) | Runtime, dependencies, core libraries, and local QA checks | [development.md](../development.md) |
+| [`tech-stack.webp`](tech-stack.webp) | Runtime, dependencies, core libraries, local checks, and CI supply-chain checks | [development.md](../development.md) |
 | [`ecosystem-schedule.webp`](ecosystem-schedule.webp) | Configured project-group schedules, prompt cadence, and pull-request cleanup | [configuration.md](../configuration.md) |
 | [`multiple-prompts.webp`](multiple-prompts.webp) | The same isolated run pattern for each due prompt, with room for more prompts | [configuration.md](../configuration.md) |
 | [`process-and-run.webp`](process-and-run.webp) | Responsible process tree and per-repository run | [architecture.md](../architecture.md) |
@@ -62,6 +62,8 @@ Preserve this architecture infographic’s composition, wording, icons, arrows, 
 Agent-neutral label edit prompt:
 
 Replace only “Antigravity CLI” with “Coding Agent” so the diagram remains accurate if the default coding agent changes. Preserve every other label, icon, arrow, layout, colour, and style.
+
+Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing “How llm-dependabot works” infographic. Preserve the title, first and third bands, all icons, arrows, colours, positions, typography, separators, and warm-paper editorial style. Make one change within the “Repositories stay isolated” band: change the summary to exactly “Each due prompt starts work in its own worktree”, and change the “GitHub discovery” note to exactly “Finds committed prompts and which are due”. Keep the band layout and all other content unchanged. British English.
 ```
 ### Software Giga Factory
 
@@ -120,6 +122,8 @@ Replace implementation-level repository operations with “Project copy exists?�
 Clarify the separate checkout as a Git worktree. Use “Runs in a Git worktree”, “Create Git worktree”, and “Remove worktree” for that checkout.
 
 Preserve this process infographic’s composition, wording, icons, arrows, branches, and warm-paper editorial design. Harmonize every teal line, symbol, and arrow to the light-mode base accent from the design guide: #14584d (RGB 20, 88, 77). Use no brighter turquoise or accent-light teal. Anti-aliased edge pixels may blend between this teal and the paper, but flat stroke interiors should match #14584d. Keep all headings in ink #201d18, explanatory copy in muted ink #5d574c, and hairlines in #e3ded2. Make no other changes.
+
+Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing “Process and run” infographic. Preserve its title, two-band layout, typography, warm-paper style, colours, existing icons, separators, and overall placement. Make one cohesive change: update the process and run flow to the current documented lifecycle. In “Responsible process”, replace the chain with “launchd” → “LLM Dependabot app” → “Login shell” → “llm_dependabot.py (uv)” → “Coding agent”, and add a side branch from “llm_dependabot.py (uv)” to “caffeinate”, with the note “keeps the Mac awake”. In the run band, after “Discover repository and prompt”, add decision “Prompt due?” with the note “weekly, or monthly not yet run this month”; its “No” branch ends at “Skip”. Continue the “Yes” branch into the existing repository-copy check and worktree/agent flow. Show that this per-prompt flow (worktree → agent → pull-request decision) repeats for each due prompt in the repository. After the “Pull request opened?” decision, put “Record run date” on both outcome branches, after the yes outcome records the pending pull request and after the no outcome removes the worktree. Add the note “Every completed run counts towards the cadence” beside “Record run date”. Replace the footer with exactly “Failures are logged and not recorded; the next prompt or repository still runs”. Keep branches clear and non-crossing. Do not alter unrelated labels or styling. British English.
 ```
 ### Usage overview
 
@@ -154,6 +158,8 @@ Align all three thin vertical dividers between the left icon-and-summary column 
 Bottom-row spacing edit prompt:
 
 Keep all three dividers aligned. In the final row only, shift the complete right-hand flow, including labels, icons, arrows, and subtitle, about 24 pixels right while preserving its content and positions relative to one another. Keep the divider fixed and leave the left title, icon, heading, and summary unchanged. This gives the first flow label more breathing room after the divider. Keep the last node inside the canvas margin.
+
+Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing usage infographic. Preserve its title, three-section layout, all existing icons, arrows, colours, positions, typography, dividers, and warm-paper style. Make one cohesive change: update the on-demand and lifecycle summaries to reflect the current commands and cleanup. In “Run work on demand”, change the branch to “Choose one project or one prompt” and add the muted detail “REPO= / PROMPT=”. In “Finish the lifecycle”, replace “Worktree removed” with “Worktree and run-only clone removed”, and add the muted note “Agent transcripts in ~/Library/Logs/llm-dependabot”. In “Check the schedule”, replace its summary with exactly “See groups, prompt cadences, and pending pull requests”. Keep all other labels and visual elements unchanged; ensure the new copy fits clearly. British English.
 ```
 ### Execution lifecycle and isolation
 
@@ -226,6 +232,8 @@ Band 3 (bottom):
 
 ```text
 Preserve this development infographic’s composition, wording, icons, arrows, bands, and warm-paper editorial design. Harmonize every teal line, icon, and arrow to the light-mode base accent from the design guide: #14584d (RGB 20, 88, 77). Use no brighter turquoise or accent-light teal. Anti-aliased edge pixels may blend between this teal and the paper, but flat stroke interiors should match #14584d. Keep headings in ink #201d18, explanatory copy in muted ink #5d574c, and hairlines #e3ded2. Preserve recognizable third-party brand marks in their official colours where shown. Make no other changes.
+
+Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing development toolchain infographic. Preserve its landscape 3:2 canvas, title, first three bands, their exact wording, positions, icons, arrows, colours, typography, separators, and warm-paper editorial style. Make one change: add a fourth band beneath the existing three, headed “CI and supply chain” with summary “The same checks again on every pull request, with pinned actions”. Its flow is “GitHub Actions workflows” → “actionlint and zizmor” → “Gitleaks” → “actions.lock”. Add muted notes “Zensical docs site” beneath “GitHub Actions workflows”, “zizmor (pedantic)” beneath “actionlint and zizmor”, “Scans the full history” beneath “Gitleaks”, and “gh-actions-lock” beneath “actions.lock”. Also add the small muted note “Homebrew and the Brewfile install tools” beneath the flow. Keep the existing three bands unchanged, and make the new band fit legibly without moving or altering them. Use the existing palette and style. Exact labels and spelling; British English.
 ```
 ### Configured project groups and prompt cadence
 
@@ -250,6 +258,8 @@ Keep every row aligned with consistent dividers and margins. Keep the weekday an
 **Follow-up edit prompt:** Replace the internal group labels “web” and “workflows” with reader-facing labels “Web Applications” and “Sundry”; use “Unmatched project types” as the Sundry note. Keep all schedules, cadence labels, colours, and layout unchanged. Replace the Sundry branching icon with a teal mixed-collection/toolkit icon and replace the Pull-request cleanup branching icon with teal pruning shears, clearly distinguishing the two. Keep the R and Python logos in official colours.
 
 **Capitalisation edit prompt:** Change only lowercase “python” to “Python” in the group label. Preserve every other text, logo, icon, colour, spacing, and layout element.
+
+Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing configured schedule infographic. Preserve its title, subtitle, five-row layout, labels, group icons and logos, schedules, cleanup row, colours, positions, typography, dividers, and warm-paper style. Make one change: update only the cadence line for each of the four project groups to reflect the three shipped prompts. Use exactly “update-deps weekly · simplify-codebase and gsc-analysis monthly” for Web Applications, Python, and Sundry; use exactly “all prompts monthly” for R Packages. Keep the Pull-request cleanup row unchanged. Ensure the cadence text remains legible and fits its existing row. British English.
 ```
 
 ### One schedule, multiple prompts
@@ -271,4 +281,6 @@ Row two: “simplify-codebase” (small cadence note “Monthly, when due”) �
 Row three: “…” (small note “Other configured prompts”) → “Own Git worktree + branch” → “Coding agent runs this prompt” → “Its own pull request”
 
 Use a file/page outline icon for prompt labels, a separate-branch/worktree outline for each worktree, a simple agent/terminal outline, and a pull-request branching icon. Make it visually obvious that every prompt row repeats the same setup and creates a separate pull request. Use thin arrows that do not cross. Do not imply that prompts run in parallel. Preserve the literal ellipsis “…” as shown. Ensure all wording, arrow direction, and spelling are exact and legible at documentation width. British English.
+
+Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing “One schedule, multiple prompts” infographic. Preserve its title, subtitle, context and timing notes, three-row composition, all existing row wording, positions, arrows, icons, colours, typography, dividers, and warm-paper style. Make one change: insert a “gsc-analysis” row with the subtitle “Monthly, when due” between “simplify-codebase” and “…” / “Other configured prompts”. Its flow is identical to the other prompt rows: “Own Git worktree + branch” → “Coding agent runs this prompt” → “Its own pull request”. Do not alter the existing rows or the ellipsis row. Keep all labels legible and do not imply parallel runs. British English.
 ```

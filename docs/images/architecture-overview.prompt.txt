@@ -7,3 +7,5 @@ Preserve this architecture infographic’s composition, wording, icons, arrows, 
 Agent-neutral label edit prompt:
 
 Replace only “Antigravity CLI” with “Coding Agent” so the diagram remains accurate if the default coding agent changes. Preserve every other label, icon, arrow, layout, colour, and style.
+
+Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing “How llm-dependabot works” infographic. Preserve the title, first and third bands, all icons, arrows, colours, positions, typography, separators, and warm-paper editorial style. Make one change within the “Repositories stay isolated” band: change the summary to exactly “Each due prompt starts work in its own worktree”, and change the “GitHub discovery” note to exactly “Finds committed prompts and which are due”. Keep the band layout and all other content unchanged. British English.
