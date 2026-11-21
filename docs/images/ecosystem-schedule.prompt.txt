@@ -1,19 +1,13 @@
-Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot, a macOS tool that runs repository-owned coding prompts on a schedule. Revise the supplied schedule infographic to reflect the current configuration while preserving its warm-paper editorial style, generous whitespace, serif title, clear sans-serif labels, and fine row dividers. Landscape 3:2. Use background #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, and teal #14584d for technology icons. Preserve the authentic R and Python logos in their official colours. No shadows, gradients, texture, 3D, cards, emoji, decorative footer, invented facts, or private repository names.
+Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot's configured project-group schedules and prompt cadence. Create a landscape 3:2 editorial infographic with warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, teal #14584d, a Fraunces-like serif title, clear Hanken-like sans labels, and generous whitespace. Use aligned rows and fine dividers. Keep the official Python and R logos in their official colours. No shadows, gradients, texture, 3D, cards, emoji, decorative footer, or invented facts. British English.
 
-Title: “Configured project groups and prompt cadence”
-Subtitle: “Each group starts weekly; prompts run when due”
+Title “Configured project groups and prompt cadence”
+Subtitle “Each group starts weekly; prompts run when due”
 
-Show five aligned rows with these exact labels and details, in weekday order:
-- “Web Applications”, note “TypeScript · JavaScript · Astro · Svelte · Vue · HTML · CSS”, schedule “Monday · 11:00”, cadence “update-deps weekly · simplify-codebase monthly”. Use a teal browser/code icon.
-- “Python”, note “Python”, schedule “Tuesday · 11:00”, cadence “update-deps weekly · simplify-codebase monthly”. Use the official Python logo in its blue and yellow.
-- “Sundry”, note “Unmatched project types”, schedule “Wednesday · 11:00”, cadence “update-deps weekly · simplify-codebase monthly”. Use a teal mixed-collection icon such as a simple toolkit with varied file symbols.
-- “R Packages”, note “R projects”, schedule “Thursday · 11:00”, cadence “update-deps monthly · simplify-codebase monthly”. Use the authentic R logo in its official colours.
-- “Pull-request cleanup”, note “Removes worktrees and local branches after PRs merge or close”. Use a teal pruning brush or pruning shears icon, visibly distinct from the Sundry mixed-collection icon. Do not state a cleanup interval.
+Show five weekday-ordered rows:
+- “Web Applications”, note “TypeScript · JavaScript · Astro · Svelte · Vue · HTML · CSS”, schedule “Monday · 11:00”, cadence “update-deps weekly · simplify-codebase and gsc-analysis monthly”. Teal browser/code icon.
+- “Python”, note “Python”, schedule “Tuesday · 11:00”, cadence “update-deps weekly · simplify-codebase and gsc-analysis monthly”. Official Python logo.
+- “Sundry”, note “Unmatched project types”, schedule “Wednesday · 11:00”, cadence “update-deps weekly · simplify-codebase and gsc-analysis monthly”. Teal mixed-collection/toolkit icon.
+- “R Packages”, note “R projects”, schedule “Thursday · 11:00”, cadence “all prompts monthly”. Authentic R logo.
+- “Pull-request cleanup”, note “Removes worktrees and local branches after PRs merge or close”. Teal pruning shears, visually distinct from the Sundry icon. Do not state a cleanup interval.
 
-Keep every row aligned with consistent dividers and margins. Keep the weekday and time text legible. Keep technology icons teal #14584d, with the R and Python logos as official-colour exceptions. Spell all labels exactly as written. British English.
-
-**Follow-up edit prompt:** Replace the internal group labels “web” and “workflows” with reader-facing labels “Web Applications” and “Sundry”; use “Unmatched project types” as the Sundry note. Keep all schedules, cadence labels, colours, and layout unchanged. Replace the Sundry branching icon with a teal mixed-collection/toolkit icon and replace the Pull-request cleanup branching icon with teal pruning shears, clearly distinguishing the two. Keep the R and Python logos in official colours.
-
-**Capitalisation edit prompt:** Change only lowercase “python” to “Python” in the group label. Preserve every other text, logo, icon, colour, spacing, and layout element.
-
-Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing configured schedule infographic. Preserve its title, subtitle, five-row layout, labels, group icons and logos, schedules, cleanup row, colours, positions, typography, dividers, and warm-paper style. Make one change: update only the cadence line for each of the four project groups to reflect the three shipped prompts. Use exactly “update-deps weekly · simplify-codebase and gsc-analysis monthly” for Web Applications, Python, and Sundry; use exactly “all prompts monthly” for R Packages. Keep the Pull-request cleanup row unchanged. Ensure the cadence text remains legible and fits its existing row. British English.
+Keep all rows aligned, labels legible, exact wording, and logos accurate.

@@ -1,35 +1,11 @@
-Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot, a macOS tool that runs an AI coding agent weekly to update dependencies. Landscape 3:2, flat canvas warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, deep teal #14584d accent for all step outline icons and connecting arrows, muted rust #9a3d2e only for failure stops. Fraunces-like serif title and band headings, Hanken-like sans labels, generous whitespace, flat outline icons in deep teal #14584d, thin orthogonal teal arrows. Match the reference style of flat warm-paper editorial documentation diagrams from indrapatil.com and python-package-quality-checks.webp. No shadows, gradients, texture, 3D, cards, boxed panels, emoji, decorative footers, ordinal numbering (do not write 'Band 1' or 'Step 1' or 'Tier 1'), or invented statistics.
+Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot's development toolchain. Create a landscape 3:2 editorial infographic using warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, and sparse teal #14584d. Use Fraunces-like serif title and band headings, Hanken-like sans labels, generous whitespace, flat outline icons, and thin orthogonal arrows. Keep the flow unboxed, with four horizontal bands separated by hairlines. No shadows, gradients, texture, 3D, cards, emoji, decorative footer, ordinal numbering, or invented facts. British English.
 
-Title exactly: 'Development toolchain and tech stack'
+Title exactly: “Development toolchain and tech stack”
 
-Layout: Three horizontal bands separated by fine horizontal hairlines (#e3ded2), each band having its heading and a one-line muted summary on the left, and its unboxed step-by-step flow on the right connected by thin orthogonal teal arrows (#14584d).
+Band “Runtime & dependencies”, summary “Single-file Python 3.15 script with locked inline dependencies”: “Python 3.15” (note “Modern language runtime”) → “uv script metadata” (note “PEP 723 inline dependencies”) → “Locked dependencies” (note “llm_dependabot.py.lock · frozen deps”).
 
-Band 1 (top):
-- Left heading: 'Runtime & dependencies'
-- Left summary: 'Single-file Python 3.15 script with locked inline dependencies'
-- Right flow (each step with a deep teal #14584d outline icon):
-  'Python 3.15' (underneath note: 'Modern language runtime') →
-  'uv script metadata' (underneath note: 'PEP 723 inline dependencies') →
-  'Locked dependencies' (underneath note: 'llm_dependabot.py.lock · frozen deps')
+Band “Libraries & native app”, summary “Rust-backed validation, CLI tooling, and macOS launcher”: “Typer & PyYAML” (note “CLI commands & config parsing”) → “Pydantic & filelock” (note “Rust-core validation & concurrency gate”) → “Native launcher” (note “app/launcher.c · Full Disk Access”).
 
-Band 2 (middle):
-- Left heading: 'Libraries & native app'
-- Left summary: 'Rust-backed validation, CLI tooling, and macOS launcher'
-- Right flow (each step with a deep teal #14584d outline icon):
-  'Typer & PyYAML' (underneath note: 'CLI commands & config parsing') →
-  'Pydantic & filelock' (underneath note: 'Rust-core validation & concurrency gate') →
-  'Native launcher' (underneath note: 'app/launcher.c · Full Disk Access')
+Band “Hygiene & local checks”, summary “Strict local linting, typing, git hooks, and vulnerability auditing”: “Ruff lint & format” (note “select = ["ALL"] · fast Rust linter”) → “ty & audit” (note “Script type check · uv audit OSV scan”) → “prek git hooks” (note “Hygiene & private repository name guard”).
 
-Band 3 (bottom):
-- Left heading: 'Hygiene & local checks'
-- Left summary: 'Strict local linting, typing, git hooks, and vulnerability auditing'
-- Right flow (each step with a deep teal #14584d outline icon):
-  'Ruff lint & format' (underneath note: 'select = ["ALL"] · fast Rust linter') →
-  'ty & audit' (underneath note: 'Script type check · uv audit OSV scan') →
-  'prek git hooks' (underneath note: 'Hygiene & private repository name guard')
-
-Follow-up edit prompt: Use case: precise-object-edit. Input image: the existing development toolchain infographic. Preserve its landscape 3:2 canvas, title, first three bands, their exact wording, positions, icons, arrows, colours, typography, separators, and warm-paper editorial style. Make one change: add a fourth band beneath the existing three, headed “CI and supply chain” with summary “The same checks again on every pull request, with pinned actions”. Its flow is “GitHub Actions workflows” → “actionlint and zizmor” → “Gitleaks” → “actions.lock”. Add muted notes “Zensical docs site” beneath “GitHub Actions workflows”, “zizmor (pedantic)” beneath “actionlint and zizmor”, “Scans the full history” beneath “Gitleaks”, and “gh-actions-lock” beneath “actions.lock”. Also add the small muted note “Homebrew and the Brewfile install tools” beneath the flow. Keep the existing three bands unchanged, and make the new band fit legibly without moving or altering them. Use the existing palette and style. Exact labels and spelling; British English.
-
-Palette correction edit prompt:
-
-Preserve this development infographic’s composition, wording, icons, arrows, bands, and warm-paper editorial design. Harmonize every teal line, icon, and arrow to the light-mode base accent from the design guide: #14584d (RGB 20, 88, 77). Use no brighter turquoise or accent-light teal. Anti-aliased edge pixels may blend between this teal and the paper, but flat stroke interiors should match #14584d. Keep headings in ink #201d18, explanatory copy in muted ink #5d574c, and hairlines #e3ded2. Preserve recognizable third-party brand marks in their official colours where shown. Make no other changes.
+Band “CI and supply chain”, summary “The same checks again on every pull request, with pinned actions”: “GitHub Actions workflows” (note “Zensical docs site”) → “actionlint and zizmor” (note “zizmor (pedantic)”) → “Gitleaks” (note “Scans the full history”) → “actions.lock” (note “gh-actions-lock”). Beneath the flow add the muted note “Homebrew and the Brewfile install tools”. Keep every label spelled exactly and legible within the four-band layout.
