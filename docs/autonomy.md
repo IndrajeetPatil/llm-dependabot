@@ -90,7 +90,7 @@ These patterns are not limited to prototypes or proofs of concept. They
 maintain live systems that people depend on and that must stay current:
 
 - **Open-source packages** with users downstream, such as the Python
-  package [crosszip](https://github.com/IndrajeetPatil/crosszip) and the R
+  package [md2linkedin](https://github.com/IndrajeetPatil/md2linkedin) and the R
   package [ggstatsplot](https://github.com/IndrajeetPatil/ggstatsplot).
 
 - **Public web applications,** such as a bilingual practice app for the
