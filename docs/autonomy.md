@@ -84,6 +84,28 @@ without anyone watching, and that takes sound agentic engineering practices:
 Once these hold, a green, approved pull request is as good as one a careful
 maintainer would have merged, and merging it automatically costs no quality.
 
+### In production
+
+These patterns are not limited to prototypes or proofs of concept. They
+maintain live systems that people depend on and that must stay current:
+
+- **Open-source packages** with users downstream, such as
+  [ggstatsplot](https://github.com/IndrajeetPatil/ggstatsplot) and
+  [statsExpressions](https://github.com/IndrajeetPatil/statsExpressions).
+
+- **A personal website,** [indrapatil.com](https://www.indrapatil.com),
+  whose content, dependencies, and search presence update themselves.
+
+- **Private dashboards** that run continuously on live data.
+
+The website and dashboards are private repositories, so
+[chatbot-template](https://github.com/IndrajeetPatil/chatbot-template)
+serves as the public example. It is a template rather than a widely used
+system, but it shows what a minimal software factory looks like: its
+`AGENTS.md`, prompts, skills, quality gates, browser tests, and reviewer loop
+let the coding agent fix CI and review findings, then squash-merge once the
+review approves and the required checks pass.
+
 > [!IMPORTANT]
 > Autonomy does not remove oversight. People own the boundaries, watch how
 > the safeguards perform, and review uncertain or high-impact changes; the
