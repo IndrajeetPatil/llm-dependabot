@@ -5,7 +5,7 @@ prompts that are due, and pull requests appear in the repositories. Review and
 merge them as usual; clones made for a run are deleted once their pull request
 is merged or closed.
 
-![Using llm-dependabot: check schedule status and project groups, preview or run a Python group or choose one project, then review pull requests before periodic cleanup removes the Git worktree.](images/usage-overview.webp)
+![Using llm-dependabot: check groups, prompt cadences, and pending pull requests; preview or run a Python group or choose one project or prompt; then review pull requests before cleanup removes the worktree and run-only clone.](images/usage-overview.webp)
 
 ## Commands
 

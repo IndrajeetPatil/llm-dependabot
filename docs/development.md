@@ -2,7 +2,7 @@
 
 ## Toolchain
 
-![Development toolchain and tech stack: three bands covering runtime and inline dependencies with uv and Python 3.15, core libraries and the native Full Disk Access launcher, and local hygiene checks with Ruff, ty, prek git hooks, and uv audit.](images/tech-stack.webp)
+![Development toolchain and tech stack: four bands cover Python and locked dependencies, core libraries and the native Full Disk Access launcher, local Ruff, ty, audit, and prek checks, and pull-request CI and supply-chain checks with GitHub Actions, actionlint, zizmor, Gitleaks, actions.lock, Zensical, Homebrew, and the Brewfile.](images/tech-stack.webp)
 
 - **Python 3.15** in a single-file [uv](https://docs.astral.sh/uv/) script
   with inline dependencies, locked in `llm_dependabot.py.lock`; there is no

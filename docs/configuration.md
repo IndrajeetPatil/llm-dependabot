@@ -105,7 +105,7 @@ prompts:
   so a monthly prompt whose run was missed, skipped, or failed runs at the
   group's next scheduled run instead of waiting a month.
 
-![One schedule, multiple prompts: each due repository prompt gets its own Git worktree and branch, coding-agent run, and pull request, processed one at a time.](images/multiple-prompts.webp)
+![One schedule, multiple prompts: update-deps, simplify-codebase, and gsc-analysis each get an isolated Git worktree and branch, a coding-agent run, and their own pull request, one at a time.](images/multiple-prompts.webp)
 
 ## Groups and the schedule
 
@@ -133,7 +133,7 @@ The default schedule, with nothing on Fridays or at weekends:
 | `workflows` | anything not matched by another group | Wednesday 11:00 | weekly | first Wednesday of the month |
 | `r` | R | Thursday 11:00 | first Thursday of the month | first Thursday of the month |
 
-![Configured project groups and prompt cadence: Web Applications run Monday at 11:00, Python Tuesday at 11:00, Sundry Wednesday at 11:00, and R Packages Thursday at 11:00; weekly and monthly prompt cadence is shown for each group, followed by pull-request cleanup.](images/ecosystem-schedule.webp)
+![Configured project groups and prompt cadence: Web Applications run Monday, Python Tuesday, Sundry Wednesday, and R Packages Thursday at 11:00; Web, Python, and Sundry run update-deps weekly and simplify-codebase and gsc-analysis monthly, while R runs all prompts monthly, followed by pull-request cleanup.](images/ecosystem-schedule.webp)
 
 With `skip_weekends: true`, groups cannot be scheduled on a Saturday or
 Sunday, and a scheduled job that launchd starts late at a weekend (for

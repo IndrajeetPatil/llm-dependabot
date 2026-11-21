@@ -4,7 +4,7 @@ llm-dependabot is a scheduler, not an agent. It decides when, where, and
 which prompt the agent runs, isolates its work, and cleans up afterwards. The
 intelligence lives in each repository's own prompts.
 
-![How llm-dependabot works: scheduled jobs start the app and login environment, repositories are prepared in isolated Git worktrees, and the coding agent opens pull requests for later cleanup.](images/architecture-overview.webp)
+![How llm-dependabot works: launchd starts the app and login shell; repository discovery finds committed prompts and those due to run, then each due prompt gets its own worktree, agent run, pull request, and cleanup.](images/architecture-overview.webp)
 
 ![Execution lifecycle and isolation: three bands show the Full Disk Access process boundary, safe Git worktree isolation, and coordinated pull-request tracking and cleanup.](images/execution-lifecycle.webp)
 
@@ -27,7 +27,7 @@ configuration and state, [PyYAML](https://pyyaml.org) to read the YAML, and
 
 ## Process tree
 
-![Process and run: launchd starts the app, login shell, update scheduler, and coding agent; each repository gets a Git worktree, and the run records a pull request or removes the worktree.](images/process-and-run.webp)
+![Process and run: launchd starts the LLM Dependabot app, login shell, uv script, and coding agent, with caffeinate keeping the Mac awake; each discovered prompt is checked for due status, and due prompts get an isolated worktree, pull-request decision, and recorded run date.](images/process-and-run.webp)
 
 - **The app** starts the job as a child process rather than replacing itself,
   so macOS treats it as the "responsible process" and applies its Full Disk

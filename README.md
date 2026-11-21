@@ -59,7 +59,7 @@ provides its own instructions, checks, and review process.
 
 ![Software Giga Factory: a staggered schedule activates each project’s software factory. Prompts drive dependency updates, refactoring, simplification, and more; each runs in an isolated worktree, opens a pull request, and passes through project checks and maintainer review, with findings returned for fixes. Weekly group schedules, monthly prompts when due, one repository and due prompt at a time.](https://raw.githubusercontent.com/IndrajeetPatil/llm-dependabot/main/docs/images/giga-factory.webp)
 
-![How llm-dependabot works: scheduled jobs start the app and login environment, repositories are prepared in isolated Git worktrees, and the coding agent opens pull requests for later cleanup.](https://raw.githubusercontent.com/IndrajeetPatil/llm-dependabot/main/docs/images/architecture-overview.webp)
+![How llm-dependabot works: launchd starts the app and login shell; repository discovery finds committed prompts and those due to run, then each due prompt gets its own worktree, agent run, pull request, and cleanup.](https://raw.githubusercontent.com/IndrajeetPatil/llm-dependabot/main/docs/images/architecture-overview.webp)
 
 I use it to maintain my own open-source repositories: web applications,
 Python and R packages, and everything else. They receive dependency updates
