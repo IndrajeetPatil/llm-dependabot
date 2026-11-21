@@ -24,7 +24,7 @@ help: ## Show this help
 setup: ## Interactive first-time setup (Brewfile, sign-ins, private repos, hooks, launchd, Full Disk Access)
 	@command -v brew >/dev/null || { echo "Install Homebrew first: https://brew.sh"; exit 1; }
 	@brew bundle check --no-upgrade >/dev/null || { \
-		brew bundle check --no-upgrade --verbose; \
+		brew bundle check --no-upgrade --verbose || true; \
 		printf "Install the missing Brewfile packages? [Y/n] "; read answer; \
 		case "$$answer" in [nN]*) exit 1;; esac; \
 		brew bundle install --no-upgrade; \
