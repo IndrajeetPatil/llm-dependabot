@@ -47,43 +47,52 @@ whether it worked.
 > commands it may run, and keep sections that only a person can check (such as
 > dashboards with no API) as notes in the pull request.
 
-## Ready for autonomous merging
+## What a repository needs
 
-Merging automatically is safe only when a green, approved pull request is
-genuinely as good as one a careful maintainer would have merged. The
-[Golden Rules for Agentic Engineering](https://www.indrapatil.com/agentic-engineering-golden-rules/)
-describe how to get there:
+llm-dependabot is a giga factory: it only decides when each prompt runs and
+where. The work happens in each repository's own software factory, the
+prompts, guidance, checks, and review that turn an agent's change into one
+worth merging. The giga factory can only be as reliable as the factories it
+coordinates, so a repository is ready for it once its own factory works
+without anyone watching, and that takes sound agentic engineering practices:
 
-| Rule | In short |
-| --- | --- |
-| 1. Prepare the codebase for agents | Agents copy the patterns they find, so pay down high-impact technical debt first |
-| 2. Improve developer experience | What makes a repository easy for humans makes it cheaper and safer for agents: one setup command and an `AGENTS.md` |
-| 3. Set deterministic quality gates | Formatters, linters, type checkers, and tests catch known classes of mistakes, fast; agents clear strict gates tirelessly |
-| 4. Define done before delegating | State the outcome, constraints, and evidence of success, and have the agent verify its own work |
-| 5. Maintain session hygiene | Keep each task's context focused; separate parallel tasks into Git worktrees |
-| 6. Know thy tools | Use the agent's less obvious capabilities, such as image generation or computer use |
-| 7. Keep pace with a fast-moving field | Keep the agent harness current, and simplify instructions as models and tools improve |
-| 8. Automate repeated agent work | Capture recurring workflows once as prompts, skills, commands, or workflows |
-| 9. Identify and remove bottlenecks | Speed up the slowest stage next, whether checks, review, or verification |
-| 10. Give your agents more autonomy | Let agents act within boundaries that people set, with scoped access |
+- **A codebase worth copying.** Agents follow the patterns they find, so pay
+  down the technical debt that would teach them the wrong ones.
 
-Three safeguards together make low-touch delivery possible:
+- **Guidance and one setup command.** An `AGENTS.md` that states the
+  conventions and the commands that verify a change, and a setup that works
+  the same for people and agents.
 
-- **Quality gates** check the code: formatting, linting, type checking, tests
-  with coverage, dependency audits, and security scans, run identically by
-  Git hooks and CI.
+- **Strict, green quality gates.** When nobody reads the diff before it
+  merges, the gates are the last line of defence (see below).
 
-- **A verification harness** checks the behaviour: end-to-end and browser
-  tests, visual snapshots, and screenshots attached to the pull request.
+- **Verification of behaviour.** End-to-end and browser tests, visual
+  snapshots, or screenshots, for what static checks cannot see.
 
-- **An independent reviewer agent** reviews every pull request and sends
-  findings back to the coding agent until it approves.
+- **An independent reviewer.** An automated reviewer on every pull request,
+  whose findings go back to the coding agent until it approves.
+
+- **Prompts that define done.** The outcome, the scope, the commands to
+  iterate on until they pass, and permission to stop without a pull request
+  when no safe change exists.
+
+- **Boundaries set by people.** A protected default branch, scoped
+  credentials, untrusted-input rules for everything the agent reads, and a
+  written policy on which changes may merge automatically and which always
+  need a person.
+
+Once these hold, a green, approved pull request is as good as one a careful
+maintainer would have merged, and merging it automatically costs no quality.
+
+> [!IMPORTANT]
+> Autonomy does not remove oversight. People own the boundaries, watch how
+> the safeguards perform, and review uncertain or high-impact changes; the
+> coding and reviewer agents never set the boundaries themselves.
 
 ### Strict, green quality gates
 
-When nobody reads the diff before it merges, the quality gates are the last
-line of defence: they reject whatever a person no longer catches. They must
-be in excellent condition:
+The gates must be in excellent condition, because they reject whatever a
+person no longer catches:
 
 | Property | What it means |
 | --- | --- |
@@ -103,55 +112,6 @@ needs review.
 > Never let an agent loosen a gate to make its change pass. Prompts and
 > `AGENTS.md` should forbid lowering thresholds, adding ignores, or skipping
 > tests without a justification that a person approves.
-
-[chatbot-template](https://github.com/IndrajeetPatil/chatbot-template/blob/main/AGENTS.md)
-shows the flow in practice: its agent instructions have the coding agent fix
-CI and review findings, then squash-merge once the review approves and the
-required checks pass.
-
-### Readiness checklist
-
-Before letting pull requests merge without a person, a repository should
-have:
-
-- [ ] A protected default branch that requires pull requests and passing
-      checks, with squash merging only.
-
-- [ ] A green default branch, so every run starts from a known baseline.
-
-- [ ] One setup command and an `AGENTS.md` with the project's conventions and
-      the commands that verify a change.
-
-- [ ] [Strict, green quality gates](#strict-green-quality-gates), strict
-      enough that passing them is meaningful, such as coverage or
-      mutation-testing thresholds rather than tests that merely exist.
-
-- [ ] A verification harness for behaviour that the gates cannot see, such as
-      user journeys and the rendered interface.
-
-- [ ] An automated reviewer on every pull request, with a fix-and-review loop.
-
-- [ ] Prompts that define done: the commands to iterate on until they pass,
-      the scope of the change, and an instruction to stop without a pull
-      request when no safe change exists.
-
-- [ ] A written risk boundary: which kinds of change may merge automatically,
-      and which always need a person, such as authentication, data
-      migrations, releases, or anything that invalidates a manual grant.
-
-- [ ] Small, reversible pull requests: one prompt, one theme, one pull
-      request.
-
-- [ ] Scoped credentials and untrusted-input rules for everything the agent
-      reads.
-
-- [ ] Monitoring after deployment, so a regression that slips through
-      becomes the next signal.
-
-> [!IMPORTANT]
-> Autonomy does not remove oversight. People own the risk boundary, watch how
-> the safeguards perform, and review uncertain or high-impact changes; the
-> coding and reviewer agents never set the boundary themselves.
 
 ## Keeping the factory itself current
 
