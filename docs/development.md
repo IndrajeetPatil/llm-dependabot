@@ -55,7 +55,8 @@ agents changing them:
   comment, and [`.github/zizmor.yml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/.github/zizmor.yml)
   makes zizmor reject any other pin.
 
-- [`.github/workflows/actions.lock`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/.github/workflows/actions.lock)
+- `actions.lock` in
+  [`.github/workflows/`](https://github.com/IndrajeetPatil/llm-dependabot/tree/main/.github/workflows)
   is a machine-generated
   [workflow dependency lockfile](https://docs.github.com/en/actions/concepts/security/workflow-dependency-lockfiles)
   (in public preview). It records every direct and transitive action with its
