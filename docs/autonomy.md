@@ -89,9 +89,11 @@ maintainer would have merged, and merging it automatically costs no quality.
 These patterns are not limited to prototypes or proofs of concept. They
 maintain live systems that people depend on and that must stay current:
 
-- **Open-source packages** with users downstream, such as the Python
-  package [md2linkedin](https://github.com/IndrajeetPatil/md2linkedin) and the R
-  package [ggstatsplot](https://github.com/IndrajeetPatil/ggstatsplot).
+- **Open-source Python packages** (for example,
+  [md2linkedin](https://github.com/IndrajeetPatil/md2linkedin)) and **R
+  packages** (for example,
+  [ggstatsplot](https://github.com/IndrajeetPatil/ggstatsplot)), with users
+  downstream.
 
 - **Public web applications,** such as a bilingual practice app for the
   [German naturalisation test](https://www.indrapatil.com/einbuergerungstest/).
