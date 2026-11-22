@@ -10,7 +10,6 @@
 # ///
 """Run each repository's prompts with a coding agent on a weekly or monthly cadence."""
 
-import contextlib
 import dataclasses
 import datetime as dt
 import json
@@ -586,17 +585,16 @@ def run_agent(
             start_new_session=True,
             text=True,
         )
-        if proc.stdin:
-            with contextlib.suppress(BrokenPipeError):
-                proc.stdin.write(prompt)
-            proc.stdin.close()
         try:
             # Agents with a timeout of their own stop first; this stops the rest.
-            return proc.wait(timeout=timeout_hours * 3600 + 600)
+            proc.communicate(
+                prompt if via_stdin else None, timeout=timeout_hours * 3600 + 600
+            )
         except subprocess.TimeoutExpired:
             os.killpg(proc.pid, signal.SIGTERM)
             proc.wait()
             return -1
+        return proc.wait()
 
 
 def find_pr(repo: Repo, branch: str, started: dt.datetime) -> dict[str, Any] | None:
