@@ -779,8 +779,7 @@ def build_app() -> bool:
     contents = APP_BUNDLE / "Contents"
     (contents / "Resources").mkdir(parents=True)
     LAUNCHER.parent.mkdir()
-    with (contents / "Info.plist").open("wb") as fh:
-        plistlib.dump(app_info(), fh)
+    (contents / "Info.plist").write_bytes(plistlib.dumps(app_info()))
     sh("clang", "-O2", "-Wall", "-Werror", "-o", LAUNCHER, sources[0])
     build_icon(sources[1], contents / "Resources/AppIcon.icns")
     sh("codesign", "--force", "--sign", "-", "--identifier", BUNDLE_ID, APP_BUNDLE)
@@ -798,17 +797,15 @@ def full_disk_access_granted(path: Path) -> bool:
     """
     label = f"{BUNDLE_ID}.access-check"
     plist_path = STATE_DIR / f"{label}.plist"
-    with plist_path.open("wb") as fh:
-        plistlib.dump(
-            {
-                "Label": label,
-                "ProgramArguments": [str(LAUNCHER), "/bin/ls", str(path)],
-                "RunAtLoad": True,
-                "StandardOutPath": "/dev/null",
-                "StandardErrorPath": "/dev/null",
-            },
-            fh,
-        )
+    plist_path.write_bytes(
+        plistlib.dumps({
+            "Label": label,
+            "ProgramArguments": [str(LAUNCHER), "/bin/ls", str(path)],
+            "RunAtLoad": True,
+            "StandardOutPath": "/dev/null",
+            "StandardErrorPath": "/dev/null",
+        })
+    )
     target = f"{gui_domain()}/{label}"
     launchctl("bootout", target)
     launchctl("bootstrap", gui_domain(), str(plist_path))
@@ -855,8 +852,7 @@ def install_agents(config: Config) -> None:
     LAUNCH_AGENTS.mkdir(parents=True, exist_ok=True)
     for label, plist in desired_agents(config).items():
         path = LAUNCH_AGENTS / f"{label}.plist"
-        with path.open("wb") as fh:
-            plistlib.dump(plist, fh)
+        path.write_bytes(plistlib.dumps(plist))
         result = launchctl("bootstrap", gui_domain(), str(path))
         if result.returncode != 0:
             fail(f"launchctl bootstrap {label} failed: {result.stderr.strip()}")
