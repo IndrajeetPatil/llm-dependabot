@@ -138,3 +138,38 @@ Template users inherit these workflows, so keep them secure by default:
   users whose Actions policy allows only selected actions copy that list.
 
 - Use British English in prose.
+
+## Pull requests
+
+Follow these rules without relying on any instructions outside this
+repository:
+
+- Write every commit message and PR title as a Conventional Commit,
+  `type(scope): description`, lowercase and imperative, with a type from
+  `conventional-commits.yml`; the `conventional-commits` check enforces it.
+
+- Open every PR ready for review with `gh pr create`, never as a draft. Keep
+  the title and body in step with the net diff.
+
+- Never add agent or tool attribution to commits, PRs, or comments.
+
+- After opening or pushing, wait for hosted CI to finish. Inspect failed jobs,
+  fix the cause, run the local checks (`make check` and `make hooks`), push,
+  and repeat. Skipped, queued, or failing required checks are not success.
+
+- If an automatic AI review (Codex, for the owner) runs on the PR, wait for
+  its result instead of requesting one. Fix merited findings, reply to and
+  resolve addressed threads, and continue until the review approves the
+  current head with no unresolved findings. Never write `@codex` anywhere in
+  a PR, even in backticks: it cancels the automatic review. Say "a Codex
+  review request" instead.
+
+- Once CI is green and the review gate is met, squash-merge, then verify the
+  merged state. Recheck the head, threads, and checks immediately before
+  merging, and never bypass branch protections.
+
+- Update a PR branch from `main` only to resolve conflicts or pick up a change
+  the PR depends on, never just to bring it up to date.
+
+- Report local validation, hosted CI, review, and merge state separately. If
+  an external blocker stops completion, leave the PR open and say so.
