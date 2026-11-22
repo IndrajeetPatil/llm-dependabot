@@ -52,6 +52,7 @@ LAUNCH_AGENTS = Path.home() / "Library/LaunchAgents"
 LOG_DIR = Path.home() / "Library/Logs" / NAME
 STATE_DIR = Path.home() / "Library/Application Support" / NAME
 STATE_FILE = STATE_DIR / "state.json"
+# Serialises runs and cleanups across processes; filelock creates STATE_DIR.
 LOCK_FILE = STATE_DIR / "lock"
 WORKTREE_ROOT = Path.home() / "Library/Caches" / NAME / "worktrees"
 APP_BUNDLE = STATE_DIR / f"{APP_NAME}.app"
@@ -301,12 +302,6 @@ def save_state(state: State) -> None:
     tmp = STATE_FILE.with_suffix(".tmp")
     tmp.write_text(state.model_dump_json(indent=2) + "\n")
     tmp.replace(STATE_FILE)
-
-
-def run_lock() -> filelock.FileLock:
-    """Serialises runs and cleanups across processes."""
-    STATE_DIR.mkdir(parents=True, exist_ok=True)
-    return filelock.FileLock(LOCK_FILE)
 
 
 # --------------------------------------------------------------------------- #
@@ -917,7 +912,7 @@ def run(
     if dry_run or not plan:
         return
 
-    with run_lock():
+    with filelock.FileLock(LOCK_FILE):
         # Keep the Mac awake (idle sleep) for as long as this process runs.
         caffeinate = subprocess.Popen(["caffeinate", "-i", "-w", str(os.getpid())])
         run_dir = LOG_DIR / f"{dt.datetime.now():%Y-%m-%d-%H%M}-{group}"
@@ -955,7 +950,7 @@ def cleanup(
         log("skipping cleanup, since it is the weekend")
         return
     try:
-        with run_lock().acquire(timeout=0):
+        with filelock.FileLock(LOCK_FILE).acquire(timeout=0):
             cleanup_finished(load_state())
     except filelock.Timeout:
         log("a run is in progress; skipping cleanup")
