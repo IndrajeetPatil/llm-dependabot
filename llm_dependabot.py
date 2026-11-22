@@ -320,7 +320,7 @@ def log(message: str) -> None:
 
 def sh(*args: str | Path, cwd: Path | None = None, check: bool = True) -> str:
     result = subprocess.run(
-        [str(a) for a in args],
+        args,
         cwd=cwd,
         capture_output=True,
         text=True,
@@ -333,7 +333,7 @@ def sh(*args: str | Path, cwd: Path | None = None, check: bool = True) -> str:
 def succeeds(*args: str | Path, timeout: float = 120) -> bool:
     try:
         result = subprocess.run(
-            [str(a) for a in args],
+            args,
             capture_output=True,
             stdin=subprocess.DEVNULL,
             timeout=timeout,
@@ -654,7 +654,7 @@ def process_repo(
 # --------------------------------------------------------------------------- #
 
 
-def launchctl(*args: str) -> subprocess.CompletedProcess[str]:
+def launchctl(*args: str | Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["launchctl", *args], capture_output=True, text=True, check=False
     )
@@ -808,7 +808,7 @@ def full_disk_access_granted(path: Path) -> bool:
     )
     target = f"{gui_domain()}/{label}"
     launchctl("bootout", target)
-    launchctl("bootstrap", gui_domain(), str(plist_path))
+    launchctl("bootstrap", gui_domain(), plist_path)
     code = None
     for _ in range(100):
         if match := re.search(
@@ -853,7 +853,7 @@ def install_agents(config: Config) -> None:
     for label, plist in desired_agents(config).items():
         path = LAUNCH_AGENTS / f"{label}.plist"
         path.write_bytes(plistlib.dumps(plist))
-        result = launchctl("bootstrap", gui_domain(), str(path))
+        result = launchctl("bootstrap", gui_domain(), path)
         if result.returncode != 0:
             fail(f"launchctl bootstrap {label} failed: {result.stderr.strip()}")
         log(f"loaded {label}")
