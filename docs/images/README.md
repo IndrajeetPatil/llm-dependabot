@@ -177,20 +177,22 @@ Band “CI and supply chain”, summary “The same checks again on every pull r
 
 
 ```text
-Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot's configured project-group schedules and prompt cadence. Create a landscape 3:2 editorial infographic with warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, teal #14584d, a Fraunces-like serif title, clear Hanken-like sans labels, and generous whitespace. Use aligned rows and fine dividers. Keep the official Python and R logos in their official colours. No shadows, gradients, texture, 3D, cards, emoji, decorative footer, or invented facts. British English.
+Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot's configured project-group schedules and prompt cadence. Create a landscape 3:2 editorial infographic with warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, teal #14584d, a Fraunces-like serif title, clear Hanken-like sans labels, and generous whitespace. Use aligned rows and fine dividers. Draw all group icons, including recognisable Python and R marks, as flat, single-colour teal outline icons with matching stroke weight. No shadows, gradients, texture, 3D, cards, emoji, decorative footer, or invented facts. British English.
 
 Title “Configured project groups and prompt cadence”
 Subtitle “Each group starts weekly; prompts run when due”
 
 Show five weekday-ordered rows:
 - “Web Applications”, note “TypeScript · JavaScript · Astro · Svelte · Vue · HTML · CSS”, schedule “Monday · 11:00”, cadence “update-deps weekly · simplify-codebase and gsc-analysis monthly”. Teal browser/code icon.
-- “Python”, note “Python”, schedule “Tuesday · 11:00”, cadence “update-deps weekly · simplify-codebase and gsc-analysis monthly”. Official Python logo.
+- “Python”, note “Python”, schedule “Tuesday · 11:00”, cadence “update-deps weekly · simplify-codebase and gsc-analysis monthly”. Recognisable Python mark as a teal outline icon.
 - “Sundry”, note “Unmatched project types”, schedule “Wednesday · 11:00”, cadence “update-deps weekly · simplify-codebase and gsc-analysis monthly”. Teal mixed-collection/toolkit icon.
-- “R Packages”, note “R projects”, schedule “Thursday · 11:00”, cadence “all prompts monthly”. Authentic R logo.
+- “R Packages”, note “R projects”, schedule “Thursday · 11:00”, cadence “all prompts monthly”. Recognisable R mark as a teal outline icon.
 - “Pull-request cleanup”, note “Removes worktrees and local branches after PRs merge or close”. Teal pruning shears, visually distinct from the Sundry icon. Do not state a cleanup interval.
 
 Keep all rows aligned, labels legible, exact wording, and logos accurate.
 ```
+
+**Edit prompt:** Preserve every title, subtitle, word, row, position, size, divider, icon, schedule, cadence, spacing, and colour exactly as shown. Make only one kind of change: restyle the Python and R language marks in their rows so they follow the same flat, single-colour teal outline icon treatment as the browser, toolkit, and pruning-shears icons. Keep each mark recognisable through its familiar silhouette, but draw both as clean teal (`#14584d`) outlines with no official blue/yellow fills, gradients, or shadows. Match the existing icon stroke weight and scale, centred in the same icon column. Do not alter any text or other elements.
 ### One schedule, multiple prompts
 
 - **File:** `docs/images/multiple-prompts.webp`
