@@ -21,8 +21,8 @@ intelligence lives in each repository's own prompts.
 
 The script leans on widely used libraries rather than code of its own:
 [Typer](https://typer.tiangolo.com) for the command line and prompts,
-[pydantic](https://docs.pydantic.dev) (with its Rust core) to validate the
-configuration and state, [PyYAML](https://pyyaml.org) to read the YAML, and
+[pydantic](https://docs.pydantic.dev) (with its Rust core) to strictly
+validate the configuration, state, and `gh` output, [PyYAML](https://pyyaml.org) to read the YAML, and
 [filelock](https://py-filelock.readthedocs.io) to serialise runs.
 
 ## Process tree
