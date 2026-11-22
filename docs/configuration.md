@@ -1,8 +1,10 @@
 # Configuration
 
 Two YAML files sit next to the script, and every command reads both. Both are
-validated on load, so a typo fails with a clear message instead of a silent
-misconfiguration.
+validated strictly on load: unknown keys are rejected and values are never
+converted between types, so a typo fails with a clear message instead of a
+silent misconfiguration. Quote times (`"11:00"`): YAML reads an unquoted
+`9:00` as the number 540, which fails validation.
 
 | File | Committed | Contents |
 | --- | --- | --- |

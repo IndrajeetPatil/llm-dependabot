@@ -32,10 +32,12 @@ from pydantic import (
     ConfigDict,
     Field,
     PositiveFloat,
+    TypeAdapter,
     ValidationError,
     field_validator,
     model_validator,
 )
+from pydantic.alias_generators import to_camel
 lazy import filelock
 lazy import yaml
 
@@ -87,18 +89,24 @@ app = typer.Typer(
 # --------------------------------------------------------------------------- #
 
 
-class Prompt(BaseModel):
+class Strict(BaseModel):
+    """A model that rejects unknown keys and never coerces between types."""
+
+    model_config = ConfigDict(strict=True, extra="forbid")
+
+
+class Prompt(Strict):
     """A prompt that repositories opt into by committing it at `path`."""
 
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = ConfigDict(frozen=True)
 
     name: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
     path: str
     cadence: Cadence = "weekly"
 
 
-class Group(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+class Group(Strict):
+    model_config = ConfigDict(frozen=True)
 
     name: str
     languages: list[str]
@@ -116,10 +124,10 @@ PROMPT = "{prompt}"
 TIMEOUT_HOURS = "{timeout_hours}"
 
 
-class Agent(BaseModel):
+class Agent(Strict):
     """The coding agent that runs each prompt, and how to call it."""
 
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = ConfigDict(frozen=True)
 
     name: str
     command: list[str] = Field(min_length=1)
@@ -140,9 +148,7 @@ class Agent(BaseModel):
         return argv, PROMPT not in self.command
 
 
-class Config(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
+class Config(Strict):
     owner: str
     prompts: list[Prompt] = Field(min_length=1)
     clone_root: Path
@@ -202,13 +208,11 @@ class Config(BaseModel):
         return group
 
 
-class PrivateRepos(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
+class PrivateRepos(Strict):
     repos: list[str] = []
 
 
-class Checkout(BaseModel):
+class Checkout(Strict):
     """A worktree on a fresh branch, created for one agent run."""
 
     repo: str
@@ -227,7 +231,7 @@ class Pending(Checkout):
     pr_url: str
 
 
-class State(BaseModel):
+class State(Strict):
     pending: list[Pending] = []
     managed_clones: list[Path] = []
     # When each prompt last ran in each repository, keyed "prompt owner/repo".
@@ -264,6 +268,43 @@ class Repo:
         return f"{self.owner}/{self.name}"
 
 
+class GitHubModel(BaseModel):
+    """An object in gh's JSON output, with camelCase keys."""
+
+    model_config = ConfigDict(strict=True, alias_generator=to_camel)
+
+
+class Language(GitHubModel):
+    name: str
+
+
+class BranchRef(GitHubModel):
+    name: str
+
+
+class GitHubRepo(GitHubModel):
+    name: str
+    visibility: Literal["PUBLIC", "PRIVATE", "INTERNAL"]
+    primary_language: Language | None
+    # Empty repositories have no default branch.
+    default_branch_ref: BranchRef | None
+
+    def repo(self, owner: str) -> Repo:
+        branch = cast("BranchRef", self.default_branch_ref)
+        return Repo(owner, self.name, branch.name)
+
+
+class PullRequest(GitHubModel):
+    number: int
+    url: str
+    state: Literal["OPEN", "CLOSED", "MERGED"]
+    created_at: dt.datetime
+
+
+class PullRequestState(GitHubModel):
+    state: Literal["OPEN", "CLOSED", "MERGED"]
+
+
 class SkipRepoError(Exception):
     """A repository cannot be processed this run."""
 
@@ -277,14 +318,23 @@ def fail(message: str) -> NoReturn:
     raise typer.Exit(1)
 
 
+def yaml_to_json(path: Path) -> str:
+    """Re-encode a YAML file as JSON, for strict validation in JSON mode.
+
+    JSON mode accepts the strings YAML holds for times and paths, while still
+    rejecting values YAML parsed as another type, such as an unquoted 9:00
+    (the integer 540).
+    """
+    return json.dumps(yaml.safe_load(path.read_text()) or {})
+
+
 def load_config() -> Config:
     """Read config.yaml plus the private repository list from private.yaml."""
     try:
-        config = Config.model_validate(yaml.safe_load(CONFIG_FILE.read_text()))
-        private = {}
+        config = Config.model_validate_json(yaml_to_json(CONFIG_FILE))
+        repos = []
         if PRIVATE_FILE.exists():
-            private = yaml.safe_load(PRIVATE_FILE.read_text()) or {}
-        repos = PrivateRepos.model_validate(private).repos
+            repos = PrivateRepos.model_validate_json(yaml_to_json(PRIVATE_FILE)).repos
     except ValidationError as exc:
         fail(f"invalid configuration: {exc}")
     config.private_repos = frozenset(repos)
@@ -344,8 +394,9 @@ def interactive(*args: str) -> int:
     return subprocess.run(args, check=False).returncode
 
 
-def gh_json(*args: str) -> Any:
-    return json.loads(sh("gh", *args) or "null")
+def gh_json[T](kind: type[T], *args: str) -> T:
+    """Run gh and validate its JSON output as `kind`."""
+    return TypeAdapter(kind).validate_json(sh("gh", *args))
 
 
 def notify(title: str, message: str) -> None:
@@ -379,9 +430,10 @@ def has_prompt(repo: Repo, prompt_path: str) -> bool:
     )
 
 
-def owned_repos(config: Config, visibility: str | None = None) -> list[dict[str, Any]]:
+def owned_repos(config: Config, visibility: str | None = None) -> list[GitHubRepo]:
     args = ["--visibility", visibility] if visibility is not None else []
-    listing: list[dict[str, Any]] = gh_json(
+    listing = gh_json(
+        list[GitHubRepo],
         "repo",
         "list",
         config.owner,
@@ -393,10 +445,9 @@ def owned_repos(config: Config, visibility: str | None = None) -> list[dict[str,
         "--json",
         "name,visibility,primaryLanguage,defaultBranchRef",
     )
-    # Empty repositories have no default branch.
     return sorted(
-        (item for item in listing if item["defaultBranchRef"]),
-        key=lambda item: item["name"].lower(),
+        (item for item in listing if item.default_branch_ref),
+        key=lambda item: item.name.lower(),
     )
 
 
@@ -413,18 +464,18 @@ def discover(config: Config, group: str | None = None) -> dict[str, list[Repo]]:
     """
     listing = owned_repos(config)
     private = config.private_repos
-    owned_private = {i["name"] for i in listing if i["visibility"] != "PUBLIC"}
+    owned_private = {i.name for i in listing if i.visibility != "PUBLIC"}
     if missing := private - owned_private:
         log(f"{PRIVATE_FILE.name}: not owned private repositories: {sorted(missing)}")
     grouped: dict[str, list[Repo]] = {g.name: [] for g in config.groups}
     for item in listing:
-        if item["visibility"] != "PUBLIC" and item["name"] not in private:
+        if item.visibility != "PUBLIC" and item.name not in private:
             continue
-        language = (item["primaryLanguage"] or {}).get("name", "")
+        language = item.primary_language.name if item.primary_language else ""
         name = group_for(language, config)
         if name is None or (group is not None and name != group):
             continue
-        repo = Repo(config.owner, item["name"], item["defaultBranchRef"]["name"])
+        repo = item.repo(config.owner)
         if prompts := prompts_in(repo, config):
             grouped[name].append(dataclasses.replace(repo, prompts=prompts))
     return grouped
@@ -541,8 +592,15 @@ def cleanup_finished(state: State) -> None:
         pr_ref = f"{entry.repo}#{entry.pr_number}"
         try:
             pr_state = gh_json(
-                "pr", "view", str(entry.pr_number), "-R", entry.repo, "--json", "state"
-            )["state"]
+                PullRequestState,
+                "pr",
+                "view",
+                str(entry.pr_number),
+                "-R",
+                entry.repo,
+                "--json",
+                "state",
+            ).state
         except subprocess.CalledProcessError as exc:
             log(f"{pr_ref}: cannot check state: {exc.stderr}")
             remaining.append(entry)
@@ -588,19 +646,15 @@ def run_agent(
         return proc.wait()
 
 
-def find_pr(repo: Repo, branch: str, started: dt.datetime) -> dict[str, Any] | None:
-    fields = "number,url,state,createdAt,headRefName"
+def find_pr(repo: Repo, branch: str, started: dt.datetime) -> PullRequest | None:
+    fields = "number,url,state,createdAt"
     base = ["pr", "list", "-R", repo.full_name, "--state", "all", "--json", fields]
-    prs: list[dict[str, Any]] = gh_json(*base, "--head", branch)
+    prs = gh_json(list[PullRequest], *base, "--head", branch)
     if not prs:
         # The agent may have pushed to a branch of its own choosing.
-        recent: list[dict[str, Any]] = gh_json(
-            *base, "--author", "@me", "--limit", "20"
-        )
-        prs = [
-            p for p in recent if dt.datetime.fromisoformat(p["createdAt"]) >= started
-        ]
-    return max(prs, key=lambda p: p["number"], default=None)
+        recent = gh_json(list[PullRequest], *base, "--author", "@me", "--limit", "20")
+        prs = [p for p in recent if p.created_at >= started]
+    return max(prs, key=lambda p: p.number, default=None)
 
 
 def process_repo(
@@ -636,12 +690,12 @@ def process_repo(
         remove_checkout(checkout)
         return f"{label}: no PR (exit {code})"
 
-    log(f"{label}: {pr['state'].lower()} pull request {pr['url']}")
+    log(f"{label}: {pr.state.lower()} pull request {pr.url}")
     state.pending.append(
-        Pending(**checkout.model_dump(), pr_number=pr["number"], pr_url=pr["url"])
+        Pending(**checkout.model_dump(), pr_number=pr.number, pr_url=pr.url)
     )
     save_state(state)
-    return f"{label}: PR #{pr['number']}"
+    return f"{label}: PR #{pr.number}"
 
 
 # --------------------------------------------------------------------------- #
@@ -1093,12 +1147,9 @@ def choose_private_repos(config: Config) -> None:
         if not typer.confirm(f"Choose them again (rewrites {PRIVATE_FILE.name})?"):
             return
     candidates = [
-        item["name"]
+        item.name
         for item in owned_repos(config, "private")
-        if prompts_in(
-            Repo(config.owner, item["name"], item["defaultBranchRef"]["name"]),
-            config,
-        )
+        if prompts_in(item.repo(config.owner), config)
     ]
     if not candidates:
         typer.echo("no private repositories contain any of the configured prompts")
