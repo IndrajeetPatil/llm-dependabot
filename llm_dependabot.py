@@ -326,12 +326,8 @@ def sh(*args: str | Path, cwd: Path | None = None, check: bool = True) -> str:
         capture_output=True,
         text=True,
         stdin=subprocess.DEVNULL,
-        check=False,
+        check=check,
     )
-    if check and result.returncode != 0:
-        raise subprocess.CalledProcessError(
-            result.returncode, result.args, result.stdout, result.stderr
-        )
     return result.stdout.strip()
 
 
