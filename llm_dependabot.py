@@ -828,8 +828,8 @@ def show_full_disk_access_steps() -> None:
         " check timed out waiting for it; dismiss the prompt and use the"
         " setting above.\n"
     )
-    subprocess.run(["open", FULL_DISK_ACCESS_PANE], check=False)
-    subprocess.run(["open", "-R", APP_BUNDLE], check=False)
+    typer.launch(FULL_DISK_ACCESS_PANE)
+    typer.launch(str(APP_BUNDLE), locate=True)
 
 
 def install_agents(config: Config) -> None:
