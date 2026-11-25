@@ -74,7 +74,9 @@ owner's Mac.
   `docs/` with full GitHub URLs.
 
 - The site's home page includes `README.md` verbatim, so give README images
-  and links absolute URLs.
+  and links absolute URLs. The link check fetches those URLs from the live
+  site, so link a new page from the README only in a follow-up pull request,
+  once the site has deployed it.
 
 - Use GitHub callouts (`> [!NOTE]`) for asides; the site renders them as
   admonitions.

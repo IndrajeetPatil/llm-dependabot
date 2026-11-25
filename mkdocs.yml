@@ -16,6 +16,7 @@ nav:
   - Autonomous evolution: autonomy.md
   - Architecture: architecture.md
   - Development: development.md
+  - FAQ: faq.md
   - Integrations:
       - LLMs: integrations/llms.md
 
@@ -111,6 +112,7 @@ plugins:
           - autonomy.md
           - architecture.md
           - development.md
+          - faq.md
         Integrations:
           - integrations/llms.md
 
