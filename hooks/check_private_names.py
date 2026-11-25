@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.15"
-# dependencies = ["pyyaml>=6.0.3"]
+# dependencies = ["pyyaml>=6.0.4"]
 # ///
 """Fail if a staged file or commit message names a repository from private.yaml.
 
