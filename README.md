@@ -97,11 +97,8 @@ for what to change.
 
 > [!NOTE]
 > As configured here, llm-dependabot runs locally and on macOS only, by
-> design. Running agents on your own machine is safer: they reuse your
-> existing sign-ins, so no credentials need to be stored in CI. And as a
-> personal project, it targets the only machine I develop on. Fork the
-> template to adapt it to another operating system, or even to run in the
-> cloud.
+> design; the [FAQ](https://www.indrapatil.com/llm-dependabot/faq/) explains
+> why, and how to adapt it to another operating system or the cloud.
 
 ```sh
 # Create from the template (recommended):
@@ -139,6 +136,7 @@ The full documentation is at <https://www.indrapatil.com/llm-dependabot/>.
 | [Autonomous evolution](https://www.indrapatil.com/llm-dependabot/autonomy/) | Self-healing prompts, strict quality gates, guidance that learns from mistakes, and what a repository's own software factory needs before it can take part |
 | [Architecture](https://www.indrapatil.com/llm-dependabot/architecture/) | How a run works and why it is built this way |
 | [Development](https://www.indrapatil.com/llm-dependabot/development/) | Toolchain, checks, CI, and the documentation site |
+| [FAQ](https://www.indrapatil.com/llm-dependabot/faq/) | Why it runs locally and on macOS, why not an agent product's scheduled tasks, agent choice, and safety |
 | [LLMs](https://www.indrapatil.com/llm-dependabot/integrations/llms/) | The documentation in the `llms.txt` format |
 
 ## License
