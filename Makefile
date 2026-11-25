@@ -1,7 +1,7 @@
 # Common operations for llm-dependabot. Run `make help` for the list.
 
 SCRIPT := ./llm_dependabot.py
-ACTIONS_LOCK_VERSION := v0.5.0
+ACTIONS_LOCK_VERSION := v0.5.1
 LOG_DIR := $(HOME)/Library/Logs/llm-dependabot
 DAYS ?= 30
 
