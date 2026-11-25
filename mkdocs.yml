@@ -1,7 +1,7 @@
 site_name: llm-dependabot
 site_description: A software giga factory for scheduled, agent-driven repository maintenance
 site_url: https://www.indrapatil.com/llm-dependabot/
-site_author: IndrajeetPatil
+site_author: Indrajeet Patil
 
 repo_name: llm-dependabot
 repo_url: https://github.com/IndrajeetPatil/llm-dependabot
