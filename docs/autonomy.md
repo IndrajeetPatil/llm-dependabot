@@ -172,20 +172,21 @@ instructions that match the code.
 A failing check, a review finding, a regression, or a mistake the agent
 notices in its own work is a defect in two places: the code, and the guidance
 that let the mistake happen. Fixing only the code leaves the next run free to
-repeat it. Prompts can tell the agent to fix both:
+repeat it. The agent instructions can tell the agent to fix both:
 
 ![Learning loop: trace a failing check, review finding, or regression to its cause, fix both code and guidance, run the same quality gates and review, and help later runs avoid the mistake.](images/learn-from-mistakes.webp)
 
-For example, a closing section that every prompt shares:
+For example, a section in `AGENTS.md`, which every agent session loads, so
+the rule covers routine work as well as prompt runs:
 
 ```markdown
 ## Learn from mistakes
 
 When a check fails, a reviewer raises a finding, or you notice a mistake in
-your own work, fix it, then ask what led you to it. If a skill, its scripts or
-templates, a prompt, or `AGENTS.md` gave missing, ambiguous, or wrong
-guidance, correct that guidance in the same pull request, stating the general
-rule rather than the incident. Never weaken a quality gate instead.
+your own work, fix it, then ask what led you to it. If `AGENTS.md`, a skill,
+its scripts or templates, a prompt, or a doc gave missing, ambiguous, or
+wrong guidance, correct that guidance in the same pull request, stating the
+general rule rather than the incident. Never weaken a quality gate instead.
 ```
 
 The same idea also works as a prompt of its own: a monthly run can read the
