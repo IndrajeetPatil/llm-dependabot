@@ -10,7 +10,6 @@
 # ///
 """Run each repository's prompts with a coding agent on a weekly or monthly cadence."""
 
-import dataclasses
 import datetime as dt
 import json
 import os
@@ -255,8 +254,11 @@ class State(Strict):
         save_state(self)
 
 
-@dataclasses.dataclass(frozen=True, slots=True)
-class Repo:
+class Repo(Strict):
+    """An owned repository eligible for agent runs."""
+
+    model_config = ConfigDict(frozen=True)
+
     owner: str
     name: str
     default_branch: str
@@ -291,7 +293,7 @@ class GitHubRepo(GitHubModel):
 
     def repo(self, owner: str) -> Repo:
         branch = cast("BranchRef", self.default_branch_ref)
-        return Repo(owner, self.name, branch.name)
+        return Repo(owner=owner, name=self.name, default_branch=branch.name)
 
 
 class PullRequest(GitHubModel):
@@ -477,7 +479,7 @@ def discover(config: Config, group: str | None = None) -> dict[str, list[Repo]]:
             continue
         repo = item.repo(config.owner)
         if prompts := prompts_in(repo, config):
-            grouped[name].append(dataclasses.replace(repo, prompts=prompts))
+            grouped[name].append(repo.model_copy(update={"prompts": prompts}))
     return grouped
 
 
@@ -1004,7 +1006,7 @@ def cleanup(
         log("skipping cleanup, since it is the weekend")
         return
     try:
-        with filelock.FileLock(LOCK_FILE).acquire(timeout=0):
+        with filelock.FileLock(LOCK_FILE, timeout=0):
             cleanup_finished(load_state())
     except filelock.Timeout:
         log("a run is in progress; skipping cleanup")
