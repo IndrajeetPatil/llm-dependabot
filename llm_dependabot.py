@@ -1006,7 +1006,7 @@ def cleanup(
         log("skipping cleanup, since it is the weekend")
         return
     try:
-        with filelock.FileLock(LOCK_FILE).acquire(timeout=0):
+        with filelock.FileLock(LOCK_FILE, timeout=0):
             cleanup_finished(load_state())
     except filelock.Timeout:
         log("a run is in progress; skipping cleanup")
