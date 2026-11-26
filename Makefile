@@ -1,6 +1,7 @@
 # Common operations for llm-dependabot. Run `make help` for the list.
 
-SCRIPT := ./llm_dependabot.py
+# The CLI, run from this checkout's locked environment.
+CLI := uv run --locked --no-dev llm-dependabot
 ACTIONS_LOCK_VERSION := v0.5.1
 LOG_DIR := $(HOME)/Library/Logs/llm-dependabot
 DAYS ?= 30
@@ -29,35 +30,34 @@ setup: ## Interactive first-time setup (Brewfile, sign-ins, private repos, hooks
 		case "$$answer" in [nN]*) exit 1;; esac; \
 		brew bundle install --no-upgrade; \
 	}
-	$(SCRIPT) setup
+	$(CLI) setup
 	@$(MAKE) --no-print-directory actions-lock-install
 
-update-deps: ## Upgrade the locked script and docs dependencies and the prek hook revisions
-	uv lock --script $(SCRIPT) --upgrade
+update-deps: ## Upgrade the locked dependencies and the prek hook revisions
 	uv lock --upgrade
 	prek update
 
 ##@ Schedule
 
 install: ## Build the app, then write and load the launchd agents
-	$(SCRIPT) install
+	$(CLI) install
 
 uninstall: ## Unload and remove the launchd agents
-	$(SCRIPT) uninstall
+	$(CLI) uninstall
 
 ##@ Runs
 
 list: ## Show which repositories fall into which group
-	$(SCRIPT) list
+	$(CLI) list
 
 status: ## Show the schedule and pending pull requests
-	$(SCRIPT) status
+	$(CLI) status
 
 dashboard: ## Build an HTML dashboard of past runs and their pull requests, and open it
-	$(SCRIPT) dashboard
+	$(CLI) dashboard
 
 cleanup: ## Clean up after merged or closed pull requests
-	$(SCRIPT) cleanup
+	$(CLI) cleanup
 
 clean-logs: ## Delete run logs older than DAYS days (default 30): make clean-logs [DAYS=7]
 	@if [ -d "$(LOG_DIR)" ]; then \
@@ -68,11 +68,11 @@ clean-logs: ## Delete run logs older than DAYS days (default 30): make clean-log
 
 run: ## Run a group's due prompts now: make run GROUP=python [REPO=name] [PROMPT=name]
 	@test -n "$(GROUP)" || { echo "usage: make run GROUP=<group> [REPO=<name>] [PROMPT=<name>]"; exit 2; }
-	$(SCRIPT) run $(GROUP) $(if $(REPO),--repo $(REPO)) $(if $(PROMPT),--prompt $(PROMPT))
+	$(CLI) run $(GROUP) $(if $(REPO),--repo $(REPO)) $(if $(PROMPT),--prompt $(PROMPT))
 
 dry-run: ## List what a group would run: make dry-run GROUP=python [PROMPT=name]
 	@test -n "$(GROUP)" || { echo "usage: make dry-run GROUP=<group> [PROMPT=<name>]"; exit 2; }
-	$(SCRIPT) run $(GROUP) --dry-run $(if $(PROMPT),--prompt $(PROMPT))
+	$(CLI) run $(GROUP) --dry-run $(if $(PROMPT),--prompt $(PROMPT))
 
 ##@ Development
 
@@ -85,12 +85,11 @@ format: ## Format with ruff
 format-check: ## Check formatting with ruff
 	uvx ruff format --check
 
-typecheck: ## Type-check with ty against the script's environment
-	uv sync --script $(SCRIPT) --quiet
-	uvx ty check --python "$$(uv python find --script $(SCRIPT))"
+typecheck: ## Type-check with ty against the project's environment
+	uv sync --locked --no-dev --quiet
+	uvx ty check --python .venv
 
 audit: ## Check the locked dependencies for known vulnerabilities with uv audit
-	uv audit --preview-features audit-command --script $(SCRIPT) --locked
 	uv audit --preview-features audit-command --script hooks/check_private_names.py
 	uv audit --preview-features audit-command --locked
 
@@ -130,7 +129,7 @@ actions-lock-verify: check-actions-lock-version ## Check that actions.lock match
 ##@ Documentation
 
 docs: ## Build the documentation site into site/, failing on any warning
-	uv run --locked zensical build --strict --clean
+	uv run --locked --group docs zensical build --strict --clean
 
 docs-serve: ## Preview the documentation site at http://localhost:8000
-	uv run --locked zensical serve --open
+	uv run --locked --group docs zensical serve --open

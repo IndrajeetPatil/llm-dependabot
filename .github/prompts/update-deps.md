@@ -11,9 +11,9 @@ Follow `AGENTS.md` throughout, especially its workflow rules.
 
 | Dependency | Where it is pinned | Keep aligned with |
 | --- | --- | --- |
-| Script dependencies | `# /// script` metadata of `llm_dependabot.py`, locked in `llm_dependabot.py.lock` | The PyYAML minimum in `hooks/check_private_names.py` |
-| Docs dependencies | `pyproject.toml`, locked in `uv.lock` | |
-| Python | `requires-python` in both scripts and `pyproject.toml`, and `.python-version` | The latest stable CPython release |
+| CLI and docs dependencies | `dependencies` and the `docs` group in `pyproject.toml`, locked in `uv.lock` | The PyYAML minimum in `hooks/check_private_names.py` |
+| uv build backend | `uv_build` in `[build-system]` of `pyproject.toml` | The `required-version` of uv in `pyproject.toml` |
+| Python | `requires-python` in `pyproject.toml` and `hooks/check_private_names.py`, and `.python-version` | The latest stable CPython release |
 | prek hooks | Frozen `rev` commit SHAs in `prek.toml` | The latest release of each hook repository |
 | prek | `minimum_prek_version` in `prek.toml`; `prek-version: latest-known` in `prek.yml` follows the `prek-action` pin | The latest `j178/prek` release |
 | GitHub Actions | Every `uses:` line in `.github/workflows/` | `.github/workflows/actions.lock` and every other use of the same action |
@@ -25,19 +25,18 @@ Follow `AGENTS.md` throughout, especially its workflow rules.
 
 ## Python and docs dependencies
 
-1. Run `make update-deps` to upgrade the locked dependencies of
-   `llm_dependabot.py` (`llm_dependabot.py.lock`), the docs project
-   (`uv.lock`), and the prek hook revisions.
+1. Run `make update-deps` to upgrade the locked dependencies (`uv.lock`) and
+   the prek hook revisions.
 
-2. Ensure that the minimum versions in the inline `# /// script` metadata of
-   `llm_dependabot.py` match the newly locked versions, and that the
-   dependencies there remain alphabetically sorted. Keep the PyYAML minimum in
-   `hooks/check_private_names.py` equal to the one in `llm_dependabot.py`.
-   After editing the metadata, run `uv lock --script llm_dependabot.py` so the
-   lockfile matches it.
+2. Ensure that the minimum versions in `pyproject.toml` match the newly
+   locked versions, and that the dependencies there remain alphabetically
+   sorted. Keep the PyYAML minimum in `hooks/check_private_names.py` equal to
+   the one in `pyproject.toml`. After editing `pyproject.toml`, run `uv lock`
+   so the lockfile matches it.
 
 3. If the `requires-python` floor is no longer the latest stable CPython,
-   raise it in both scripts, `pyproject.toml`, and `.python-version`, and
+   raise it in `pyproject.toml`, `hooks/check_private_names.py`, and
+   `.python-version`, and
    adopt the new version's features where they simplify the code.
 
 ## prek hooks

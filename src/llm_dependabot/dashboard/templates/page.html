@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<script>{theme}</script>
+<title>LLM Dependabot dashboard</title>
+<style>{css}</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>LLM Dependabot</h1>
+    <p class="muted">Generated {generated} from the run logs.
+    Run <code>make dashboard</code> to refresh.</p>
+  </div>
+  <div class="controls">
+  <button id="theme" type="button">
+    <span class="to-dark">Dark mode</span><span class="to-light">Light mode</span>
+  </button>
+  <label class="filter">
+    <span class="visually-hidden">Filter jobs</span>
+    <input id="filter" type="search" autocomplete="off"
+      placeholder="Filter by repository, prompt, or status">
+  </label>
+  </div>
+</header>
+<main>
+  <section class="tiles" aria-label="Totals">{stats}</section>
+  <h2 id="schedule-caption">Schedule</h2>
+  <div class="table-wrapper" tabindex="0" role="region"
+    aria-labelledby="schedule-caption">
+    <table>
+      <thead><tr><th>Group</th><th>Runs</th><th>Next run</th><th>Prompts</th>
+      </tr></thead>
+      <tbody>{schedule}</tbody>
+    </table>
+  </div>
+  <p class="muted small">Monthly prompts run at the group's first run of each
+  month.{weekend}</p>
+  <h2>Runs</h2>
+  <div id="runs">{runs}</div>
+  <p id="no-match" class="note" hidden>No jobs match the filter.</p>
+</main>
+<script>{script}</script>
+</body>
+</html>

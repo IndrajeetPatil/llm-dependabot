@@ -15,8 +15,8 @@ Guidance for AI coding agents working in this repository.
 
 | Path | Purpose |
 | --- | --- |
-| `llm_dependabot.py` | The whole CLI: a single-file `uv` script (Python 3.15+) |
-| `llm_dependabot.py.lock` | Locked versions of the script's dependencies |
+| `src/llm_dependabot/` | The CLI package (Python 3.15+); see the module map below |
+| `src/llm_dependabot/dashboard/templates/` | The dashboard's HTML, CSS, and JavaScript |
 | `config.yaml` | Shared settings and the source of truth for prompts, cadences, groups, weekdays, and times |
 | `private.example.yaml` | Template for the git-ignored `private.yaml` listing private repositories |
 | `app/` | Sources of the LLM Dependabot app (`launcher.c`, `icon.png`), which holds the Full Disk Access grant |
@@ -24,7 +24,7 @@ Guidance for AI coding agents working in this repository.
 | `mkdocs.yml` | Documentation site configuration, navigation, and `llms.txt` sections |
 | `lychee.toml` | Link-check settings for the CI link check |
 | `overrides/` | Site template overrides: structured data, `llms.txt` links, and README edit links |
-| `pyproject.toml`, `uv.lock` | Docs uv project that installs Zensical, and Ruff and ty configuration |
+| `pyproject.toml`, `uv.lock` | The uv project: CLI dependencies and entry point, the `docs` group with Zensical, and Ruff and ty configuration |
 | `.github/workflows/` | CI workflows: checks on pull requests, docs deployment from `main` |
 | `.github/workflows/actions.lock` | Generated lockfile of every workflow's direct and transitive actions |
 | `.github/zizmor.yml` | zizmor policy that requires full-SHA action pins |
@@ -36,6 +36,27 @@ Guidance for AI coding agents working in this repository.
 | `prek.toml` | Git hooks, run with `make hooks` |
 | `Makefile` | Entry points for common operations (`make help`) |
 | `Brewfile` | Command-line tools that `make setup` installs with `brew bundle` |
+
+### Modules
+
+Each module depends only on those above it; `cli.py` holds no logic of its own.
+
+| Module | Responsibility |
+| --- | --- |
+| `paths.py` | Names and locations: the checkout, logs, state, launchd, and the app |
+| `shell.py` | Logging, failing, and running external commands |
+| `config.py` | `config.yaml` and `private.yaml` models, validation, and loading |
+| `github.py` | Repository and pull request models, and every `gh` call |
+| `state.py` | Pending pull requests, managed clones, and last runs in `state.json` |
+| `discovery.py` | Sorting owned repositories that carry prompts into groups |
+| `checkouts.py` | Worktrees for runs, and cleanup once pull requests finish |
+| `runner.py` | Planning due prompts, running the agent, and the run lock |
+| `launchd.py` | The launchd agents and `launchctl` |
+| `macos_app.py` | Building the LLM Dependabot app and checking Full Disk Access |
+| `install.py` | Installing the app and the agents together |
+| `setup_wizard.py` | The steps of the interactive `setup` |
+| `dashboard/` | Reading runs back from the logs (`runs.py`) and rendering them (`render.py`) |
+| `cli.py` | The Typer commands, which parse arguments and call the modules above |
 
 ## Commands
 
@@ -49,6 +70,7 @@ make format        # apply ruff formatting
 make update-deps   # upgrade locked dependencies and prek hooks
 make actions-lock  # regenerate .github/workflows/actions.lock after action changes
 make list          # show group assignment (needs gh authenticated)
+uv run llm-dependabot --help  # the CLI that the everyday targets wrap
 make dry-run GROUP=python
 make docs          # build the documentation site strictly
 ```
@@ -60,9 +82,15 @@ owner's Mac.
 
 ## Conventions
 
-- Keep the CLI a single uv script with inline dependencies. Prefer widely used,
+- Keep the CLI a package under `src/llm_dependabot/` with its dependencies in
+  `pyproject.toml`, locked in `uv.lock`. Put new code in the module that owns
+  its concern (see the module map), keep `cli.py` to argument parsing, and
+  never import from a module further down the map. Prefer widely used,
   maintained libraries (Rust-backed where available) over hand-written code;
   the current ones are Typer, pydantic, PyYAML, and filelock.
+
+- Keep non-Python assets, such as the dashboard's HTML, CSS, and JavaScript,
+  in their own files, loaded with `importlib.resources`, not in Python strings.
 
 - Ruff runs with `select = ["ALL"]`; fix findings rather than adding ignores,
   and justify any new ignore in a comment in `pyproject.toml`.
@@ -76,7 +104,9 @@ owner's Mac.
 - The site's home page includes `README.md` verbatim, so give README images
   and links absolute URLs. The link check fetches those URLs from the live
   site, so link a new page from the README only in a follow-up pull request,
-  once the site has deployed it.
+  once the site has deployed it. The same holds for GitHub URLs of files a
+  pull request adds: they resolve only once it merges, so name new files in
+  code formatting and link them in a follow-up.
 
 - Use GitHub callouts (`> [!NOTE]`) for asides; the site renders them as
   admonitions.

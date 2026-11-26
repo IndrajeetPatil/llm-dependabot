@@ -96,7 +96,7 @@ entry = "submodules are not allowed in this repository:"
 language = "fail"
 types = ["directory"]
 
-# ty runs in the script's own environment, which holds its dependencies.
+# ty runs in the project's own environment, which holds its dependencies.
 [[repos.hooks]]
 id = "ty"
 name = "ty"

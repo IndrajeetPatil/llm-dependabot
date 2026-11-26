@@ -1,6 +1,6 @@
 # Configuration
 
-Two YAML files sit next to the script, and every command reads both. Both are
+Two YAML files sit at the root of the repository, and every command reads both. Both are
 validated strictly on load: unknown keys are rejected and values are never
 converted between types, so a typo fails with a clear message instead of a
 silent misconfiguration. Quote times (`"11:00"`): YAML reads an unquoted
@@ -198,10 +198,9 @@ interactive setup, and testing your installation.
 
 ### What comes with the template
 
-The scheduler needs only `llm_dependabot.py` and its lockfile, `config.yaml`,
-`private.example.yaml`, `app/`, `hooks/`, `prek.toml`, the `Makefile`, and
-the `Brewfile`, plus `pyproject.toml` and `uv.lock` for the Ruff and ty
-configuration and the docs tooling. The rest serves this repository's own
+The scheduler needs only `src/`, `pyproject.toml` and `uv.lock`,
+`config.yaml`, `private.example.yaml`, `app/`, `hooks/`, `prek.toml`, the
+`Makefile`, and the `Brewfile`. The rest serves this repository's own
 documentation, branding, and CI:
 
 | Files | In your copy |
@@ -218,8 +217,9 @@ Full Disk Access granted again.
 
 The scheduling and the tooling are macOS's. Everything else (discovery,
 worktrees, running the agent, pull-request tracking, and cleanup) is plain
-`git`, `gh`, and Python. To run elsewhere, replace these parts of
-[`llm_dependabot.py`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/llm_dependabot.py):
+`git`, `gh`, and Python. To run elsewhere, replace these parts of the
+`llm_dependabot` package, which keeps them in `launchd.py`, `macos_app.py`,
+`runner.py`, and `shell.py`:
 
 | macOS part | Role | Replace with, for example |
 | --- | --- | --- |

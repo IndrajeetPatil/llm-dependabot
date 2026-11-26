@@ -12,7 +12,7 @@ intelligence lives in each repository's own prompts.
 
 | Component | Role |
 | --- | --- |
-| [`llm_dependabot.py`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/llm_dependabot.py) | The CLI: a single-file uv script that discovers repositories, runs the agent, tracks pull requests, and writes the launchd agents |
+| `src/llm_dependabot/` | The CLI: a Python package, run with uv from the checkout, that discovers repositories, runs the agent, tracks pull requests, and writes the launchd agents |
 | [`config.yaml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/config.yaml) and `private.yaml` | The prompts, their cadences, the schedule, and which repositories take part (see [Configuration](configuration.md)) |
 | [`app/`](https://github.com/IndrajeetPatil/llm-dependabot/tree/main/app) | Sources of the LLM Dependabot app, a tiny launcher that holds the Full Disk Access grant |
 | launchd | macOS's built-in scheduler: one agent per group, plus a cleanup agent |
@@ -46,7 +46,7 @@ validate the configuration, state, and `gh` output, [PyYAML](https://pyyaml.org)
 - **Cadence:** a run takes every weekly prompt a repository has, plus each
   monthly one that has not yet run there this calendar month, according to
   the last runs recorded in `state.json`. Launchd starts every group weekly;
-  the script decides what is due, so a missed monthly run catches up the
+  the CLI decides what is due, so a missed monthly run catches up the
   following week.
 
 - **Isolation:** each prompt runs in its own git worktree and branch, so an

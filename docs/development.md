@@ -4,14 +4,14 @@
 
 ![Development toolchain and tech stack: four bands cover Python and locked dependencies, core libraries and the native Full Disk Access launcher, local Ruff, ty, audit, and prek checks, and pull-request CI and supply-chain checks with GitHub Actions, actionlint, zizmor, Gitleaks, actions.lock, Zensical, Homebrew, and the Brewfile.](images/tech-stack.webp)
 
-- **Python 3.15** in a single-file [uv](https://docs.astral.sh/uv/) script
-  with inline dependencies, locked in `llm_dependabot.py.lock`; there is no
-  virtual environment to manage.
+- **Python 3.15** in a [uv](https://docs.astral.sh/uv/) project: the
+  `llm_dependabot` package under `src/`, with its dependencies locked in
+  `uv.lock`. uv creates and syncs the virtual environment on each run.
 
 - **[Ruff](https://docs.astral.sh/ruff/)** lints (with every rule enabled)
   and formats.
 
-- **[ty](https://docs.astral.sh/ty/)** type-checks against the script's own
+- **[ty](https://docs.astral.sh/ty/)** type-checks against the project's own
   environment.
 
 - **[prek](https://prek.j178.dev)** runs the git hooks.
@@ -23,12 +23,12 @@
   [`gh-actions-lock`](https://github.com/github/gh-actions-lock) extension
   maintains the workflow dependency lockfile.
 
-- **`uv audit`** checks the locked dependencies of both scripts and the docs
-  project against the OSV vulnerability database.
+- **`uv audit`** checks the locked dependencies of the project and of the
+  private-names hook script against the OSV vulnerability database.
 
 - **[Zensical](https://zensical.org)** builds this documentation into a
-  website. It is the only dependency of the docs-only uv project in
-  `pyproject.toml`, locked in `uv.lock`.
+  website. It is the only package in the `docs` dependency group of
+  `pyproject.toml`, so scheduled runs never install it.
 
 - **[Homebrew](https://brew.sh)** installs the command-line tools listed in
   the [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile).

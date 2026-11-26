@@ -25,7 +25,7 @@ Find a simplification opportunity in one of these categories:
    action makes redundant (keeping every workflow rule in `AGENTS.md`).
 
 2. **A reliable, widely used third-party dependency:** where
-   `llm_dependabot.py` maintains custom code for a solved problem, replace it
+   the `llm_dependabot` package maintains custom code for a solved problem, replace it
    with a mature dependency only if that clearly reduces risk and complexity
    overall. Prefer Rust-backed libraries where available.
 
@@ -49,9 +49,9 @@ instructions, or superseded steps.
   dependency is broadly adopted, well maintained, and materially reduces
   long-term liability.
 
-- Keep the CLI a single uv script with inline dependencies, as `AGENTS.md`
-  requires. A new dependency goes in the `# /// script` metadata, kept
-  alphabetically sorted, followed by `uv lock --script llm_dependabot.py`.
+- Keep the package layout and module responsibilities that `AGENTS.md`
+  records. A new dependency goes in `dependencies` in `pyproject.toml`, kept
+  alphabetically sorted, followed by `uv lock`.
 
 - Keep the refactoring tightly scoped to one coherent simplification theme
   rather than bundling unrelated cleanups.
