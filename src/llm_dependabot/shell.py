@@ -12,19 +12,23 @@ if TYPE_CHECKING:
 
 
 def local_today() -> dt.date:
+    """Today's date in the local time zone."""
     return dt.datetime.now().astimezone().date()
 
 
 def log(message: str) -> None:
+    """Print a timestamped line, which the dashboard reads back."""
     print(f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {message}", flush=True)
 
 
 def fail(message: str) -> NoReturn:
+    """Print an error and exit with status 1."""
     typer.secho(message, err=True, fg="red")
     raise typer.Exit(1)
 
 
 def sh(*args: str | Path, cwd: Path | None = None, check: bool = True) -> str:
+    """Run a command and return its stripped standard output."""
     result = subprocess.run(
         args,
         cwd=cwd,
@@ -37,6 +41,7 @@ def sh(*args: str | Path, cwd: Path | None = None, check: bool = True) -> str:
 
 
 def succeeds(*args: str | Path, timeout: float = 120) -> bool:
+    """Whether a command exits successfully within the timeout."""
     try:
         result = subprocess.run(
             args,
@@ -56,6 +61,7 @@ def interactive(*args: str) -> int:
 
 
 def notify(title: str, message: str) -> None:
+    """Show a macOS notification."""
     script = (
         f"display notification {json.dumps(message)} with title {json.dumps(title)}"
     )

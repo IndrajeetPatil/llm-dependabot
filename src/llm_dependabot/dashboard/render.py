@@ -17,16 +17,19 @@ TEMPLATES = files("llm_dependabot.dashboard") / "templates"
 
 
 def template(name: str) -> str:
+    """The text of a file in the dashboard's templates folder."""
     return (TEMPLATES / name).read_text()
 
 
 def next_run(group: Group, now: dt.datetime) -> dt.datetime:
+    """When launchd next starts the group's run after now."""
     days = (WEEKDAYS.index(group.weekday) - now.isoweekday()) % 7
     when = dt.datetime.combine(now.date() + dt.timedelta(days=days), group.time)
     return when if when > now else when + dt.timedelta(weeks=1)
 
 
 def format_duration(start: dt.datetime, end: dt.datetime | None) -> str:
+    """A short, human-readable duration, or a dash if unfinished."""
     if end is None:
         return "&ndash;"
     minutes, seconds = divmod(int((end - start).total_seconds()), 60)
@@ -51,6 +54,7 @@ def job_status(job: Job, final: dict[str, str]) -> tuple[str, str]:
 
 
 def render_job(job: Job, owner: str, final: dict[str, str]) -> str:
+    """A table row for one job."""
     esc = html.escape
     kind, text = job_status(job, final)
     status = f'<span class="chip {kind}">{esc(text)}</span>'
@@ -78,6 +82,7 @@ def render_job(job: Job, owner: str, final: dict[str, str]) -> str:
 
 
 def render_run(run: GroupRun, owner: str, final: dict[str, str]) -> str:
+    """A section for one group run, with a table of its jobs."""
     esc = html.escape
     end = f"&ndash;{run.finished:%H:%M}" if run.finished else ""
     title = (
@@ -103,6 +108,7 @@ def render_run(run: GroupRun, owner: str, final: dict[str, str]) -> str:
 
 
 def render_dashboard(config: Config) -> str:
+    """The complete dashboard page."""
     esc = html.escape
     now = dt.datetime.now()
     runs, final = collect_runs(config)
@@ -126,7 +132,7 @@ def render_dashboard(config: Config) -> str:
         f"<td>{group.weekday[:3]} {group.time:%H:%M}</td>"
         f"<td>{next_run(group, now):%a %d %b, %H:%M}</td><td>"
         + ", ".join(
-            f"{esc(p.name)} <span class='muted'>{config.cadence(group, p)}</span>"
+            f"{esc(p.name)} <span class='muted'>{group.cadence_for(p)}</span>"
             for p in config.prompts
         )
         + "</td></tr>"

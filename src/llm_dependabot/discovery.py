@@ -14,6 +14,7 @@ CATCH_ALL = "*"
 
 
 def group_for(language: str, config: Config) -> str | None:
+    """The group a primary language belongs to, if any."""
     for group in config.groups:
         if language in group.languages:
             return group.name

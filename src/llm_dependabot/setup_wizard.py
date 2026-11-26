@@ -22,14 +22,17 @@ if TYPE_CHECKING:
 
 
 def step(title: str) -> None:
+    """Print a setup step's heading."""
     typer.secho(f"\n==> {title}", bold=True)
 
 
 def pause(message: str) -> None:
+    """Wait for the user to press Enter."""
     typer.prompt(f"{message} Press Enter to continue", default="", show_default=False)
 
 
 def ensure_brew_bundle() -> None:
+    """Check that every Brewfile package is installed."""
     step("Homebrew packages (Brewfile)")
     if not succeeds("brew", "bundle", "check", "--no-upgrade", "--file", BREWFILE):
         fail(
@@ -39,6 +42,7 @@ def ensure_brew_bundle() -> None:
 
 
 def ensure_signed_in(config: Config) -> None:
+    """Wait until gh and the agent are both signed in."""
     step("GitHub CLI sign-in")
     while not succeeds("gh", "auth", "status"):
         if not typer.confirm(
@@ -68,6 +72,7 @@ def ensure_signed_in(config: Config) -> None:
 
 
 def check_owner(config: Config) -> None:
+    """Offer to set owner in config.yaml to the signed-in GitHub account."""
     step("Repository owner")
     login = sh("gh", "api", "user", "--jq", ".login")
     if login.lower() == config.owner.lower():
@@ -85,6 +90,7 @@ def check_owner(config: Config) -> None:
 
 
 def ensure_clone_root(config: Config) -> None:
+    """Offer to create clone_root if it does not exist."""
     step("Clone directory")
     root = config.clone_root
     if not root.is_dir():
@@ -95,6 +101,7 @@ def ensure_clone_root(config: Config) -> None:
 
 
 def choose_private_repos(config: Config) -> None:
+    """Ask which private repositories with prompts to include."""
     step("Private repositories")
     if PRIVATE_FILE.exists():
         typer.echo(
@@ -125,12 +132,14 @@ def choose_private_repos(config: Config) -> None:
 
 
 def install_git_hooks() -> None:
+    """Install the prek git hooks."""
     step("Git hooks")
     if interactive("prek", "install") != 0:
         fail("prek install failed")
 
 
 def ensure_full_disk_access(config: Config) -> None:
+    """Install the app and agents, then wait for Full Disk Access."""
     step(f"{APP_NAME} app, launchd agents, and Full Disk Access")
     install_agents(config)
     while not full_disk_access_granted(config.clone_root):
