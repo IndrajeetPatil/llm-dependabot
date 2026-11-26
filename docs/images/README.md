@@ -105,7 +105,7 @@ Use case: infographic-diagram. Asset type: documentation diagram for llm-dependa
 
 Title exactly “Process and run”.
 
-Top band “Responsible process”: “launchd” → “LLM Dependabot app” (note “Responsible process · Full Disk Access”) → “Login shell” (note “Uses the user's login environment”) → “llm_dependabot.py (uv)” → “Coding agent” (note “Runs in a Git worktree”). Branch from “llm_dependabot.py (uv)” to “caffeinate” with note “keeps the Mac awake”.
+Top band “Responsible process”: “launchd” → “LLM Dependabot app” (note “Responsible process · Full Disk Access”) → “Login shell” (note “Uses the user's login environment”) → “llm-dependabot CLI (uv run)” → “Coding agent” (note “Runs in a Git worktree”). Branch from “llm-dependabot CLI (uv run)” to “caffeinate” with note “keeps the Mac awake”.
 
 Bottom band “One repository run”: “Discover repository and prompt” → decision “Prompt due?” (note “weekly, or monthly not yet run this month”). “No” leads to “Skip”. “Yes” continues to decision “Project copy exists?” with “Yes → Update existing copy” and “No → Prepare a new copy”; rejoin at “Create Git worktree” → “Run coding agent with a time limit” → decision “Pull request opened?”. Yes branch: “Record pending state” → “Record run date”. No branch: “Remove worktree” → “Record run date”. Put the note “Every completed run counts towards the cadence” beside the date outcomes. Mark the segment “Create Git worktree” → agent → pull-request decision as repeating for each due prompt in the repository. Footer exactly “Failures are logged and not recorded; the next prompt or repository still runs”. Make all branches distinct, non-crossing, and legible.
 ```
@@ -160,11 +160,11 @@ Use case: infographic-diagram. Asset type: documentation diagram for llm-dependa
 
 Title exactly: “Development toolchain and tech stack”
 
-Band “Runtime & dependencies”, summary “Single-file Python 3.15 script with locked inline dependencies”: “Python 3.15” (note “Modern language runtime”) → “uv script metadata” (note “PEP 723 inline dependencies”) → “Locked dependencies” (note “llm_dependabot.py.lock · frozen deps”).
+Band “Runtime & dependencies”, summary “A Python 3.15 package with locked dependencies”: “Python 3.15” (note “Modern language runtime”) → “uv project” (note “src/llm_dependabot · pyproject.toml”) → “Locked dependencies” (note “uv.lock · CLI, dev, and docs groups”).
 
 Band “Libraries & native app”, summary “Rust-backed validation, CLI tooling, and macOS launcher”: “Typer & PyYAML” (note “CLI commands & config parsing”) → “Pydantic & filelock” (note “Rust-core validation & concurrency gate”) → “Native launcher” (note “app/launcher.c · Full Disk Access”).
 
-Band “Hygiene & local checks”, summary “Strict local linting, typing, git hooks, and vulnerability auditing”: “Ruff lint & format” (note “select = ["ALL"] · fast Rust linter”) → “ty & audit” (note “Script type check · uv audit OSV scan”) → “prek git hooks” (note “Hygiene & private repository name guard”).
+Band “Hygiene & local checks”, summary “Strict local linting, typing, dependency auditing, and git hooks”: “Ruff lint & format” (note “select = ["ALL"] · fast Rust linter”) → “ty, pyrefly & unref” (note “Type check · type coverage · dead code”) → “uv audit & deptry” (note “OSV scan · declared dependencies”) → “prek git hooks” (note “Hygiene & private repository name guard”).
 
 Band “CI and supply chain”, summary “The same checks again on every pull request, with pinned actions”: “GitHub Actions workflows” (note “Zensical docs site”) → “actionlint and zizmor” (note “zizmor (pedantic)”) → “Gitleaks” (note “Scans the full history”) → “actions.lock” (note “gh-actions-lock”). Beneath the flow add the muted note “Homebrew and the Brewfile install tools”. Keep every label spelled exactly and legible within the four-band layout.
 ```

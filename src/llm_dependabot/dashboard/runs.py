@@ -57,6 +57,7 @@ def read_log(path: Path) -> list[tuple[dt.datetime, str]]:
 
 
 def local_time(timestamp: float) -> dt.datetime:
+    """A POSIX timestamp as a naive local time, like the log timestamps."""
     return (
         dt.datetime.fromtimestamp(timestamp, dt.UTC).astimezone().replace(tzinfo=None)
     )
@@ -66,6 +67,7 @@ def record_job_event(
     run: GroupRun, jobs: dict[str, Job], at: dt.datetime, label: str, event: str
 ) -> None:
     # Labels are "<repo> <prompt>"; older logs carry only "<repo>".
+    """Apply one logged event to the job it belongs to, creating it if new."""
     repo, _, prompt = label.partition(" ")
     problem = event.startswith(("skipped: ", "failed: "))
     if event.startswith("running agent in ") or (problem and label not in jobs):
@@ -94,6 +96,7 @@ def record_job_event(
 
 
 def parse_group_log(group: str, lines: list[tuple[dt.datetime, str]]) -> list[GroupRun]:
+    """Split a group log's lines into the runs they record."""
     runs: list[GroupRun] = []
     run: GroupRun | None = None
     jobs: dict[str, Job] = {}

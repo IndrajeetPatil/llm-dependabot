@@ -1,3 +1,5 @@
+"""Tests for the launchd agents' plists."""
+
 import shlex
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -12,6 +14,7 @@ if TYPE_CHECKING:
 
 
 def test_each_group_runs_on_its_weekday_and_time(config: Config) -> None:
+    """Each group's agent fires on its weekday and time."""
     agents = desired_agents(config)
     assert sorted(agents) == [
         "com.indrajeetpatil.llm-dependabot.cleanup",
@@ -27,6 +30,7 @@ def test_each_group_runs_on_its_weekday_and_time(config: Config) -> None:
 
 
 def test_jobs_start_through_the_app_in_a_login_shell(config: Config) -> None:
+    """Every job starts through the app's launcher in a login shell."""
     for plist in desired_agents(config).values():
         program = plist["ProgramArguments"]
         assert program[:5] == [str(launchd.LAUNCHER), "/bin/zsh", "-l", "-i", "-c"]
@@ -36,6 +40,7 @@ def test_jobs_start_through_the_app_in_a_login_shell(config: Config) -> None:
 
 
 def test_the_cleanup_runs_at_load_and_on_an_interval(config: Config) -> None:
+    """The cleanup agent runs at load and every interval."""
     cleanup = desired_agents(config)["com.indrajeetpatil.llm-dependabot.cleanup"]
     assert cleanup["StartInterval"] == 3 * 3600
     assert cleanup["RunAtLoad"] is True
@@ -46,6 +51,7 @@ def test_the_cleanup_runs_at_load_and_on_an_interval(config: Config) -> None:
 
 
 def test_the_cli_command_quotes_the_checkout(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The CLI command survives spaces in paths and names."""
     monkeypatch.setattr(launchd, "ROOT", Path("/Users/me/My Projects/bot"))
     command = cli_command("run", "web apps", "--scheduled")
     assert command.startswith("exec ")

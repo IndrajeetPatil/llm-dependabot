@@ -1,3 +1,5 @@
+"""Tests for reading runs back from the logs and rendering the dashboard."""
+
 import datetime as dt
 from typing import TYPE_CHECKING
 
@@ -24,7 +26,7 @@ def local(text: str) -> dt.datetime:
     return dt.datetime.fromisoformat(text)
 
 
-AT = local("2026-11-24 11:00")
+AT: dt.datetime = local("2026-11-24 11:00")
 
 
 def write_run(log_dir: Path) -> Path:
@@ -52,6 +54,7 @@ def write_run(log_dir: Path) -> Path:
 
 
 def test_read_log_skips_untimestamped_lines() -> None:
+    """Lines without a timestamp, such as shell noise, are skipped."""
     write_run(runs.LOG_DIR)
     lines = read_log(runs.LOG_DIR / "python.log")
     assert lines[0] == (AT, "group python: app update-deps, lib update-deps")
@@ -59,6 +62,7 @@ def test_read_log_skips_untimestamped_lines() -> None:
 
 
 def test_parse_group_log() -> None:
+    """A group log splits into runs and their jobs."""
     run_dir = write_run(runs.LOG_DIR)
     first, nothing, unfinished = parse_group_log(
         "python", read_log(runs.LOG_DIR / "python.log")
@@ -78,6 +82,7 @@ def test_parse_group_log() -> None:
 def test_collect_runs_reads_final_pull_request_states(
     home: Path, monkeypatch: pytest.MonkeyPatch, config: Config
 ) -> None:
+    """Cleanup logs and pending state give each pull request's final state."""
     write_run(runs.LOG_DIR)
     monkeypatch.setattr(runs, "running_jobs", list)
     save_state(
@@ -126,6 +131,7 @@ def test_collect_runs_reads_final_pull_request_states(
     ],
 )
 def test_job_status(job: Job, status: tuple[str, str]) -> None:
+    """Each job outcome maps to its chip."""
     assert job_status(job, {"u/1": "merged"}) == status
 
 
@@ -134,10 +140,12 @@ def test_job_status(job: Job, status: tuple[str, str]) -> None:
     [(0.5, "30 s"), (12, "12 min"), (65, "1 h 05 min")],
 )
 def test_format_duration(minutes: float, text: str) -> None:
+    """Durations are shown in the largest sensible unit."""
     assert format_duration(AT, AT + dt.timedelta(minutes=minutes)) == text
 
 
 def test_format_duration_of_an_unfinished_job() -> None:
+    """An unfinished job has no duration."""
     assert format_duration(AT, None) == "&ndash;"
 
 
@@ -151,16 +159,19 @@ def test_format_duration_of_an_unfinished_job() -> None:
     ],
 )
 def test_next_run(config: Config, now: dt.datetime, expected: dt.datetime) -> None:
+    """The next run is the group's next weekday and time after now."""
     assert next_run(config.group("python"), now) == expected
 
 
 def test_render_dashboard(monkeypatch: pytest.MonkeyPatch, config: Config) -> None:
+    """The page fills every placeholder and escapes configured names."""
     write_run(runs.LOG_DIR)
     monkeypatch.setattr(runs, "running_jobs", list)
     config.groups[0] = config.groups[0].model_copy(update={"name": "<python>"})
     page = render_dashboard(config)
     assert page.startswith("<!doctype html>")
-    placeholders = ("{css}", "{theme}", "{script}", "{stats}", "{schedule}", "{runs}")
+    names = ("css", "theme", "script", "stats", "schedule", "runs")
+    placeholders = [f"{{{name}}}" for name in names]
     assert not any(placeholder in page for placeholder in placeholders)
     assert "&lt;python&gt;" in page
     assert '<a href="https://github.com/octo/app/pull/12">#12</a>' in page

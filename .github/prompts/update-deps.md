@@ -11,7 +11,7 @@ Follow `AGENTS.md` throughout, especially its workflow rules.
 
 | Dependency | Where it is pinned | Keep aligned with |
 | --- | --- | --- |
-| CLI, test, and docs dependencies | `dependencies` and the `dev` and `docs` groups in `pyproject.toml`, locked in `uv.lock` | The PyYAML minimum in `hooks/check_private_names.py` |
+| CLI, dev, and docs dependencies | `dependencies` and the `dev` and `docs` groups in `pyproject.toml`, locked in `uv.lock` | The PyYAML minimum in `hooks/check_private_names.py`, and the locked Ruff version with the `ruff-pre-commit` rev in `prek.toml` |
 | uv build backend | `uv_build` in `[build-system]` of `pyproject.toml` | The `required-version` of uv in `pyproject.toml` |
 | Python | `requires-python` in `pyproject.toml` and `hooks/check_private_names.py`, and `.python-version` | The latest stable CPython release |
 | prek hooks | Frozen `rev` commit SHAs in `prek.toml` | The latest release of each hook repository |
@@ -29,8 +29,8 @@ Follow `AGENTS.md` throughout, especially its workflow rules.
    the prek hook revisions.
 
 2. Ensure that the minimum versions in `pyproject.toml` match the newly
-   locked versions, and that the dependencies there remain alphabetically
-   sorted. Keep the PyYAML minimum in `hooks/check_private_names.py` equal to
+   locked versions, and that the dependencies and dependency groups there
+   remain alphabetically sorted. Keep the PyYAML minimum in `hooks/check_private_names.py` equal to
    the one in `pyproject.toml`. After editing `pyproject.toml`, run `uv lock`
    so the lockfile matches it.
 
@@ -46,7 +46,8 @@ Follow `AGENTS.md` throughout, especially its workflow rules.
 `# frozen: vX.Y.Z` comment. Never rewrite a frozen `rev` back to a bare
 mutable tag. Raise `minimum_prek_version` to the latest prek release, and
 keep the zizmor and conventional-pre-commit hooks on the same versions as
-`security.yml` and `conventional-commits.yml`.
+`security.yml` and `conventional-commits.yml`, and the `ruff-pre-commit` rev
+on the Ruff version locked in `uv.lock`.
 
 ## Workflows
 
@@ -80,7 +81,8 @@ keep the zizmor and conventional-pre-commit hooks on the same versions as
 
 Iterate until the full local quality gate passes:
 
-- `make check` (including `uv audit` of the locked dependencies)
+- `make check` (including `uv audit` of the locked dependencies and the
+  package build)
 - `make hooks` (including actionlint, zizmor, Gitleaks, and the
   `actions.lock` check)
 - `make docs`

@@ -23,8 +23,8 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from llm_dependabot.config import Agent, Config, Group, Prompt
-    from llm_dependabot.github import Repo
-    from llm_dependabot.state import State
+    from llm_dependabot.github import PullRequest, Repo
+    from llm_dependabot.state import Checkout, State
 
 
 def planned_runs(
@@ -41,13 +41,17 @@ def planned_runs(
         for repo in repos
         for prompt in prompts
         if prompt.name in repo.prompts
-        and (forced or state.is_due(prompt, repo, config.cadence(group, prompt)))
+        and (forced or state.is_due(prompt, repo, group.cadence_for(prompt)))
     ]
 
 
 def run_agent(
     agent: Agent, worktree: Path, prompt: str, log_path: Path, timeout_hours: float
 ) -> int:
+    """Run the agent in a worktree, logging its output; return its exit code.
+
+    A run that outlasts its timeout is stopped and returns -1.
+    """
     argv, via_stdin = agent.argv(prompt, timeout_hours)
     with log_path.open("w") as out:
         proc = subprocess.Popen(
@@ -71,6 +75,28 @@ def run_agent(
         return proc.wait()
 
 
+def agent_pass(
+    checkout: Checkout, repo: Repo, prompt: Prompt, config: Config, label: str
+) -> tuple[int, PullRequest | None]:
+    """Run the agent in a prepared checkout, then find the pull request it opened."""
+    # The prompt is passed verbatim, exactly as committed in the repository.
+    text = (checkout.worktree / prompt.path).read_text()
+    log(f"{label}: running agent in {checkout.worktree} (log: {checkout.log})")
+    code = run_agent(
+        config.agent,
+        checkout.worktree,
+        text,
+        checkout.log,
+        config.agent_timeout_hours,
+    )
+    log(f"{label}: agent exited with code {code}")
+    current = sh(
+        "git", "-C", checkout.worktree, "branch", "--show-current", check=False
+    )
+    checkout.final_branch = current or checkout.branch
+    return code, find_pr(repo, checkout.final_branch, checkout.started)
+
+
 def process_repo(
     repo: Repo, prompt: Prompt, config: Config, state: State, run_dir: Path
 ) -> str:
@@ -79,22 +105,7 @@ def process_repo(
     log_path = run_dir / f"{repo.name}-{prompt.name}.log"
     checkout = prepare_checkout(repo, prompt, config, state, log_path)
     try:
-        # The prompt is passed verbatim, exactly as committed in the repository.
-        text = (checkout.worktree / prompt.path).read_text()
-        log(f"{label}: running agent in {checkout.worktree} (log: {checkout.log})")
-        code = run_agent(
-            config.agent,
-            checkout.worktree,
-            text,
-            checkout.log,
-            config.agent_timeout_hours,
-        )
-        log(f"{label}: agent exited with code {code}")
-        current = sh(
-            "git", "-C", checkout.worktree, "branch", "--show-current", check=False
-        )
-        checkout.final_branch = current or checkout.branch
-        pr = find_pr(repo, checkout.final_branch, checkout.started)
+        code, pr = agent_pass(checkout, repo, prompt, config, label)
     except Exception:
         remove_checkout(checkout)
         raise
@@ -134,7 +145,7 @@ def run_plan(config: Config, group: str, plan: list[tuple[Repo, Prompt]]) -> lis
             except SkipRepoError as exc:
                 log(f"{label}: skipped: {exc}")
                 results.append(f"{label}: skipped")
-            except Exception as exc:  # noqa: BLE001 - keep going with the other repos
+            except Exception as exc:  # ruff: ignore[blind-except] (keep going with the other repos)
                 detail = getattr(exc, "stderr", "") or exc
                 log(f"{label}: failed: {detail}")
                 results.append(f"{label}: failed")

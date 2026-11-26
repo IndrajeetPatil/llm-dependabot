@@ -35,6 +35,8 @@ class Pending(Checkout):
 
 
 class State(Strict):
+    """Everything runs leave behind, kept in state.json."""
+
     pending: list[Pending] = Field(default_factory=list)
     managed_clones: list[Path] = Field(default_factory=list)
     # When each prompt last ran in each repository, keyed "prompt owner/repo".
@@ -54,17 +56,20 @@ class State(Strict):
         return last is None or (last.year, last.month) != (today.year, today.month)
 
     def record_run(self, prompt: Prompt, repo: Repo) -> None:
+        """Record that the prompt ran in the repository today."""
         self.last_runs[f"{prompt.name} {repo.full_name}"] = local_today()
         save_state(self)
 
 
 def load_state() -> State:
+    """The saved state, or an empty one before the first run."""
     if STATE_FILE.exists():
         return State.model_validate_json(STATE_FILE.read_text())
     return State()
 
 
 def save_state(state: State) -> None:
+    """Write the state atomically."""
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     tmp = STATE_FILE.with_suffix(".tmp")
     tmp.write_text(state.model_dump_json(indent=2) + "\n")

@@ -1,3 +1,5 @@
+"""Tests for the Typer commands, with discovery and runs faked."""
+
 import datetime as dt
 from typing import TYPE_CHECKING
 
@@ -17,15 +19,19 @@ if TYPE_CHECKING:
 
 runner = CliRunner()
 
+pytestmark: pytest.MarkDecorator = pytest.mark.usefixtures("use_config")
 
-@pytest.fixture(autouse=True)
+
+@pytest.fixture
 def use_config(config: Config, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Use the test config and report no installed agents."""
     monkeypatch.setattr(cli, "load_config", lambda: config)
     monkeypatch.setattr(cli, "installed_labels", list)
 
 
 @pytest.fixture
 def discovered(monkeypatch: pytest.MonkeyPatch, make_repo: Callable[..., Repo]) -> None:
+    """Fake discovery with two python repositories."""
     grouped = {
         "python": [make_repo("app", "update-deps"), make_repo("lib", "update-deps")],
         "rest": [],
@@ -34,11 +40,13 @@ def discovered(monkeypatch: pytest.MonkeyPatch, make_repo: Callable[..., Repo]) 
 
 
 def fail_if_called(*_args: object) -> list[str]:
+    """Fail the test; stands in for what must not run."""
     pytest.fail("a dry run must not run anything")
 
 
 @pytest.mark.usefixtures("discovered")
 def test_a_dry_run_lists_what_would_run(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A dry run logs the plan and runs nothing."""
     monkeypatch.setattr(cli, "run_plan", fail_if_called)
     result = runner.invoke(app, ["run", "python", "--dry-run", "--repo", "lib"])
     assert result.exit_code == 0, result.output
@@ -47,6 +55,7 @@ def test_a_dry_run_lists_what_would_run(monkeypatch: pytest.MonkeyPatch) -> None
 
 @pytest.mark.usefixtures("discovered")
 def test_a_run_runs_the_plan_and_notifies(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A run logs and notifies its summary."""
     notified: list[tuple[str, str]] = []
     monkeypatch.setattr(
         cli, "run_plan", lambda _c, _g, plan: [f"{r.name}: PR #1" for r, _ in plan]
@@ -59,6 +68,7 @@ def test_a_run_runs_the_plan_and_notifies(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 def test_a_scheduled_run_skips_weekends(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A scheduled run on a weekend does nothing."""
     monkeypatch.setattr(cli, "is_weekend", lambda _config: True)
     monkeypatch.setattr(cli, "discover", fail_if_called)
     result = runner.invoke(app, ["run", "python", "--scheduled"])
@@ -67,6 +77,7 @@ def test_a_scheduled_run_skips_weekends(monkeypatch: pytest.MonkeyPatch) -> None
 
 
 def test_an_unknown_group_fails() -> None:
+    """An unknown group fails with the choices."""
     result = runner.invoke(app, ["run", "nope"])
     assert result.exit_code == 1
     assert "unknown group 'nope'" in result.output
@@ -74,6 +85,7 @@ def test_an_unknown_group_fails() -> None:
 
 @pytest.mark.usefixtures("discovered")
 def test_list_shows_each_group() -> None:
+    """The list command prints each group with its repositories and prompts."""
     result = runner.invoke(app, ["list"])
     assert (
         result.output == "python:\n  app (update-deps)\n  lib (update-deps)\nrest: -\n"
@@ -81,6 +93,7 @@ def test_list_shows_each_group() -> None:
 
 
 def test_status_shows_the_schedule_and_pending_pull_requests(home: Path) -> None:
+    """The status command prints the schedule, cadences, and pending pull requests."""
     save_state(
         State(
             pending=[
@@ -108,6 +121,7 @@ def test_status_shows_the_schedule_and_pending_pull_requests(home: Path) -> None
 
 
 def test_dashboard_writes_the_page(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The dashboard command writes the rendered page."""
     monkeypatch.setattr(cli, "render_dashboard", lambda _config: "<!doctype html>")
     result = runner.invoke(app, ["dashboard", "--no-open"])
     assert result.exit_code == 0, result.output

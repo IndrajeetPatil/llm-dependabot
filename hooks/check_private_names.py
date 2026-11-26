@@ -20,6 +20,7 @@ PRIVATE_FILE = Path(__file__).resolve().parent.parent / "private.yaml"
 
 
 def main(paths: list[str]) -> int:
+    """Return 1 if any of the files names a private repository, else 0."""
     if not PRIVATE_FILE.exists():
         return 0
     names = (yaml.safe_load(PRIVATE_FILE.read_text(encoding="utf-8")) or {}).get(

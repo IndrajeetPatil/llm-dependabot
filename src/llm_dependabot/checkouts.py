@@ -23,6 +23,7 @@ class SkipRepoError(Exception):
 
 
 def remote_matches(clone: Path, repo: Repo) -> bool:
+    """Whether the clone's origin is the repository on GitHub."""
     url = sh("git", "-C", clone, "remote", "get-url", "origin", check=False)
     return url.lower().removesuffix(".git").endswith(repo.full_name.lower())
 
@@ -78,6 +79,7 @@ def prepare_checkout(
 
 
 def remove_checkout(checkout: Checkout) -> None:
+    """Remove a checkout's worktree and its local branches, if the clone remains."""
     clone = checkout.clone
     if not clone.exists():
         return
@@ -90,6 +92,7 @@ def remove_checkout(checkout: Checkout) -> None:
 
 
 def clone_is_disposable(clone: Path) -> tuple[bool, str]:
+    """Whether a clone holds no local work; if not, a reason saying why."""
     if sh("git", "-C", clone, "status", "--porcelain", check=False):
         return False, "has uncommitted changes"
     worktrees = sh("git", "-C", clone, "worktree", "list", "--porcelain", check=False)
@@ -123,6 +126,7 @@ def delete_unused_managed_clones(state: State) -> None:
 
 
 def cleanup_finished(state: State) -> None:
+    """Remove checkouts whose pull requests finished, then unused clones."""
     remaining = []
     for entry in state.pending:
         pr_ref = f"{entry.repo}#{entry.pr_number}"

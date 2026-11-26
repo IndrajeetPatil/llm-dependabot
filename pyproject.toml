@@ -3,8 +3,23 @@ name = "llm-dependabot"
 version = "0.1.0"
 description = "Run each repository's prompts with a coding agent on a weekly or monthly cadence"
 readme = "README.md"
+authors = [
+  { name = "Indrajeet Patil", email = "patilindrajeet.science@gmail.com" },
+]
 license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.15"
+keywords = ["automation", "coding-agent", "dependencies", "launchd", "maintenance"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Operating System :: MacOS",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.15",
+  "Topic :: Software Development :: Build Tools",
+  "Topic :: Utilities",
+]
 dependencies = [
   "filelock>=4.3.1",
   "pydantic>=2.14.4",
@@ -15,9 +30,23 @@ dependencies = [
 [project.scripts]
 llm-dependabot = "llm_dependabot.cli:app"
 
+[project.urls]
+Homepage = "https://github.com/IndrajeetPatil/llm-dependabot"
+Documentation = "https://www.indrapatil.com/llm-dependabot/"
+Repository = "https://github.com/IndrajeetPatil/llm-dependabot"
+Issues = "https://github.com/IndrajeetPatil/llm-dependabot/issues"
+
 [dependency-groups]
-# Tests and type-checking; `uv run` installs it by default, scheduled runs never.
-dev = ["pytest>=9.2.0"]
+# Development tools, locked in uv.lock so new rules arrive only through a
+# reviewed dependency update; scheduled runs use --no-dev and never install them.
+dev = [
+  "deptry>=0.25.1",
+  "pyrefly>=1.5.0",
+  "pytest>=9.2.0",
+  "ruff>=0.17.6",
+  "ty>=0.0.111",
+  "unref>=0.5.1",
+]
 # Installed only for `make docs`; scheduled runs never need it.
 docs = ["zensical>=0.1.3"]
 
@@ -30,36 +59,60 @@ required-version = ">=0.13.0"
 
 [tool.pytest]
 testpaths = ["tests"]
+# Isolates every test from the real home directory (see tests/conftest.py).
+usefixtures = ["home"]
 strict = true
 addopts = ["-ra"]
 
 [tool.ruff]
 target-version = "py315"
 line-length = 88
+preview = true
 
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-  "COM812",  # conflicts with the formatter
-  "CPY001",  # no copyright headers
-  "ANN401",  # gh JSON output is untyped
-  "D",       # the module docstring documents the CLI
-  "EM",      # short inline exception messages are clearer here
-  "DTZ005",  # local wall-clock time is intended for logs and branch names
-  "S603",    # subprocess arguments are built from lists, never a shell
-  "S607",    # agy, gh, git, and launchctl are resolved from the login PATH
-  "T201",    # print is the CLI's output
-  "TRY003",  # see EM
+  # Conflicts with the formatter.
+  "missing-trailing-comma",
+  # The repository-level LICENSE covers every file.
+  "missing-copyright-notice",
+  # gh's JSON output is untyped.
+  "any-type",
+  # Docstrings say what a function does and why; Returns and Raises sections
+  # would only restate the signature (see AGENTS.md).
+  "docstring-missing-returns",
+  "docstring-missing-exception",
+  # Short inline exception messages are clearer here.
+  "EM",
+  "raise-vanilla-args",
+  # Local wall-clock time is intended for logs and branch names.
+  "call-datetime-now-without-tzinfo",
+  # Python 3.15 opens text files as UTF-8 by default (PEP 686).
+  "unspecified-encoding",
+  # Running git, gh, launchctl, and the agent is the CLI's job. Arguments are
+  # built from lists, never a shell, and the tools are resolved from the
+  # login PATH.
+  "suspicious-subprocess-import",
+  "subprocess-without-shell-equals-true",
+  "start-process-with-partial-path",
+  # print is the CLI's output.
+  "print",
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = [
-  "S101",    # pytest asserts with plain assert
-  "PLR2004", # expected values read better inline than as named constants
+  # pytest checks with plain assert statements.
+  "assert",
+  # Expected values read better inline than as named constants.
+  "magic-value-comparison",
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
+known-first-party = ["llm_dependabot"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "parents"
@@ -85,8 +138,8 @@ python-platform = "darwin"
 
 [tool.ty.rules]
 # Enable every current diagnostic, including soundness and suppression checks that
-# ty leaves disabled by default. Pinning ty in uv.lock keeps new rules from arriving
-# silently between dependency updates.
+# ty leaves disabled by default. The dev group pins ty in uv.lock, so new rules
+# arrive only through a reviewed dependency update.
 all = "error"
 
 [tool.ty.analysis]
@@ -94,3 +147,9 @@ all = "error"
 respect-type-ignore-comments = false
 strict-equality-semantics = true
 strict-generic-narrowing = true
+
+[tool.deptry]
+known_first_party = ["llm_dependabot"]
+
+[tool.unref]
+show-transitive = true

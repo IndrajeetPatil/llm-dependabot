@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 
 
 def git(*args: str | Path) -> str:
+    """Run git with a fixed identity and return its output."""
     return subprocess.run(
         ["git", "-c", "user.name=Test", "-c", "user.email=test@example.com", *args],
         check=True,
@@ -50,6 +51,7 @@ def clone(tmp_path: Path, config: Config) -> Path:
 def test_prepare_checkout_adds_a_worktree_off_the_default_branch(
     clone: Path, config: Config, make_repo: Callable[..., Repo], tmp_path: Path
 ) -> None:
+    """A run works in its own worktree and leaves the clone alone."""
     git("-C", clone, "checkout", "--quiet", "-b", "my-work")
     (clone / "notes.txt").write_text("uncommitted\n")
     prompt = config.prompt("update-deps")
@@ -74,6 +76,7 @@ def test_prepare_checkout_adds_a_worktree_off_the_default_branch(
 def test_a_clone_of_another_repository_is_skipped(
     clone: Path, config: Config, make_repo: Callable[..., Repo], tmp_path: Path
 ) -> None:
+    """A clone whose origin is another repository is never used."""
     git("-C", clone, "remote", "set-url", "origin", "https://example.com/x/y.git")
     with pytest.raises(SkipRepoError, match="different repository"):
         prepare_checkout(
@@ -84,6 +87,7 @@ def test_a_clone_of_another_repository_is_skipped(
 def test_a_directory_that_is_not_a_clone_is_skipped(
     config: Config, make_repo: Callable[..., Repo], tmp_path: Path
 ) -> None:
+    """A plain directory in the clone's place is never used."""
     (config.clone_root / "project").mkdir(parents=True)
     with pytest.raises(SkipRepoError, match="not a git clone"):
         prepare_checkout(
@@ -92,6 +96,7 @@ def test_a_directory_that_is_not_a_clone_is_skipped(
 
 
 def test_clone_is_disposable(clone: Path) -> None:
+    """Only a clean clone without local commits may be deleted."""
     assert clone_is_disposable(clone) == (True, "")
     (clone / "README.md").write_text("changed\n")
     assert clone_is_disposable(clone) == (False, "has uncommitted changes")
@@ -109,6 +114,7 @@ def test_cleanup_removes_finished_pull_requests_and_their_managed_clones(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
+    """Cleanup keeps open pull requests and deletes clones nothing needs."""
     state = State(managed_clones=[clone])
     checkout = prepare_checkout(
         make_repo(), config.prompt("update-deps"), config, state, tmp_path / "l"

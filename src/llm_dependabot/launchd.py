@@ -16,12 +16,14 @@ if TYPE_CHECKING:
 
 
 def launchctl(*args: str | Path) -> subprocess.CompletedProcess[str]:
+    """Run launchctl, capturing its output without checking its exit code."""
     return subprocess.run(
         ["launchctl", *args], capture_output=True, text=True, check=False
     )
 
 
 def gui_domain() -> str:
+    """The launchd domain of the logged-in user's agents."""
     return f"gui/{os.getuid()}"
 
 
@@ -34,6 +36,7 @@ def cli_command(*args: str) -> str:
 def plist_for(
     label: str, shell_command: str, schedule: dict[str, Any], log_name: str
 ) -> dict[str, Any]:
+    """A launchd agent that runs the shell command through the app."""
     return {
         "Label": label,
         # Shows the jobs as "LLM Dependabot" in System Settings > General >
@@ -58,6 +61,7 @@ def plist_for(
 
 
 def desired_agents(config: Config) -> dict[str, dict[str, Any]]:
+    """Every launchd agent the configuration calls for, by label."""
     agents = {}
     for group in config.groups:
         when = {
@@ -82,11 +86,13 @@ def desired_agents(config: Config) -> dict[str, dict[str, Any]]:
 
 
 def unload(label: str) -> None:
+    """Stop and remove a launchd agent."""
     launchctl("bootout", f"{gui_domain()}/{label}")
     (LAUNCH_AGENTS / f"{label}.plist").unlink(missing_ok=True)
 
 
 def installed_labels() -> list[str]:
+    """Labels of the installed launchd agents."""
     return sorted(p.stem for p in LAUNCH_AGENTS.glob(f"{BUNDLE_ID}.*.plist"))
 
 

@@ -2,14 +2,20 @@
 
 ## Toolchain
 
-![Development toolchain and tech stack: four bands cover Python and locked dependencies, core libraries and the native Full Disk Access launcher, local Ruff, ty, audit, and prek checks, and pull-request CI and supply-chain checks with GitHub Actions, actionlint, zizmor, Gitleaks, actions.lock, Zensical, Homebrew, and the Brewfile.](images/tech-stack.webp)
+![Development toolchain and tech stack: four bands cover Python and locked dependencies, core libraries and the native Full Disk Access launcher, local Ruff, ty, pyrefly, unref, audit, deptry, and prek checks, and pull-request CI and supply-chain checks with GitHub Actions, actionlint, zizmor, Gitleaks, actions.lock, Zensical, Homebrew, and the Brewfile.](images/tech-stack.webp)
 
 - **Python 3.15** in a [uv](https://docs.astral.sh/uv/) project: the
   `llm_dependabot` package under `src/`, with its dependencies locked in
-  `uv.lock`. uv creates and syncs the virtual environment on each run.
+  `uv.lock`. uv creates and syncs the virtual environment on each run, and
+  `make build` builds the sdist and wheel with the `uv_build` backend.
 
-- **[Ruff](https://docs.astral.sh/ruff/)** lints (with every rule enabled)
-  and formats.
+- **The `dev` dependency group** in `pyproject.toml` holds the development
+  tools, locked in `uv.lock` like everything else, so new rules arrive only
+  through a reviewed dependency update. Scheduled runs pass `--no-dev` and
+  never install them.
+
+- **[Ruff](https://docs.astral.sh/ruff/)** lints (with every rule, including
+  preview rules and Google-style docstring checks, enabled) and formats.
 
 - **[pytest](https://docs.pytest.org)** runs the test suite in `tests/`. It
   fakes `gh` and `launchctl`, runs real `git` against local repositories, and
@@ -17,7 +23,12 @@
   OS.
 
 - **[ty](https://docs.astral.sh/ty/)** type-checks against the project's own
-  environment.
+  environment, and **[pyrefly](https://pyrefly.org)** requires complete
+  strict type coverage.
+
+- **[unref](https://github.com/Apakottur/unref)** finds unused code, and
+  **[deptry](https://deptry.com)** checks that `pyproject.toml` declares
+  exactly the dependencies the package imports.
 
 - **[prek](https://prek.j178.dev)** runs the git hooks.
 
@@ -92,9 +103,10 @@ If your account allows only selected actions, allow these:
 
 ```sh
 make hooks-install   # once per clone: install the git hooks
-make check           # ruff check, ruff format --check, ty check, pytest, and audit
+make check           # lint, format check, type check and coverage, tests, dead code, audit, and build
 make test            # run the pytest suite
-make audit           # check locked dependencies for known vulnerabilities
+make audit           # check dependencies for known vulnerabilities and declarations
+make build           # build the sdist and wheel into dist/
 make format          # apply ruff formatting
 make hooks           # run every prek hook on all files
 make update-deps     # upgrade locked dependencies and prek hook revisions

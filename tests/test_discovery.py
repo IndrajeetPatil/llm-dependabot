@@ -1,3 +1,5 @@
+"""Tests for sorting owned repositories into groups."""
+
 from typing import TYPE_CHECKING
 
 import pytest
@@ -18,15 +20,18 @@ if TYPE_CHECKING:
 def test_group_for_falls_back_to_the_catch_all(
     config: Config, language: str, group: str
 ) -> None:
+    """A language without a group goes to the catch-all group."""
     assert group_for(language, config) == group
 
 
 def test_group_for_without_a_catch_all(config: Config) -> None:
+    """Without a catch-all, an unknown language has no group."""
     config.groups.pop()
     assert group_for("Rust", config) is None
 
 
 def listing(*items: tuple[str, str, str | None]) -> list[GitHubRepo]:
+    """The output of gh repo list for (name, visibility, language) triples."""
     return [
         GitHubRepo.model_validate({
             "name": name,
@@ -62,6 +67,7 @@ def github(monkeypatch: pytest.MonkeyPatch) -> dict[str, set[str]]:
     monkeypatch.setattr(discovery, "owned_repos", lambda _config: repos)
 
     def has_prompt(repo: Repo, path: str) -> bool:
+        """Whether the fake repository carries the prompt."""
         return path in prompts.get(repo.name, set())
 
     monkeypatch.setattr(discovery, "has_prompt", has_prompt)
@@ -70,6 +76,7 @@ def github(monkeypatch: pytest.MonkeyPatch) -> dict[str, set[str]]:
 
 @pytest.mark.usefixtures("github")
 def test_discover_groups_repositories_that_carry_prompts(config: Config) -> None:
+    """Only public or listed private repositories with prompts are grouped."""
     config.private_repos = frozenset({"secret", "gone"})
     grouped = discover(config)
     assert {name: [r.name for r in repos] for name, repos in grouped.items()} == {
@@ -83,6 +90,7 @@ def test_discover_groups_repositories_that_carry_prompts(config: Config) -> None
 
 @pytest.mark.usefixtures("github")
 def test_discover_one_group(config: Config) -> None:
+    """Discovering one group leaves the others empty."""
     assert discover(config, "rest") == {
         "python": [],
         "rest": [discover(config)["rest"][0]],

@@ -1,10 +1,12 @@
+"""Fixtures shared by every test: an isolated home and a valid config."""
+
 import json
 import sys
 from typing import TYPE_CHECKING, Any
 
 import pytest
 
-import llm_dependabot.cli  # noqa: F401 - imports every module, so the paths below can be patched
+import llm_dependabot.cli  # ruff: ignore[unused-import] (imports every module, so home can patch them)
 from llm_dependabot.config import Config
 from llm_dependabot.github import Repo
 
@@ -13,9 +15,12 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Point every per-user location at a temporary directory.
+
+    pyproject.toml lists this fixture in usefixtures, so every test uses it and
+    none can touch the real home directory.
 
     Modules import the constants from llm_dependabot.paths by name, so each
     module's own copy is patched.
@@ -83,12 +88,16 @@ def raw_config(tmp_path: Path) -> dict[str, Any]:
 
 @pytest.fixture
 def config(raw_config: dict[str, Any]) -> Config:
+    """The raw config, validated as load_config validates it."""
     return Config.model_validate_json(json.dumps(raw_config))
 
 
 @pytest.fixture
 def make_repo() -> Callable[..., Repo]:
+    """A factory for repositories owned by octo."""
+
     def make(name: str = "project", *prompts: str) -> Repo:
+        """A repository carrying the named prompts."""
         return Repo(owner="octo", name=name, default_branch="main", prompts=prompts)
 
     return make
