@@ -56,9 +56,10 @@
 
 Every check runs locally, and the GitHub Actions workflows in
 [`.github/workflows/`](https://github.com/IndrajeetPatil/llm-dependabot/tree/main/.github/workflows)
-run them again on each pull request. `astral-sh/setup-uv` installs uv,
-supplies uv-managed Python, and caches both dependencies and interpreters
-between runs, keyed on `uv.lock` and the hook script's lockfile:
+run them again on each pull request. `astral-sh/setup-uv` installs uv and
+caches dependencies between runs, keyed on `pyproject.toml`, `uv.lock`, and
+the hook script's lockfile. uv downloads managed Python interpreters on demand;
+they are not cached between runs:
 
 | Workflow | Runs | Trigger |
 | --- | --- | --- |
