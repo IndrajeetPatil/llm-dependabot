@@ -1,5 +1,28 @@
 # Development
 
+## Package layout
+
+The modules below live in `src/llm_dependabot/`. Each module may import
+from those above it. `cli.py` handles argument parsing and delegates to
+the other modules.
+
+| Module | Responsibility |
+| --- | --- |
+| `paths.py` | Names and locations: the checkout, logs, state, launchd, and the app |
+| `shell.py` | Logging, failing, and running external commands |
+| `config.py` | `config.yaml` and `private.yaml` models, validation, and loading |
+| `github.py` | Repository and pull request models, and every `gh` call |
+| `state.py` | Pending pull requests, recovery checkouts, managed clones, and last runs in `state.json` |
+| `discovery.py` | Sorting owned repositories that carry prompts into groups |
+| `checkouts.py` | Worktrees for runs, and cleanup once pull requests finish |
+| `runner.py` | Planning due prompts, running the agent, and the run lock |
+| `launchd.py` | The launchd agents and `launchctl` |
+| `macos_app.py` | Building the LLM Dependabot app and checking Full Disk Access |
+| `install.py` | Installing the app and the agents together |
+| `setup_wizard.py` | The steps of the interactive `setup` |
+| `dashboard/` | Reading runs back from the logs (`runs.py`) and rendering them (`render.py`) |
+| `cli.py` | The Typer commands, which parse arguments and call the modules above |
+
 ## Toolchain
 
 ![Development toolchain and tech stack: four bands cover the Python package and locked project dependencies, core libraries and the native Full Disk Access launcher, local Ruff, ty, pyrefly, unref, uv audit, deptry, and prek checks, and pull-request CI and supply-chain checks with GitHub Actions, actionlint, zizmor, Gitleaks, actions.lock, Zensical, Homebrew, and the Brewfile.](images/tech-stack.webp)
@@ -72,11 +95,16 @@ they are not cached between runs:
 
 ### Workflow security
 
-The workflows follow the same hardening rules, which `AGENTS.md` records for
-agents changing them:
+Keep these rules when changing the workflows. Repositories created from
+this template inherit them.
+
+- Run checks on pull requests to `main`. Only `docs.yml` also runs on
+  `main` and by hand for deployment. Keep workflows self-contained so
+  template users can run them with their own repository settings. Avoid
+  reusable workflow calls in the template.
 
 - Every action is pinned to a full commit SHA with its release in an inline
-  comment, and [`.github/zizmor.yml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/.github/zizmor.yml)
+  comment (for example, `# v7.0.1`), and [`.github/zizmor.yml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/.github/zizmor.yml)
   makes zizmor reject any other pin.
 
 - `actions.lock` in
@@ -88,15 +116,30 @@ agents changing them:
   changing a `uses:` line; the `actions-lock-verify` hook fails a commit
   whose lockfile is stale.
 
-- The default `GITHUB_TOKEN` is read-only; only the Pages deployment job can
-  write, and checkouts never keep the token.
+- Set `GITHUB_TOKEN` to `contents: read` at workflow level. Grant additional
+  permissions only to the job that needs them and document why. Set
+  `persist-credentials: false` on every checkout.
 
-- Every job has a timeout, every workflow cancels superseded runs, and event
-  data reaches scripts only through environment variables.
+- Give each job a finite `timeout-minutes` and each workflow a
+  `concurrency` group. Pass event data and inputs to scripts through
+  `env:` instead of interpolating expressions into `run:`.
 
-- Gitleaks is installed from a release archive pinned by version and SHA-256
-  checksum. It scans the complete history in CI and the staged diff on every
-  commit.
+- Prefer runner-provided tools. For standalone binaries such as Gitleaks,
+  pin the version and archive SHA-256, verify the checksum before
+  extraction, and update both pins together.
+
+- Keep Gitleaks scanning the full history in CI and the staged diff on
+  commit. Audit every workflow with zizmor in pedantic mode. Keep both
+  checks fail-closed and fix findings at their source.
+
+- Use `astral-sh/setup-uv` to install uv, select the required Python
+  version, and cache dependencies. Let uv download managed interpreters
+  on demand. Keep Python and dependency setup in uv. Keep tools with
+  dedicated actions or prek hooks on those integrations.
+
+- Keep zizmor's version, conventional-pre-commit's version, and the
+  allowed commit types in sync between the workflows and `prek.toml`.
+  Update the workflow table and permitted action list here when they change.
 
 If your account allows only selected actions, allow these:
 
@@ -155,6 +198,11 @@ publishes `llms.txt`, `llms-full.txt`, a Markdown copy of every page, and a
 - Link to other pages and images with paths relative to `docs/`; link to
   anything outside `docs/` with its full GitHub URL, since the site only
   contains `docs/`.
+
+- Link to a new documentation page from the README after it is deployed.
+  Use code formatting for paths to new files outside `docs/` until their
+  GitHub URLs resolve on `main`. The link check fetches absolute URLs
+  from the live site and GitHub.
 
 - Use GitHub callouts (`> [!NOTE]`, `> [!TIP]`, `> [!IMPORTANT]`, and
   `> [!WARNING]`) for asides: GitHub renders them as alerts and the site as

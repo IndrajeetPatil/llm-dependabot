@@ -22,7 +22,8 @@ Find a simplification opportunity in one of these categories:
    workaround code, compatibility glue, or redundant abstractions that newer
    versions of Python, Typer, pydantic, PyYAML, filelock, uv, or Zensical make
    unnecessary, or workflow steps that a newer input or default of a pinned
-   action makes redundant (keeping every workflow rule in `AGENTS.md`).
+   action makes redundant (keeping the workflow rules linked from
+   `AGENTS.md`).
 
 2. **A reliable, widely used third-party dependency:** where
    the `llm_dependabot` package maintains custom code for a solved problem, replace it
@@ -49,9 +50,9 @@ instructions, or superseded steps.
   dependency is broadly adopted, well maintained, and materially reduces
   long-term liability.
 
-- Keep the package layout and module responsibilities that `AGENTS.md`
-  records. A new dependency goes in `dependencies` in `pyproject.toml`, kept
-  alphabetically sorted, followed by `uv lock`.
+- Keep the package layout and module responsibilities in the development
+  guide linked from `AGENTS.md`. A new dependency goes in `dependencies` in
+  `pyproject.toml`, kept alphabetically sorted, followed by `uv lock`.
 
 - Keep the refactoring tightly scoped to one coherent simplification theme
   rather than bundling unrelated cleanups.
