@@ -172,6 +172,11 @@ like any other participating repository:
   removes custom code that a newer dependency feature or a proven library
   makes unnecessary.
 
+Its pull requests change the tool that is running them. Each run works in its
+own worktree, so the checkout the scheduled jobs run from is untouched until
+`make self-update` pulls the merged change into it (see
+[Setup](setup.md#update-llm-dependabot)).
+
 ## Design
 
 [`DESIGN.md`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/DESIGN.md) records the visual identity, shared with

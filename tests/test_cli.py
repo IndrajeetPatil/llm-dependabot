@@ -243,3 +243,21 @@ def test_status_mentions_skipped_weekends_only_when_on(
     ]
     result = runner.invoke(app, ["status"])
     assert ("skip Saturdays and Sundays" in result.output) is skip_weekends
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        pytest.param(["status"], id="status"),
+        pytest.param(["run", "python", "--dry-run"], id="run"),
+    ],
+)
+@pytest.mark.usefixtures("discovered")
+def test_stale_checkout_warnings_are_shown(
+    monkeypatch: pytest.MonkeyPatch, args: list[str]
+) -> None:
+    """Runs and status warn when the tool's own checkout misses merged code."""
+    monkeypatch.setattr(cli, "stale_checkout", lambda _root: "it is behind")
+    result = runner.invoke(app, args)
+    assert result.exit_code == 0, result.output
+    assert "warning: it is behind" in result.output

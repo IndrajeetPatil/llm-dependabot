@@ -14,6 +14,7 @@ from llm_dependabot.checkouts import (
     clone_is_disposable,
     prepare_checkout,
     remove_checkout,
+    stale_checkout,
 )
 from llm_dependabot.state import Checkout, Pending, State, load_state
 
@@ -257,3 +258,60 @@ def test_cleanup_keeps_what_it_cannot_safely_remove(
     out = capsys.readouterr().out
     assert "octo/project#1: cannot check state: offline" in out
     assert f"keeping {clone} for now: it has uncommitted changes" in out
+
+
+def stay_current(_clone: Path) -> None:
+    """Leave the clone on main, level with origin."""
+
+
+def switch_branch(clone: Path) -> None:
+    """Check out a feature branch."""
+    git("-C", clone, "switch", "--quiet", "-c", "feat/x")
+
+
+def detach(clone: Path) -> None:
+    """Detach HEAD at the current commit."""
+    git("-C", clone, "switch", "--quiet", "--detach")
+
+
+def fall_behind(clone: Path) -> None:
+    """Push a commit to origin, then step the local main back before it."""
+    git("-C", clone, "commit", "--quiet", "--allow-empty", "-m", "merged")
+    git("-C", clone, "push", "--quiet", "origin", "HEAD:main")
+    git("-C", clone, "reset", "--quiet", "--hard", "HEAD~1")
+
+
+def follow_origin_head(clone: Path) -> None:
+    """Record origin's default branch, as a fresh clone of a non-empty repo does."""
+    git("-C", clone, "fetch", "--quiet", "origin")
+    git("-C", clone, "remote", "set-head", "origin", "main")
+
+
+@pytest.mark.parametrize(
+    ("arrange", "expected"),
+    [
+        pytest.param(stay_current, None, id="current"),
+        pytest.param(follow_origin_head, None, id="current with origin/HEAD"),
+        pytest.param(switch_branch, "has feat/x checked out, not main", id="branch"),
+        pytest.param(detach, "has a detached HEAD checked out", id="detached"),
+        pytest.param(fall_behind, "is 1 commit(s) behind origin/main", id="behind"),
+    ],
+)
+def test_stale_checkout_flags_code_scheduled_runs_would_miss(
+    clone: Path, arrange: Callable[[Path], None], expected: str | None
+) -> None:
+    """The tool's checkout is flagged when off the default branch or behind it."""
+    arrange(clone)
+    warning = stale_checkout(clone)
+    if expected is None:
+        assert warning is None
+    else:
+        assert warning is not None
+        assert expected in warning
+
+
+def test_stale_checkout_ignores_a_directory_that_is_not_a_clone(
+    tmp_path: Path,
+) -> None:
+    """Outside a git checkout, such as an unpacked copy, there is nothing to check."""
+    assert stale_checkout(tmp_path) is None

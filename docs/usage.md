@@ -23,8 +23,9 @@ is merged or closed.
 | `make cleanup` | Clean up after merged or closed pull requests now |
 | `make clean-logs` | Delete logs older than 30 days; set `DAYS=<n>` to change the cut-off |
 | `make install` | Reload the agents after editing the configuration |
+| `make self-update` | Pull merged changes into this checkout and reinstall (see [Setup](setup.md#update-llm-dependabot)) |
 
-Except for `make clean-logs`, each everyday target wraps the `llm-dependabot`
+Except for `make clean-logs` and `make self-update`, each everyday target wraps the `llm-dependabot`
 CLI, which also works directly (`uv run llm-dependabot --help`).
 
 `make run` without `PROMPT` runs what a scheduled run would: every weekly
@@ -90,3 +91,4 @@ whole run. Each agent's own output goes to its transcript,
 | A monthly prompt did not run | `make dry-run GROUP=<group>` shows whether it already ran this month; `make run GROUP=<group> PROMPT=<name>` runs it anyway |
 | A run opened no pull request | Read the agent transcript in the run's folder under `~/Library/Logs/llm-dependabot/` |
 | `make install` says a job is running | Wait until it finishes; `make status` shows the schedule |
+| A log or `make status` warns about the checkout | Switch it back to `main`, then run `make self-update` |

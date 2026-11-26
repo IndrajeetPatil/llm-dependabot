@@ -10,7 +10,7 @@ SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
 
 .DEFAULT_GOAL := help
-.PHONY: help setup update-deps install uninstall list status dashboard cleanup clean-logs run dry-run lint format format-check typecheck typecoverage test deadcode audit build check hooks hooks-install actions-lock-install actions-lock actions-lock-verify check-actions-lock-version docs docs-serve
+.PHONY: help setup self-update update-deps install uninstall list status dashboard cleanup clean-logs run dry-run lint format format-check typecheck typecoverage test deadcode audit build check hooks hooks-install actions-lock-install actions-lock actions-lock-verify check-actions-lock-version docs docs-serve
 
 ##@ General
 
@@ -32,6 +32,13 @@ setup: ## Interactive first-time setup (Brewfile, sign-ins, private repos, hooks
 	}
 	$(CLI) setup
 	@$(MAKE) --no-print-directory actions-lock-install
+
+self-update: ## Pull merged changes into this checkout, then reinstall the app and agents
+	@test "$$(git branch --show-current)" = main || { echo "Check out main first: git switch main"; exit 1; }
+	@git diff --quiet HEAD || { echo "Commit or stash local changes first"; exit 1; }
+	git pull --ff-only --quiet
+	@brew bundle check --no-upgrade >/dev/null || brew bundle install --no-upgrade
+	$(CLI) install
 
 update-deps: ## Upgrade the locked dependencies and the prek hook revisions
 	uv lock --upgrade

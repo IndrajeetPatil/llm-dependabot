@@ -23,6 +23,8 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     pyproject.toml lists this fixture in usefixtures, so every test uses it and
     none can touch the real home directory.
 
+    The checkout (ROOT) moves too, so nothing inspects the real repository.
+
     Modules import the constants from llm_dependabot.paths by name, so each
     module's own copy is patched.
     """
@@ -39,6 +41,7 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
         "APP_BUNDLE": app_bundle,
         "LAUNCHER": app_bundle / "Contents/MacOS/llm-dependabot",
         "DASHBOARD_FILE": tmp_path / "dashboard.html",
+        "ROOT": tmp_path / "checkout",
         "CONFIG_FILE": tmp_path / "config.yaml",
         "PRIVATE_FILE": tmp_path / "private.yaml",
     }
