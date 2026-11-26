@@ -207,19 +207,28 @@ documentation, branding, and CI:
 | --- | --- |
 | `.github/workflows/` | Self-contained CI that runs in any account; `docs.yml` deploys the site from `main`, so set **Settings › Pages › Source** to **GitHub Actions** or delete it |
 | `docs/`, `mkdocs.yml`, and `overrides/` | The documentation site; `mkdocs.yml` sets this site's URL and Google Analytics property, and `overrides/main.html` names its author. Change them before deploying the site, or delete them with `docs.yml` and the `docs` targets in the `Makefile` |
-| `.github/prompts/` | This repository's own maintenance prompts; keep them so llm-dependabot maintains your copy |
+| `.github/prompts/` | This repository's own maintenance prompts; keep them so llm-dependabot maintains your copy. Their smoke test runs `make dry-run GROUP=python`, so update it if you rename or remove the `python` group |
+| `AGENTS.md` | Guidance for agents working on your copy, including the pull-request workflow (wait for CI and an automatic Codex review, then squash-merge); adapt the review and merge rules to your own process |
+| `pyproject.toml` and `LICENSE` | The package's author and URLs in `pyproject.toml`; replace them with your own. Keep the copyright notice in `LICENSE`, which the MIT licence requires, and add your own line beneath it for your changes |
 | `hextools/`, `DESIGN.md`, and `.agents/` | Branding and figure generation; delete them, or keep them to draw your own |
 
 `app/icon.png` is the app's icon; replacing it rebuilds the app, which needs
 Full Disk Access granted again.
+
+`BUNDLE_ID` in `src/llm_dependabot/paths.py` names the app and prefixes the
+launchd agents (`com.indrajeetpatil.llm-dependabot.*`). Keeping it is
+harmless. To use your own, run `make uninstall` first, since the CLI finds
+installed agents by this prefix, then change it, run `make install`, and
+grant the rebuilt app Full Disk Access again.
 
 ### Another operating system
 
 The scheduling and the tooling are macOS's. Everything else (discovery,
 worktrees, running the agent, pull-request tracking, and cleanup) is plain
 `git`, `gh`, and Python. To run elsewhere, replace these parts of the
-`llm_dependabot` package, which keeps them in `launchd.py`, `macos_app.py`,
-`runner.py`, and `shell.py`:
+`llm_dependabot` package, which keeps them in `paths.py` (the `~/Library`
+locations of logs, state, worktrees, and the agents), `launchd.py`,
+`install.py`, `macos_app.py`, `runner.py`, and `shell.py`:
 
 | macOS part | Role | Replace with, for example |
 | --- | --- | --- |
