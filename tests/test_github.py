@@ -2,7 +2,10 @@
 
 import datetime as dt
 import json
+from itertools import starmap
 from typing import TYPE_CHECKING
+
+import pytest
 
 from llm_dependabot import github
 from llm_dependabot.github import GitHubRepo, PullRequest, find_pr, gh_json
@@ -10,11 +13,9 @@ from llm_dependabot.github import GitHubRepo, PullRequest, find_pr, gh_json
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    import pytest
-
     from llm_dependabot.github import Repo
 
-STARTED = dt.datetime(2026, 11, 26, 9, tzinfo=dt.UTC)
+STARTED: dt.datetime = dt.datetime(2026, 11, 26, 9, tzinfo=dt.UTC)
 
 
 def test_gh_json_validates_camel_case_output(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -52,45 +53,39 @@ def pull_request(number: int, created: dt.datetime) -> PullRequest:
     })
 
 
-def fake_gh(
+BEFORE: dt.datetime = STARTED - dt.timedelta(minutes=1)
+
+
+@pytest.mark.parametrize(
+    ("by_head", "recent", "expected"),
+    [
+        pytest.param(
+            [(3, STARTED), (5, STARTED)], [], 5, id="newest on the run branch"
+        ),
+        pytest.param(
+            [], [(7, BEFORE), (8, STARTED)], 8, id="opened since the run started"
+        ),
+        pytest.param([], [(7, BEFORE)], None, id="only older pull requests"),
+        pytest.param([], [], None, id="none at all"),
+    ],
+)
+def test_find_pr(
     monkeypatch: pytest.MonkeyPatch,
-    by_head: list[PullRequest],
-    recent: list[PullRequest],
+    make_repo: Callable[..., Repo],
+    by_head: list[tuple[int, dt.datetime]],
+    recent: list[tuple[int, dt.datetime]],
+    expected: int | None,
 ) -> None:
-    """Fake gh pr list, by head branch and by recent author."""
+    """The run branch's newest pull request, else one opened since the run started."""
+    answers = {
+        True: list(starmap(pull_request, by_head)),
+        False: list(starmap(pull_request, recent)),
+    }
 
     def gh(_kind: object, *args: str) -> list[PullRequest]:
-        """Answer a gh pr list call."""
-        return by_head if "--head" in args else recent
+        """Answer gh pr list, by head branch or by recent author."""
+        return answers["--head" in args]
 
     monkeypatch.setattr(github, "gh_json", gh)
-
-
-def test_find_pr_prefers_the_run_branch(
-    monkeypatch: pytest.MonkeyPatch, make_repo: Callable[..., Repo]
-) -> None:
-    """The newest pull request from the run's branch wins."""
-    fake_gh(monkeypatch, [pull_request(3, STARTED), pull_request(5, STARTED)], [])
     found = find_pr(make_repo(), "chore/update-deps", STARTED)
-    assert found is not None
-    assert found.number == 5
-
-
-def test_find_pr_falls_back_to_pull_requests_opened_since_the_start(
-    monkeypatch: pytest.MonkeyPatch, make_repo: Callable[..., Repo]
-) -> None:
-    """Without one on the run's branch, a pull request opened since the start counts."""
-    before = STARTED - dt.timedelta(minutes=1)
-    recent = [pull_request(7, before), pull_request(8, STARTED)]
-    fake_gh(monkeypatch, [], recent)
-    found = find_pr(make_repo(), "chore/update-deps", STARTED)
-    assert found is not None
-    assert found.number == 8
-
-
-def test_find_pr_finds_nothing(
-    monkeypatch: pytest.MonkeyPatch, make_repo: Callable[..., Repo]
-) -> None:
-    """Pull requests from before the run do not count."""
-    fake_gh(monkeypatch, [], [pull_request(7, STARTED - dt.timedelta(days=1))])
-    assert find_pr(make_repo(), "chore/update-deps", STARTED) is None
+    assert (found.number if found else None) == expected

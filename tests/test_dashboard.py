@@ -113,49 +113,51 @@ def test_collect_runs_reads_final_pull_request_states(
 
 
 @pytest.mark.parametrize(
-    ("job", "status"),
+    ("fields", "status"),
     [
-        (Job(repo="a", prompt="p", started=AT, pr_url="u/1"), ("merged", "merged")),
-        (Job(repo="a", prompt="p", started=AT, pr_url="u/2"), ("open", "open")),
-        (
-            Job(repo="a", prompt="p", started=AT, problem="failed: x"),
-            ("failed", "failed"),
-        ),
-        (Job(repo="a", prompt="p", started=AT, exit_code=2), ("failed", "exit 2")),
-        (
-            Job(repo="a", prompt="p", started=AT, problem="skipped: busy"),
-            ("muted", "skipped"),
-        ),
-        (Job(repo="a", prompt="p", started=AT), ("muted", "running")),
-        (Job(repo="a", prompt="p", started=AT, finished=AT), ("muted", "unknown")),
+        pytest.param({"pr_url": "u/1"}, ("merged", "merged"), id="merged since"),
+        pytest.param({"pr_url": "u/2"}, ("open", "open"), id="still open"),
+        pytest.param({"problem": "failed: x"}, ("failed", "failed"), id="failed"),
+        pytest.param({"exit_code": 2}, ("failed", "exit 2"), id="non-zero exit"),
+        pytest.param({"problem": "skipped: busy"}, ("muted", "skipped"), id="skipped"),
+        pytest.param({}, ("muted", "running"), id="running"),
+        pytest.param({"finished": AT}, ("muted", "unknown"), id="finished, no outcome"),
     ],
 )
-def test_job_status(job: Job, status: tuple[str, str]) -> None:
-    """Each job outcome maps to its chip."""
+def test_job_status(fields: dict[str, object], status: tuple[str, str]) -> None:
+    """Each job outcome maps to its chip, using the final state of its pull request."""
+    job = Job.model_validate({"repo": "a", "prompt": "p", "started": AT, **fields})
     assert job_status(job, {"u/1": "merged"}) == status
 
 
 @pytest.mark.parametrize(
     ("minutes", "text"),
-    [(0.5, "30 s"), (12, "12 min"), (65, "1 h 05 min")],
+    [
+        pytest.param(0.5, "30 s", id="seconds"),
+        pytest.param(12, "12 min", id="minutes"),
+        pytest.param(65, "1 h 05 min", id="hours"),
+        pytest.param(None, "&ndash;", id="unfinished"),
+    ],
 )
-def test_format_duration(minutes: float, text: str) -> None:
-    """Durations are shown in the largest sensible unit."""
-    assert format_duration(AT, AT + dt.timedelta(minutes=minutes)) == text
-
-
-def test_format_duration_of_an_unfinished_job() -> None:
-    """An unfinished job has no duration."""
-    assert format_duration(AT, None) == "&ndash;"
+def test_format_duration(minutes: float | None, text: str) -> None:
+    """Durations are shown in the largest sensible unit, or a dash if unfinished."""
+    end = None if minutes is None else AT + dt.timedelta(minutes=minutes)
+    assert format_duration(AT, end) == text
 
 
 @pytest.mark.parametrize(
     ("now", "expected"),
     [
         # Tuesday 24 November 2026; the python group runs on Tuesdays at 11:00.
-        (local("2026-11-24 10:59"), local("2026-11-24 11:00")),
-        (local("2026-11-24 11:00"), local("2026-12-01 11:00")),
-        (local("2026-11-29 23:00"), local("2026-12-01 11:00")),
+        pytest.param(
+            local("2026-11-24 10:59"), local("2026-11-24 11:00"), id="later today"
+        ),
+        pytest.param(
+            local("2026-11-24 11:00"), local("2026-12-01 11:00"), id="just started"
+        ),
+        pytest.param(
+            local("2026-11-29 23:00"), local("2026-12-01 11:00"), id="later this week"
+        ),
     ],
 )
 def test_next_run(config: Config, now: dt.datetime, expected: dt.datetime) -> None:

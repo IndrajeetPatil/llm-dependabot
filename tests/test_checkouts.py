@@ -73,38 +73,78 @@ def test_prepare_checkout_adds_a_worktree_off_the_default_branch(
     assert checkout.branch not in git("-C", clone, "branch", "--list")
 
 
-def test_a_clone_of_another_repository_is_skipped(
-    clone: Path, config: Config, make_repo: Callable[..., Repo], tmp_path: Path
+def foreign_clone(project: Path) -> None:
+    """Make the project directory a clone of another repository."""
+    git("init", "--quiet", project)
+    git("-C", project, "remote", "add", "origin", "https://example.com/x/y.git")
+
+
+def plain_directory(project: Path) -> None:
+    """Make the project directory an ordinary directory."""
+    project.mkdir(parents=True)
+
+
+@pytest.mark.parametrize(
+    ("occupy", "match"),
+    [
+        pytest.param(foreign_clone, "different repository", id="foreign clone"),
+        pytest.param(plain_directory, "not a git clone", id="plain directory"),
+    ],
+)
+def test_a_directory_in_the_way_is_skipped(
+    config: Config,
+    make_repo: Callable[..., Repo],
+    tmp_path: Path,
+    occupy: Callable[[Path], None],
+    match: str,
 ) -> None:
-    """A clone whose origin is another repository is never used."""
-    git("-C", clone, "remote", "set-url", "origin", "https://example.com/x/y.git")
-    with pytest.raises(SkipRepoError, match="different repository"):
+    """Anything in the clone's place other than its own clone is left alone."""
+    occupy(config.clone_root / "project")
+    with pytest.raises(SkipRepoError, match=match):
         prepare_checkout(
             make_repo(), config.prompt("update-deps"), config, State(), tmp_path / "l"
         )
 
 
-def test_a_directory_that_is_not_a_clone_is_skipped(
-    config: Config, make_repo: Callable[..., Repo], tmp_path: Path
-) -> None:
-    """A plain directory in the clone's place is never used."""
-    (config.clone_root / "project").mkdir(parents=True)
-    with pytest.raises(SkipRepoError, match="not a git clone"):
-        prepare_checkout(
-            make_repo(), config.prompt("update-deps"), config, State(), tmp_path / "l"
-        )
+def leave_clean(_clone: Path) -> None:
+    """Change nothing."""
 
 
-def test_clone_is_disposable(clone: Path) -> None:
-    """Only a clean clone without local commits may be deleted."""
-    assert clone_is_disposable(clone) == (True, "")
+def edit_a_file(clone: Path) -> None:
+    """Leave an uncommitted change."""
     (clone / "README.md").write_text("changed\n")
-    assert clone_is_disposable(clone) == (False, "has uncommitted changes")
+
+
+def commit_locally(clone: Path) -> None:
+    """Commit a change that is not pushed."""
+    edit_a_file(clone)
     git("-C", clone, "commit", "--quiet", "-am", "local")
-    assert clone_is_disposable(clone) == (
-        False,
-        "has local commits that are not on the remote",
-    )
+
+
+def add_a_worktree(clone: Path) -> None:
+    """Add a worktree of the clone's own."""
+    git("-C", clone, "worktree", "add", "--quiet", "--detach", clone.parent / "wt")
+
+
+@pytest.mark.parametrize(
+    ("change", "expected"),
+    [
+        pytest.param(leave_clean, (True, ""), id="clean"),
+        pytest.param(edit_a_file, (False, "has uncommitted changes"), id="edited"),
+        pytest.param(
+            commit_locally,
+            (False, "has local commits that are not on the remote"),
+            id="unpushed commit",
+        ),
+        pytest.param(add_a_worktree, (False, "has other worktrees"), id="worktree"),
+    ],
+)
+def test_clone_is_disposable(
+    clone: Path, change: Callable[[Path], None], expected: tuple[bool, str]
+) -> None:
+    """Only a clean clone without local commits or other worktrees may be deleted."""
+    change(clone)
+    assert clone_is_disposable(clone) == expected
 
 
 def test_cleanup_removes_finished_pull_requests_and_their_managed_clones(

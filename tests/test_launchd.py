@@ -4,29 +4,44 @@ import shlex
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import pytest
+
 from llm_dependabot import launchd
 from llm_dependabot.launchd import cli_command, desired_agents
 
 if TYPE_CHECKING:
-    import pytest
-
     from llm_dependabot.config import Config
 
 
-def test_each_group_runs_on_its_weekday_and_time(config: Config) -> None:
-    """Each group's agent fires on its weekday and time."""
-    agents = desired_agents(config)
-    assert sorted(agents) == [
+def test_there_is_one_agent_per_group_plus_the_cleanup(config: Config) -> None:
+    """Each group gets an agent, and so does the cleanup."""
+    assert sorted(desired_agents(config)) == [
         "com.indrajeetpatil.llm-dependabot.cleanup",
         "com.indrajeetpatil.llm-dependabot.python",
         "com.indrajeetpatil.llm-dependabot.rest",
     ]
-    python = agents["com.indrajeetpatil.llm-dependabot.python"]
-    # launchd counts weekdays from Sunday as 0.
-    assert python["StartCalendarInterval"] == {"Weekday": 2, "Hour": 11, "Minute": 0}
-    rest = agents["com.indrajeetpatil.llm-dependabot.rest"]
-    assert rest["StartCalendarInterval"] == {"Weekday": 3, "Hour": 9, "Minute": 30}
-    assert rest["StandardOutPath"] == str(launchd.LOG_DIR / "rest.log")
+
+
+@pytest.mark.parametrize(
+    ("group", "when"),
+    [
+        # launchd counts weekdays from Sunday as 0.
+        pytest.param("python", {"Weekday": 2, "Hour": 11, "Minute": 0}, id="python"),
+        pytest.param("rest", {"Weekday": 3, "Hour": 9, "Minute": 30}, id="rest"),
+    ],
+)
+def test_each_group_runs_on_its_weekday_and_time(
+    config: Config, group: str, when: dict[str, int]
+) -> None:
+    """Each group's agent fires on its weekday and time, and logs to its own file."""
+    plist = desired_agents(config)[f"com.indrajeetpatil.llm-dependabot.{group}"]
+    assert plist["StartCalendarInterval"] == when
+    assert plist["StandardOutPath"] == str(launchd.LOG_DIR / f"{group}.log")
+    assert shlex.split(plist["ProgramArguments"][-1])[-3:] == [
+        "run",
+        group,
+        "--scheduled",
+    ]
 
 
 def test_jobs_start_through_the_app_in_a_login_shell(config: Config) -> None:

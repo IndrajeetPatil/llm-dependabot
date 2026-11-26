@@ -78,9 +78,10 @@ ignore = [
   "missing-copyright-notice",
   # gh's JSON output is untyped.
   "any-type",
-  # Docstrings say what a function does and why; Returns and Raises sections
-  # would only restate the signature (see AGENTS.md).
+  # Docstrings say what a function does and why; Returns, Yields, and Raises
+  # sections would only restate the signature (see AGENTS.md).
   "docstring-missing-returns",
+  "docstring-missing-yields",
   "docstring-missing-exception",
   # Short inline exception messages are clearer here.
   "EM",

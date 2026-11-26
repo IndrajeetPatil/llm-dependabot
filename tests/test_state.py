@@ -11,7 +11,7 @@ from llm_dependabot.state import State, load_state, save_state
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from llm_dependabot.config import Config
+    from llm_dependabot.config import Cadence, Config
     from llm_dependabot.github import Repo
 
 TODAY = dt.date(2026, 11, 26)
@@ -26,35 +26,35 @@ def today(monkeypatch: pytest.MonkeyPatch) -> dt.date:
     return TODAY
 
 
-def test_a_weekly_prompt_is_always_due(
-    config: Config, make_repo: Callable[..., Repo]
-) -> None:
-    """A weekly prompt is due even if it ran today."""
-    state = State(last_runs={f"update-deps {make_repo().full_name}": TODAY})
-    assert state.is_due(config.prompt("update-deps"), make_repo(), "weekly")
-
-
 @pytest.mark.parametrize(
-    ("last", "due"),
+    ("cadence", "last", "due"),
     [
-        (None, True),
-        (dt.date(2026, 11, 2), False),
-        (dt.date(2026, 10, 30), True),
-        (dt.date(2025, 11, 26), True),  # the same month a year earlier
+        pytest.param("weekly", TODAY, True, id="weekly, ran today"),
+        pytest.param("monthly", None, True, id="monthly, never ran"),
+        pytest.param(
+            "monthly", dt.date(2026, 11, 2), False, id="monthly, ran this month"
+        ),
+        pytest.param(
+            "monthly", dt.date(2026, 10, 30), True, id="monthly, ran last month"
+        ),
+        pytest.param(
+            "monthly", dt.date(2025, 11, 26), True, id="monthly, same month last year"
+        ),
     ],
 )
-def test_a_monthly_prompt_is_due_once_a_calendar_month(
+def test_is_due(
     config: Config,
     make_repo: Callable[..., Repo],
+    cadence: Cadence,
     last: dt.date | None,
     *,
     due: bool,
 ) -> None:
-    """A monthly prompt is due once per calendar month."""
+    """Weekly prompts are always due; monthly ones once per calendar month."""
     repo = make_repo()
     runs = {} if last is None else {f"simplify-codebase {repo.full_name}": last}
     state = State(last_runs=runs)
-    assert state.is_due(config.prompt("simplify-codebase"), repo, "monthly") is due
+    assert state.is_due(config.prompt("simplify-codebase"), repo, cadence) is due
 
 
 def test_record_run_saves_the_date(

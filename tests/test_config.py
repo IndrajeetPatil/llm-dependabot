@@ -3,7 +3,7 @@
 import datetime as dt
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 import typer
@@ -14,10 +14,22 @@ from llm_dependabot import config as config_module
 from llm_dependabot.config import Agent, Config, is_weekend, load_config
 from llm_dependabot.paths import ROOT
 
+# YAML reads an unquoted 9:00 as the sexagesimal integer 540.
+UNQUOTED_TIME: int = cast("int", yaml.safe_load("time: 9:00")["time"])
+
 
 def validate(raw: dict[str, Any]) -> Config:
     """Validate a raw config as load_config does."""
     return Config.model_validate_json(json.dumps(raw))
+
+
+def set_at(raw: dict[str, Any], path: tuple[str | int, ...], value: object) -> None:
+    """Set the value at a path of keys and list indices in the raw config."""
+    *parents, last = path
+    node: Any = raw
+    for key in parents:
+        node = node[key]
+    node[last] = value
 
 
 def test_the_committed_config_is_valid() -> None:
@@ -36,58 +48,79 @@ def test_values_are_parsed(config: Config) -> None:
     assert config.skip_weekends
 
 
-def test_clone_root_expands_the_home_directory(raw_config: dict[str, Any]) -> None:
-    """A clone_root under ~ is expanded."""
-    raw_config["clone_root"] = "~/clones"
-    assert validate(raw_config).clone_root == Path.home() / "clones"
-
-
-def test_unknown_keys_are_rejected(raw_config: dict[str, Any]) -> None:
-    """A misspelt key fails validation."""
-    raw_config["ownr"] = "typo"
-    with pytest.raises(ValidationError, match="ownr"):
-        validate(raw_config)
-
-
-def test_an_unquoted_time_is_rejected(raw_config: dict[str, Any]) -> None:
-    # YAML reads an unquoted 9:00 as the sexagesimal integer 540.
-    """A time YAML read as a number fails validation."""
-    raw_config["groups"][0]["time"] = yaml.safe_load("time: 9:00")["time"]
-    with pytest.raises(ValidationError):
-        validate(raw_config)
-
-
-@pytest.mark.parametrize("kind", ["groups", "prompts"])
-def test_names_must_be_unique(raw_config: dict[str, Any], kind: str) -> None:
-    """Duplicate group or prompt names fail validation."""
-    raw_config[kind].append(raw_config[kind][0])
-    with pytest.raises(ValidationError, match="names must be unique"):
-        validate(raw_config)
-
-
-def test_a_cadence_override_must_name_a_known_prompt(
+@pytest.mark.parametrize(
+    ("path", "value", "match"),
+    [
+        pytest.param(("ownr",), "typo", "ownr", id="unknown key"),
+        pytest.param(("groups", 0, "time"), UNQUOTED_TIME, "time", id="unquoted time"),
+        pytest.param(("groups", 1, "name"), "python", "unique", id="duplicate group"),
+        pytest.param(
+            ("prompts", 1, "name"), "update-deps", "unique", id="duplicate prompt"
+        ),
+        pytest.param(("prompts", 0, "name"), "-x", "pattern", id="bad prompt name"),
+        pytest.param(("label", "color"), "red", "pattern", id="bad label colour"),
+        pytest.param(("agent", "command"), [], "at least 1", id="empty command"),
+        pytest.param(("agent_timeout_hours",), 0, "greater than 0", id="zero timeout"),
+        pytest.param(
+            ("groups", 0, "cadence"),
+            {"no-such-prompt": "monthly"},
+            "unknown prompts",
+            id="override for an unknown prompt",
+        ),
+        pytest.param(
+            ("groups", 0, "weekday"), "Saturday", "skip_weekends", id="weekend group"
+        ),
+    ],
+)
+def test_invalid_configuration_is_rejected(
     raw_config: dict[str, Any],
+    path: tuple[str | int, ...],
+    value: object,
+    match: str,
 ) -> None:
-    """A cadence override for an unknown prompt fails validation."""
-    raw_config["groups"][0]["cadence"] = {"no-such-prompt": "monthly"}
-    with pytest.raises(ValidationError, match="unknown prompts"):
+    """Each kind of mistake fails validation with a message naming it."""
+    set_at(raw_config, path, value)
+    with pytest.raises(ValidationError, match=match):
         validate(raw_config)
 
 
-def test_a_weekend_group_needs_skip_weekends_off(raw_config: dict[str, Any]) -> None:
-    """A group on a weekend day is valid only without skip_weekends."""
-    raw_config["groups"][0]["weekday"] = "Saturday"
-    with pytest.raises(ValidationError, match="skip_weekends"):
-        validate(raw_config)
-    raw_config["skip_weekends"] = False
-    assert validate(raw_config).groups[0].weekday == "Saturday"
+@pytest.mark.parametrize(
+    ("changes", "attribute", "expected"),
+    [
+        pytest.param(
+            {("clone_root",): "~/clones"},
+            "clone_root",
+            Path.home() / "clones",
+            id="clone root under home",
+        ),
+        pytest.param(
+            {("groups", 0, "weekday"): "Saturday", ("skip_weekends",): False},
+            "skip_weekends",
+            False,
+            id="weekend group without skip_weekends",
+        ),
+    ],
+)
+def test_valid_variations_are_accepted(
+    raw_config: dict[str, Any],
+    changes: dict[tuple[str | int, ...], object],
+    attribute: str,
+    expected: object,
+) -> None:
+    """Variations on the valid config load, with values normalised."""
+    for path, value in changes.items():
+        set_at(raw_config, path, value)
+    assert getattr(validate(raw_config), attribute) == expected
 
 
-def test_a_group_overrides_a_prompt_cadence(config: Config) -> None:
+@pytest.mark.parametrize(
+    ("group", "cadence"), [("python", "weekly"), ("rest", "monthly")]
+)
+def test_a_group_overrides_a_prompt_cadence(
+    config: Config, group: str, cadence: str
+) -> None:
     """A group's cadence override replaces the prompt's own."""
-    update_deps = config.prompt("update-deps")
-    assert config.group("python").cadence_for(update_deps) == "weekly"
-    assert config.group("rest").cadence_for(update_deps) == "monthly"
+    assert config.group(group).cadence_for(config.prompt("update-deps")) == cadence
 
 
 @pytest.mark.parametrize("method", ["group", "prompt"])
@@ -97,29 +130,33 @@ def test_an_unknown_name_fails(config: Config, method: str) -> None:
         getattr(config, method)("missing")
 
 
-def test_the_prompt_replaces_its_placeholder_argument() -> None:
-    """The prompt and timeout fill their placeholders."""
-    agent = Agent(
-        name="a", command=["agent", "--hours", "{timeout_hours}h", "{prompt}"]
-    )
-    argv, via_stdin = agent.argv("Do it {timeout_hours}", 1.5)
-    assert argv == ["agent", "--hours", "1.5h", "Do it {timeout_hours}"]
-    assert not via_stdin
-
-
-def test_without_a_placeholder_the_prompt_goes_to_stdin() -> None:
-    """Without a prompt placeholder, the prompt is piped to stdin."""
-    argv, via_stdin = Agent(name="a", command=["agent", "-"]).argv("text", 4)
-    assert argv == ["agent", "-"]
-    assert via_stdin
+@pytest.mark.parametrize(
+    ("command", "hours", "argv", "via_stdin"),
+    [
+        pytest.param(
+            ["agent", "--hours", "{timeout_hours}h", "{prompt}"],
+            1.5,
+            ["agent", "--hours", "1.5h", "Do it {timeout_hours}"],
+            False,
+            id="placeholders filled",
+        ),
+        pytest.param(["agent", "-"], 4, ["agent", "-"], True, id="prompt on stdin"),
+    ],
+)
+def test_agent_argv(
+    command: list[str], hours: float, argv: list[str], *, via_stdin: bool
+) -> None:
+    """The prompt fills its placeholder argument, or goes to stdin without one."""
+    agent = Agent(name="a", command=command)
+    assert agent.argv("Do it {timeout_hours}", hours) == (argv, via_stdin)
 
 
 @pytest.mark.parametrize(
     ("today", "skip", "expected"),
     [
-        (dt.date(2026, 11, 28), True, True),  # a Saturday
-        (dt.date(2026, 11, 28), False, False),
-        (dt.date(2026, 11, 26), True, False),  # a Thursday
+        pytest.param(dt.date(2026, 11, 28), True, True, id="Saturday"),
+        pytest.param(dt.date(2026, 11, 28), False, False, id="Saturday, not skipped"),
+        pytest.param(dt.date(2026, 11, 26), True, False, id="Thursday"),
     ],
 )
 def test_is_weekend(
@@ -136,27 +173,55 @@ def test_is_weekend(
     assert is_weekend(config) is expected
 
 
-def test_load_config_adds_the_private_repositories(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, raw_config: dict[str, Any]
-) -> None:
-    """load_config reads the private repositories from private.yaml."""
+@pytest.fixture
+def config_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path]:
+    """Point load_config at a config.yaml and private.yaml in a temporary directory."""
     config_file = tmp_path / "config.yaml"
     private_file = tmp_path / "private.yaml"
-    config_file.write_text(yaml.safe_dump(raw_config))
     monkeypatch.setattr(config_module, "CONFIG_FILE", config_file)
     monkeypatch.setattr(config_module, "PRIVATE_FILE", private_file)
-    assert load_config().private_repos == frozenset()
-
-    private_file.write_text("repos: [secret]\n")
-    assert load_config().private_repos == {"secret"}
+    return config_file, private_file
 
 
-def test_load_config_reports_invalid_configuration(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize(
+    ("private", "expected"),
+    [
+        pytest.param(None, frozenset(), id="no private.yaml"),
+        pytest.param("repos: [secret]\n", frozenset({"secret"}), id="one repository"),
+        pytest.param("{}\n", frozenset(), id="empty private.yaml"),
+    ],
+)
+def test_load_config_adds_the_private_repositories(
+    config_files: tuple[Path, Path],
+    raw_config: dict[str, Any],
+    private: str | None,
+    expected: frozenset[str],
 ) -> None:
-    """load_config fails on an invalid config.yaml."""
-    config_file = tmp_path / "config.yaml"
-    config_file.write_text("owner: octo\n")
-    monkeypatch.setattr(config_module, "CONFIG_FILE", config_file)
+    """load_config reads the private repositories from private.yaml."""
+    config_file, private_file = config_files
+    config_file.write_text(yaml.safe_dump(raw_config))
+    if private is not None:
+        private_file.write_text(private)
+    assert load_config().private_repos == expected
+
+
+@pytest.mark.parametrize(
+    ("config_text", "private"),
+    [
+        pytest.param("owner: octo\n", None, id="incomplete config.yaml"),
+        pytest.param(None, "repos: secret\n", id="private repos not a list"),
+    ],
+)
+def test_load_config_reports_invalid_configuration(
+    config_files: tuple[Path, Path],
+    raw_config: dict[str, Any],
+    config_text: str | None,
+    private: str | None,
+) -> None:
+    """load_config fails on an invalid config.yaml or private.yaml."""
+    config_file, private_file = config_files
+    config_file.write_text(config_text or yaml.safe_dump(raw_config))
+    if private is not None:
+        private_file.write_text(private)
     with pytest.raises(typer.Exit):
         load_config()
