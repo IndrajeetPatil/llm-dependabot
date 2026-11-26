@@ -72,9 +72,8 @@ the PR merges.
 
 Use British English. Keep the README to an overview, quick start, and links.
 Update the relevant guide when behaviour, commands, configuration, or
-external files change. Keep user-facing entries in `CHANGELOG.md` under
-`Unreleased`, including before the first release. The site includes that
-file through `docs/changelog.md`.
+external files change. Keep release notes in `CHANGELOG.md`. The site
+includes that file through `docs/changelog.md`.
 
 When incorrect guidance contributes to a mistake, fix it alongside the code
 and keep the quality gates intact.
