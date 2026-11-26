@@ -18,7 +18,9 @@ if TYPE_CHECKING:
     [("Python", "python"), ("Rust", "rest"), ("", "rest")],
 )
 def test_group_for_falls_back_to_the_catch_all(
-    config: Config, language: str, group: str
+    config: Config,
+    language: str,
+    group: str,
 ) -> None:
     """A language without a group goes to the catch-all group."""
     assert group_for(language, config) == group

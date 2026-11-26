@@ -57,7 +57,9 @@ def test_install_reports_a_new_app_build(
 
 
 def test_install_refuses_to_interrupt_a_run(
-    launchctl: FakeCommands, config: Config, capsys: pytest.CaptureFixture[str]
+    launchctl: FakeCommands,
+    config: Config,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Reinstalling would stop a running job, so installing waits for it."""
     install.LAUNCH_AGENTS.mkdir(parents=True)
@@ -70,7 +72,9 @@ def test_install_refuses_to_interrupt_a_run(
 
 
 def test_install_stops_when_an_agent_will_not_load(
-    launchctl: FakeCommands, config: Config, capsys: pytest.CaptureFixture[str]
+    launchctl: FakeCommands,
+    config: Config,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """A launchctl refusal stops the install with its reason."""
     launchctl.on("launchctl", "bootstrap", code=5, times=1)

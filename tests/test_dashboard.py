@@ -45,10 +45,10 @@ def write_run(log_dir: Path) -> Path:
         "[2026-11-24 11:20:10] lib update-deps: failed: fetch failed\n"
         "[2026-11-24 11:20:11] summary: app update-deps: PR #12; lib: failed\n"
         "[2026-12-01 11:00:00] group python: nothing due\n"
-        "[2026-12-08 11:00:00] group python: app update-deps\n"
+        "[2026-12-08 11:00:00] group python: app update-deps\n",
     )
     (log_dir / "cleanup.log").write_text(
-        "[2026-11-25 08:00:00] octo/app#12 is merged; cleaning up\n"
+        "[2026-11-25 08:00:00] octo/app#12 is merged; cleaning up\n",
     )
     return run_dir
 
@@ -65,7 +65,8 @@ def test_parse_group_log() -> None:
     """A group log splits into runs and their jobs."""
     run_dir = write_run(runs.LOG_DIR)
     first, nothing, unfinished = parse_group_log(
-        "python", read_log(runs.LOG_DIR / "python.log")
+        "python",
+        read_log(runs.LOG_DIR / "python.log"),
     )
     assert first.finished == local("2026-11-24 11:20:11")
     app, lib = first.jobs
@@ -80,7 +81,9 @@ def test_parse_group_log() -> None:
 
 
 def test_collect_runs_reads_final_pull_request_states(
-    home: Path, monkeypatch: pytest.MonkeyPatch, config: Config
+    home: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    config: Config,
 ) -> None:
     """Cleanup logs and pending state give each pull request's final state."""
     write_run(runs.LOG_DIR)
@@ -97,13 +100,14 @@ def test_collect_runs_reads_final_pull_request_states(
                     started=AT.astimezone(dt.UTC),
                     pr_number=3,
                     pr_url="https://github.com/octo/lib/pull/3",
-                )
-            ]
-        )
+                ),
+            ],
+        ),
     )
     collected, final = collect_runs(config)
     assert [run.started for run in collected] == sorted(
-        (run.started for run in collected), reverse=True
+        (run.started for run in collected),
+        reverse=True,
     )
     assert collected[0].note == "interrupted before its summary"
     assert final == {
@@ -150,13 +154,19 @@ def test_format_duration(minutes: float | None, text: str) -> None:
     [
         # Tuesday 24 November 2026; the python group runs on Tuesdays at 11:00.
         pytest.param(
-            local("2026-11-24 10:59"), local("2026-11-24 11:00"), id="later today"
+            local("2026-11-24 10:59"),
+            local("2026-11-24 11:00"),
+            id="later today",
         ),
         pytest.param(
-            local("2026-11-24 11:00"), local("2026-12-01 11:00"), id="just started"
+            local("2026-11-24 11:00"),
+            local("2026-12-01 11:00"),
+            id="just started",
         ),
         pytest.param(
-            local("2026-11-29 23:00"), local("2026-12-01 11:00"), id="later this week"
+            local("2026-11-29 23:00"),
+            local("2026-12-01 11:00"),
+            id="later this week",
         ),
     ],
 )
@@ -212,7 +222,8 @@ def test_job_problems(lines: list[str], expected: str | None) -> None:
 
 
 def test_collect_runs_without_any_logs(
-    monkeypatch: pytest.MonkeyPatch, config: Config
+    monkeypatch: pytest.MonkeyPatch,
+    config: Config,
 ) -> None:
     """Before the first run there is no log directory, and so no runs."""
     monkeypatch.setattr(runs, "running_jobs", list)
@@ -220,7 +231,8 @@ def test_collect_runs_without_any_logs(
 
 
 def test_runs_started_by_hand_are_read_from_their_transcripts(
-    monkeypatch: pytest.MonkeyPatch, config: Config
+    monkeypatch: pytest.MonkeyPatch,
+    config: Config,
 ) -> None:
     """A run folder no group log mentions becomes a run of its transcripts.
 
@@ -258,6 +270,6 @@ def test_runs_started_by_hand_are_read_from_their_transcripts(
     finished = [job.finished for job in run.jobs if job.finished is not None]
     assert len(finished) == len(run.jobs)
     assert {end - job.started for end, job in zip(finished, run.jobs, strict=True)} == {
-        dt.timedelta(minutes=1)
+        dt.timedelta(minutes=1),
     }
     assert run.finished == max(finished)

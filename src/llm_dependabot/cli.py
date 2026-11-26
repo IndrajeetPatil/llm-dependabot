@@ -59,7 +59,8 @@ def main(
 def run(
     group: str,
     repo: Annotated[
-        list[str] | None, typer.Option(help="Limit to this repository.")
+        list[str] | None,
+        typer.Option(help="Limit to this repository."),
     ] = None,
     prompt: Annotated[
         list[str] | None,
@@ -68,7 +69,8 @@ def run(
     *,
     dry_run: Annotated[bool, typer.Option(help="Only list what would run.")] = False,
     scheduled: Annotated[
-        bool, typer.Option(hidden=True, help="Started by launchd.")
+        bool,
+        typer.Option(hidden=True, help="Started by launchd."),
     ] = False,
 ) -> None:
     """Run the prompts that are due in every repository in GROUP."""
@@ -97,7 +99,8 @@ def run(
 def cleanup(
     *,
     scheduled: Annotated[
-        bool, typer.Option(hidden=True, help="Started by launchd.")
+        bool,
+        typer.Option(hidden=True, help="Started by launchd."),
     ] = False,
 ) -> None:
     """Remove checkouts whose pull requests are merged or closed."""
@@ -146,7 +149,8 @@ def status() -> None:
 def dashboard(
     *,
     open_browser: Annotated[
-        bool, typer.Option("--open/--no-open", help="Open it in the browser.")
+        bool,
+        typer.Option("--open/--no-open", help="Open it in the browser."),
     ] = True,
 ) -> None:
     """Build an HTML dashboard of past runs and their pull requests from the logs."""

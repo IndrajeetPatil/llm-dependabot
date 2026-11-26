@@ -18,7 +18,10 @@ if TYPE_CHECKING:
 def launchctl(*args: str | Path) -> subprocess.CompletedProcess[str]:
     """Run launchctl, capturing its output without checking its exit code."""
     return subprocess.run(
-        ["launchctl", *args], capture_output=True, text=True, check=False
+        ["launchctl", *args],
+        capture_output=True,
+        text=True,
+        check=False,
     )
 
 
@@ -34,7 +37,10 @@ def cli_command(*args: str) -> str:
 
 
 def plist_for(
-    config: Config, job: str, shell_command: str, schedule: dict[str, Any]
+    config: Config,
+    job: str,
+    shell_command: str,
+    schedule: dict[str, Any],
 ) -> dict[str, Any]:
     """A launchd agent that runs the shell command through the app."""
     return {

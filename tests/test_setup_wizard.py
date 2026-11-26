@@ -74,7 +74,9 @@ def test_ensure_brew_bundle(commands: FakeCommands, *, installed: bool) -> None:
 
 
 def test_ensure_signed_in_offers_gh_login(
-    commands: FakeCommands, answers: Answers, config: Config
+    commands: FakeCommands,
+    answers: Answers,
+    config: Config,
 ) -> None:
     """A signed-out gh gets a login; an agent without a check is trusted."""
     commands.on("gh", "auth status", code=1, times=1)
@@ -89,7 +91,9 @@ def test_ensure_signed_in_offers_gh_login(
 
 
 def test_ensure_signed_in_waits_for_the_agent(
-    commands: FakeCommands, answers: Answers, config: Config
+    commands: FakeCommands,
+    answers: Answers,
+    config: Config,
 ) -> None:
     """Setup waits until the agent's sign-in check passes."""
     commands.install("gh")
@@ -101,7 +105,9 @@ def test_ensure_signed_in_waits_for_the_agent(
 
 
 def test_setup_stops_if_gh_stays_signed_out(
-    commands: FakeCommands, answers: Answers, config: Config
+    commands: FakeCommands,
+    answers: Answers,
+    config: Config,
 ) -> None:
     """Declining to sign gh in stops setup."""
     commands.on("gh", code=1)
@@ -113,7 +119,9 @@ def test_setup_stops_if_gh_stays_signed_out(
 
 
 def test_setup_stops_without_the_agent(
-    commands: FakeCommands, config: Config, capsys: pytest.CaptureFixture[str]
+    commands: FakeCommands,
+    config: Config,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """A missing agent command stops setup, pointing at the Brewfile."""
     commands.install("gh")
@@ -139,7 +147,10 @@ class OwnerCase(NamedTuple):
     ],
 )
 def test_check_owner(
-    commands: FakeCommands, answers: Answers, config: Config, case: OwnerCase
+    commands: FakeCommands,
+    answers: Answers,
+    config: Config,
+    case: OwnerCase,
 ) -> None:
     """The owner can follow the signed-in account, in config.yaml too."""
     setup_wizard.CONFIG_FILE.write_text("# comment\nowner: octo\nother: owner: x\n")
@@ -207,7 +218,10 @@ def private_listing(monkeypatch: pytest.MonkeyPatch) -> None:
     [
         pytest.param(None, [True, False], ["alpha"], id="first choice"),
         pytest.param(
-            "repos: [old]\n", [True, True, True], ["alpha", "gamma"], id="redo"
+            "repos: [old]\n",
+            [True, True, True],
+            ["alpha", "gamma"],
+            id="redo",
         ),
         pytest.param("repos: [old]\n", [False], ["old"], id="keep the list"),
     ],
@@ -260,19 +274,27 @@ def test_install_git_hooks(commands: FakeCommands, code: int) -> None:
 
 
 def test_ensure_full_disk_access_waits_for_the_grant(
-    answers: Answers, config: Config, monkeypatch: pytest.MonkeyPatch
+    answers: Answers,
+    config: Config,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """After installing, setup shows the steps until the grant takes effect."""
     grants = [False, False, True]
     events: list[str] = []
     monkeypatch.setattr(
-        setup_wizard, "install_agents", lambda _config: events.append("install")
+        setup_wizard,
+        "install_agents",
+        lambda _config: events.append("install"),
     )
     monkeypatch.setattr(
-        setup_wizard, "full_disk_access_granted", lambda _config: grants.pop(0)
+        setup_wizard,
+        "full_disk_access_granted",
+        lambda _config: grants.pop(0),
     )
     monkeypatch.setattr(
-        setup_wizard, "show_full_disk_access_steps", lambda: events.append("steps")
+        setup_wizard,
+        "show_full_disk_access_steps",
+        lambda: events.append("steps"),
     )
     ensure_full_disk_access(config)
     assert events == ["install", "steps", "steps"]
@@ -280,7 +302,8 @@ def test_ensure_full_disk_access_waits_for_the_grant(
 
 
 def test_run_setup_runs_every_step_in_order(
-    config: Config, monkeypatch: pytest.MonkeyPatch
+    config: Config,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Setup checks prerequisites first and installs the agents last."""
     steps = [
@@ -295,7 +318,9 @@ def test_run_setup_runs_every_step_in_order(
     ran: list[str] = []
     for name in steps:
         monkeypatch.setattr(
-            setup_wizard, name, lambda *_args, name=name: ran.append(name)
+            setup_wizard,
+            name,
+            lambda *_args, name=name: ran.append(name),
         )
     run_setup(config)
     assert ran == steps

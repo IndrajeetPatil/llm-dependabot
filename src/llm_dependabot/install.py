@@ -24,7 +24,7 @@ def install_agents(config: Config) -> None:
     if busy := running_jobs():
         fail(
             f"{', '.join(busy)} is running; reinstalling would stop it."
-            " Try again once it finishes (see `status`)."
+            " Try again once it finishes (see `status`).",
         )
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     if build_app(config):

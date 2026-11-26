@@ -70,7 +70,7 @@ make check         # lint, format check, type check and coverage, tests, dead co
 make test          # the pytest suite with 100% line and branch coverage (uv run pytest -k NAME for one test)
 make build         # build the sdist and wheel into dist/
 make hooks         # every prek hook on all files; must pass before committing
-make format        # apply ruff formatting
+make format        # add missing trailing commas, then apply ruff formatting
 make update-deps   # upgrade locked dependencies and prek hooks
 make actions-lock  # regenerate .github/workflows/actions.lock after action changes
 make list          # show group assignment (needs gh authenticated)

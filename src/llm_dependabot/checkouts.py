@@ -57,7 +57,11 @@ def remote_matches(clone: Path, repo: Repo) -> bool:
 
 
 def prepare_checkout(
-    repo: Repo, prompt: Prompt, config: Config, state: State, log_path: Path
+    repo: Repo,
+    prompt: Prompt,
+    config: Config,
+    state: State,
+    log_path: Path,
 ) -> Checkout:
     """Create a worktree on a fresh branch off the default branch.
 

@@ -20,10 +20,17 @@ from llm_dependabot.paths import CONFIG_FILE, NAME, PRIVATE_FILE
 from llm_dependabot.shell import fail, local_today
 
 type Weekday = Literal[
-    "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
 ]
 WEEKDAYS: tuple[str, ...] = cast(
-    "tuple[str, ...]", get_args(Weekday.__value__)
+    "tuple[str, ...]",
+    get_args(Weekday.__value__),
 )  # launchd: Sunday is 0
 WEEKEND = frozenset({"Saturday", "Sunday"})
 

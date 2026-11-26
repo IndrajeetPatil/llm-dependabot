@@ -106,7 +106,7 @@ def full_disk_access_granted(config: Config) -> bool:
             "RunAtLoad": True,
             "StandardOutPath": "/dev/null",
             "StandardErrorPath": "/dev/null",
-        })
+        }),
     )
     target = f"{gui_domain()}/{label}"
     launchctl("bootout", target)
@@ -114,7 +114,8 @@ def full_disk_access_granted(config: Config) -> bool:
     code = None
     for _ in range(100):
         if match := re.search(
-            r"last exit code = (\d+)", launchctl("print", target).stdout
+            r"last exit code = (\d+)",
+            launchctl("print", target).stdout,
         ):
             code = int(match[1])
             break
@@ -134,7 +135,7 @@ def show_full_disk_access_steps() -> None:
         f"  {APP_BUNDLE}\n"
         f"If macOS instead asks whether {APP_NAME} may access a folder, the"
         " check timed out waiting for it; dismiss the prompt and use the"
-        " setting above.\n"
+        " setting above.\n",
     )
     typer.launch(FULL_DISK_ACCESS_PANE)
     typer.launch(str(APP_BUNDLE), locate=True)

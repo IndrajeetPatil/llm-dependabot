@@ -32,13 +32,22 @@ def today(monkeypatch: pytest.MonkeyPatch) -> dt.date:
         pytest.param("weekly", TODAY, True, id="weekly, ran today"),
         pytest.param("monthly", None, True, id="monthly, never ran"),
         pytest.param(
-            "monthly", dt.date(2026, 11, 2), False, id="monthly, ran this month"
+            "monthly",
+            dt.date(2026, 11, 2),
+            False,
+            id="monthly, ran this month",
         ),
         pytest.param(
-            "monthly", dt.date(2026, 10, 30), True, id="monthly, ran last month"
+            "monthly",
+            dt.date(2026, 10, 30),
+            True,
+            id="monthly, ran last month",
         ),
         pytest.param(
-            "monthly", dt.date(2025, 11, 26), True, id="monthly, same month last year"
+            "monthly",
+            dt.date(2025, 11, 26),
+            True,
+            id="monthly, same month last year",
         ),
     ],
 )
@@ -58,7 +67,8 @@ def test_is_due(
 
 
 def test_record_run_saves_the_date(
-    config: Config, make_repo: Callable[..., Repo]
+    config: Config,
+    make_repo: Callable[..., Repo],
 ) -> None:
     """Recording a run saves today's date to the state file."""
     state = State()

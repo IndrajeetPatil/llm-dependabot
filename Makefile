@@ -87,7 +87,12 @@ dry-run: ## List what a group would run: make dry-run GROUP=python [PROMPT=name]
 lint: ## Lint with ruff
 	uv run --locked ruff check
 
-format: ## Format with ruff
+# Twice: formatting can split a line into a multi-line call, which then needs
+# its own trailing comma.
+format: ## Add missing trailing commas, then format with ruff
+	uv run --locked ruff check --select missing-trailing-comma --fix --quiet
+	uv run --locked ruff format --quiet
+	uv run --locked ruff check --select missing-trailing-comma --fix --quiet
 	uv run --locked ruff format
 
 format-check: ## Check formatting with ruff

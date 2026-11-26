@@ -103,10 +103,11 @@ line-length = 88
 preview = true
 
 [tool.ruff.lint]
+# missing-trailing-comma stays on, so multi-line calls and collections keep
+# one item per line; `make format` applies its fixes before the formatter,
+# which would otherwise collapse them.
 select = ["ALL"]
 ignore = [
-  # Conflicts with the formatter.
-  "missing-trailing-comma",
   # The repository-level LICENSE covers every file.
   "missing-copyright-notice",
   # gh's JSON output is untyped.

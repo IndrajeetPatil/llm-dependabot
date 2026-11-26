@@ -117,12 +117,19 @@ def test_an_unknown_forced_prompt_fails(config: Config, repos: list[Repo]) -> No
     [
         pytest.param("import sys; print(sys.argv[1])", True, 0, id="argument"),
         pytest.param(
-            "import sys; print(sys.stdin.read()); sys.exit(3)", False, 3, id="stdin"
+            "import sys; print(sys.stdin.read()); sys.exit(3)",
+            False,
+            3,
+            id="stdin",
         ),
     ],
 )
 def test_run_agent(
-    tmp_path: Path, code: str, exit_code: int, *, via_argument: bool
+    tmp_path: Path,
+    code: str,
+    exit_code: int,
+    *,
+    via_argument: bool,
 ) -> None:
     """The prompt reaches the agent, its output is logged, and its exit code returns."""
     command = [sys.executable, "-c", code, *(["{prompt}"] if via_argument else [])]
@@ -202,7 +209,10 @@ class FakeGitHub:
         self.done: threading.Event = threading.Event()
 
     def find_pr(
-        self, _repo: Repo, _branch: str, _started: dt.datetime
+        self,
+        _repo: Repo,
+        _branch: str,
+        _started: dt.datetime,
     ) -> PullRequest | None:
         """Return or raise the next scripted result."""
         result = self.lookups[min(self.calls, len(self.lookups) - 1)]
@@ -212,7 +222,11 @@ class FakeGitHub:
         return result
 
     def label_pr(
-        self, _repo: Repo, pr: PullRequest, _label: PullRequestLabel, _name: str
+        self,
+        _repo: Repo,
+        pr: PullRequest,
+        _label: PullRequestLabel,
+        _name: str,
     ) -> bool:
         """Record the label and signal that the watcher has done its work."""
         self.labelled.append(pr.number)
@@ -317,7 +331,10 @@ def test_process_repo(
     labels: list[int] = []
 
     def record_label(
-        _repo: Repo, pr: PullRequest, _label: PullRequestLabel, _name: str
+        _repo: Repo,
+        pr: PullRequest,
+        _label: PullRequestLabel,
+        _name: str,
     ) -> bool:
         """Record which pull request was labelled after the run."""
         labels.append(pr.number)
@@ -325,7 +342,9 @@ def test_process_repo(
 
     monkeypatch.setattr(runner, "prepare_checkout", lambda *_args: checkout)
     monkeypatch.setattr(
-        runner, "agent_pass", lambda *_args: (0, case.pr, case.labelled_early)
+        runner,
+        "agent_pass",
+        lambda *_args: (0, case.pr, case.labelled_early),
     )
     monkeypatch.setattr(runner, "remove_checkout", removed.append)
     monkeypatch.setattr(runner, "label_pr", record_label)
@@ -341,7 +360,8 @@ def test_process_repo(
 
 
 def test_run_agent_stops_an_agent_that_outlasts_its_timeout(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     """A hung agent's whole process group is stopped, and the run reports -1."""
 
@@ -360,13 +380,16 @@ def test_run_agent_stops_an_agent_that_outlasts_its_timeout(
 
     monkeypatch.setattr(runner.subprocess, "Popen", QuickTimeout)
     agent = Agent(
-        name="sleepy", command=[sys.executable, "-c", "import time; time.sleep(30)"]
+        name="sleepy",
+        command=[sys.executable, "-c", "import time; time.sleep(30)"],
     )
     assert run_agent(agent, tmp_path, "prompt", tmp_path / "run.log", 1) == -1
 
 
 def test_agent_pass_runs_the_committed_prompt(
-    config: Config, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    config: Config,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     """The agent gets the prompt file's text, then the run's pull request is found."""
     (tmp_path / "prompt.md").write_text("Update everything.")
@@ -395,7 +418,9 @@ def test_agent_pass_runs_the_committed_prompt(
 
 
 def test_process_repo_removes_the_checkout_when_the_agent_cannot_run(
-    config: Config, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    config: Config,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     """An error during the agent pass removes the worktree, then propagates."""
     checkout = checkout_in(tmp_path)

@@ -36,7 +36,7 @@ def ensure_brew_bundle() -> None:
     step("Homebrew packages (Brewfile)")
     if not succeeds("brew", "bundle", "check", "--no-upgrade", "--file", BREWFILE):
         fail(
-            "some Brewfile packages are missing; run `make setup`, which installs them"
+            "some Brewfile packages are missing; run `make setup`, which installs them",
         )
     typer.echo("installed")
 
@@ -46,7 +46,8 @@ def ensure_signed_in(config: Config) -> None:
     step("GitHub CLI sign-in")
     while not succeeds("gh", "auth", "status"):
         if not typer.confirm(
-            "gh is not signed in. Run `gh auth login` now?", default=True
+            "gh is not signed in. Run `gh auth login` now?",
+            default=True,
         ):
             fail("gh must be signed in")
         interactive("gh", "auth", "login")
@@ -57,7 +58,7 @@ def ensure_signed_in(config: Config) -> None:
     if shutil.which(agent.command[0]) is None:
         fail(
             f"{agent.command[0]} is not installed; add its package to the Brewfile"
-            " and rerun `make setup`"
+            " and rerun `make setup`",
         )
     if agent.check is None:
         typer.echo(f"no sign-in check configured; make sure {agent.name} is signed in")
@@ -65,7 +66,7 @@ def ensure_signed_in(config: Config) -> None:
     while not succeeds(*agent.check):
         typer.echo(
             f"`{' '.join(agent.check)}` failed. Run `{agent.command[0]}` in another"
-            " terminal and sign in."
+            " terminal and sign in.",
         )
         pause("Once signed in, come back here.")
     typer.echo("signed in")
@@ -79,12 +80,18 @@ def check_owner(config: Config) -> None:
         typer.echo(f"{CONFIG_FILE.name} owner {config.owner!r} matches your account")
         return
     typer.echo(
-        f"{CONFIG_FILE.name} names {config.owner!r}, but gh is signed in as {login!r}."
+        f"{CONFIG_FILE.name} names {config.owner!r}, but gh is signed in as {login!r}.",
     )
     if typer.confirm(f"Set owner to {login!r} in {CONFIG_FILE.name}?", default=True):
         text = CONFIG_FILE.read_text()
         CONFIG_FILE.write_text(
-            re.sub(r"^owner: .*$", f"owner: {login}", text, count=1, flags=re.MULTILINE)
+            re.sub(
+                r"^owner: .*$",
+                f"owner: {login}",
+                text,
+                count=1,
+                flags=re.MULTILINE,
+            ),
         )
         config.owner = login
 
@@ -106,7 +113,7 @@ def choose_private_repos(config: Config) -> None:
     if PRIVATE_FILE.exists():
         typer.echo(
             f"{PRIVATE_FILE.name} already lists"
-            f" {len(config.private_repos)} repositories"
+            f" {len(config.private_repos)} repositories",
         )
         if not typer.confirm(f"Choose them again (rewrites {PRIVATE_FILE.name})?"):
             return
@@ -125,7 +132,7 @@ def choose_private_repos(config: Config) -> None:
     data = {"repos": chosen}
     PRIVATE_FILE.write_text(
         "# Private repositories to include; git-ignored, never commit it.\n\n"
-        + yaml.safe_dump(data, sort_keys=False)
+        + yaml.safe_dump(data, sort_keys=False),
     )
     config.private_repos = frozenset(chosen)
     typer.echo(f"wrote {PRIVATE_FILE.name} with {len(chosen)} repositories")
