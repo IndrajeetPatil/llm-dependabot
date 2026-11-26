@@ -31,7 +31,8 @@ Guidance for AI coding agents working in this repository.
 | `.github/zizmor.yml` | zizmor policy that requires full-SHA action pins |
 | `DESIGN.md` | Visual identity for the sticker, app icon, and documentation figures |
 | `.agents/skills/documentation-illustrations/` | Skill for generating documentation figures |
-| `.github/prompts/` | This repository's own `update-deps` and `simplify-codebase` prompts |
+| `.github/prompts/` | This repository's own `update-deps` and `simplify-codebase` prompts, which run on the schedule, and `create-release`, which the owner runs by hand |
+| `CHANGELOG.md` | Release notes, also the documentation's changelog page (`docs/changelog.md` only includes it) |
 | `hextools/` | Artwork and R scripts that render the hex sticker, `app/icon.png`, and the social preview card |
 | `hooks/check_private_names.py` | Hook that keeps private repository names out of commits |
 | `prek.toml` | Git hooks, run with `make hooks` |
@@ -222,6 +223,15 @@ Template users inherit these workflows, so keep them secure by default:
   users whose Actions policy allows only selected actions copy that list.
 
 - Use British English in prose.
+
+## Releases
+
+A release is a Git tag and a GitHub release, never a PyPI upload: the CLI
+runs from its checkout. To make one, follow
+`.github/prompts/create-release.md`. Edit `CHANGELOG.md`, never
+`docs/changelog.md`; the release collects every user-facing change since the
+last one into its `Unreleased` section, so a pull request may add its entry
+there but need not.
 
 ## Learn from mistakes
 

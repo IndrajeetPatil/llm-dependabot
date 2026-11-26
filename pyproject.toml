@@ -35,6 +35,7 @@ Homepage = "https://github.com/IndrajeetPatil/llm-dependabot"
 Documentation = "https://www.indrapatil.com/llm-dependabot/"
 Repository = "https://github.com/IndrajeetPatil/llm-dependabot"
 Issues = "https://github.com/IndrajeetPatil/llm-dependabot/issues"
+Changelog = "https://www.indrapatil.com/llm-dependabot/changelog/"
 
 [dependency-groups]
 # Development tools, locked in uv.lock so new rules arrive only through a

@@ -19,6 +19,7 @@ nav:
   - Architecture: architecture.md
   - Development: development.md
   - FAQ: faq.md
+  - Changelog: changelog.md
   - Integrations:
       - LLMs: integrations/llms.md
 
@@ -115,6 +116,7 @@ plugins:
           - architecture.md
           - development.md
           - faq.md
+          - changelog.md
         Integrations:
           - integrations/llms.md
 

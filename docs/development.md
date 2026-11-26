@@ -177,6 +177,15 @@ own worktree, so the checkout the scheduled jobs run from is untouched until
 `make self-update` pulls the merged change into it (see
 [Setup](setup.md#update-llm-dependabot)).
 
+## Releases
+
+A release is a Git tag and a GitHub release whose notes match the
+[changelog](changelog.md); llm-dependabot runs from its checkout, so it is not
+published to PyPI. The owner runs the `create-release` prompt in
+`.github/prompts/` by hand: it bumps the version with `uv version`, dates the
+changelog's `Unreleased` section, merges that as a release pull request, and
+tags the merge commit with `gh release create`.
+
 ## Design
 
 [`DESIGN.md`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/DESIGN.md) records the visual identity, shared with
