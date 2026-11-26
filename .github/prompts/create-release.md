@@ -75,8 +75,9 @@ published to PyPI: do not run `uv publish` or upload the built distributions.
 3. Verify with `gh release view x.y.z` that the tag points at the merge
    commit and the notes match `CHANGELOG.md`.
 
-4. Remove the release worktree, and tell the owner to run
-   `make self-update` so the scheduled jobs run the released version.
+4. Remove the release worktree. Run `make self-update` from the live
+   checkout and verify the installation as described in `AGENTS.md`.
 
-Report the pull request, merge commit, release URL, and every validation.
-Do not claim the release succeeded until the GitHub release is verified.
+Report the pull request, merge commit, release URL, validation, and live
+installation status. Do not claim the release succeeded until the GitHub
+release is verified.
