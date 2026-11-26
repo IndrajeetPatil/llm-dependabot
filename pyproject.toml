@@ -52,6 +52,8 @@ exclude = [".venv", "build", "dist", "docs"]
 
 [tool.ty.environment]
 python-version = "3.15"
+# The CLI runs only on macOS; check it against macOS APIs on any runner.
+python-platform = "darwin"
 
 [tool.ty.rules]
 # Enable every current diagnostic, including soundness and suppression checks that
