@@ -338,6 +338,35 @@ make install
 `make install` revalidates the configuration and updates your schedules. It
 safely refuses to reload if an agent run is currently in progress.
 
+## Update llm-dependabot
+
+The scheduled jobs run the CLI from this checkout, so a merged pull request,
+including one llm-dependabot opened on itself, takes effect only once it is
+pulled here. Bring the checkout up to date with:
+
+```sh
+make self-update
+```
+
+It requires `main` checked out without local changes, then pulls, installs
+anything new in the `Brewfile`, and runs `make install`. That covers every
+kind of change:
+
+| Change | Handled by |
+| --- | --- |
+| Python code and locked dependencies | Every run syncs the environment from `uv.lock`, so nothing is rebuilt |
+| `config.yaml` and the launchd agents | `make install` rewrites and reloads the agents |
+| The app's sources in `app/` | `make install` rebuilds the app; then grant it Full Disk Access again |
+| The `Brewfile` | `brew bundle install` |
+
+`make status` and every run's log warn when this checkout is behind
+`origin/main` or has another branch checked out, since scheduled runs execute
+whatever is checked out here.
+
+> [!NOTE]
+> If uv's `required-version` in `pyproject.toml` rises above the installed uv,
+> runs fail until you upgrade it with `brew upgrade uv`.
+
 ## Uninstall
 
 To remove the scheduled `launchd` jobs:

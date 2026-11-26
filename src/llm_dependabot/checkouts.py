@@ -22,6 +22,34 @@ class SkipRepoError(Exception):
     """A repository cannot be processed this run."""
 
 
+def stale_checkout(root: Path) -> str | None:
+    """Why the tool's own checkout may not hold the latest merged code, if so.
+
+    The launchd agents run the CLI from this checkout, so a merged pull
+    request takes effect only once it is pulled here, and a feature branch
+    left checked out is what the scheduled runs execute.
+    """
+    if not (root / ".git").exists():
+        return None
+    git = ("git", "-C", root)
+    head = sh(*git, "symbolic-ref", "--short", "refs/remotes/origin/HEAD", check=False)
+    default = head.removeprefix("origin/") or "main"
+    branch = sh(*git, "branch", "--show-current", check=False) or "a detached HEAD"
+    if branch != default:
+        return (
+            f"{root} has {branch} checked out, not {default}, and scheduled runs"
+            f" use that code; run `git switch {default}`, then `make self-update`"
+        )
+    sh(*git, "fetch", "--quiet", "origin", default, check=False)
+    behind = sh(*git, "rev-list", "--count", f"HEAD..origin/{default}", check=False)
+    if behind in {"", "0"}:
+        return None
+    return (
+        f"{root} is {behind} commit(s) behind origin/{default};"
+        " run `make self-update` to use them"
+    )
+
+
 def remote_matches(clone: Path, repo: Repo) -> bool:
     """Whether the clone's origin is the repository on GitHub."""
     url = sh("git", "-C", clone, "remote", "get-url", "origin", check=False)

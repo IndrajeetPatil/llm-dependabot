@@ -6,6 +6,7 @@ from typing import Annotated
 import typer
 
 from llm_dependabot import __version__
+from llm_dependabot.checkouts import stale_checkout
 from llm_dependabot.config import is_weekend, load_config
 from llm_dependabot.dashboard.render import render_dashboard
 from llm_dependabot.discovery import discover
@@ -15,7 +16,7 @@ from llm_dependabot.macos_app import (
     full_disk_access_granted,
     show_full_disk_access_steps,
 )
-from llm_dependabot.paths import APP_NAME, DASHBOARD_FILE
+from llm_dependabot.paths import APP_NAME, DASHBOARD_FILE, ROOT
 from llm_dependabot.runner import cleanup as cleanup_pending, planned_runs, run_plan
 from llm_dependabot.setup_wizard import run_setup, step
 from llm_dependabot.shell import fail, log, notify
@@ -75,6 +76,8 @@ def run(
     if scheduled and is_weekend(config):
         log(f"group {group}: skipped, since it is the weekend")
         return
+    if (warning := stale_checkout(ROOT)) is not None:
+        log(f"warning: {warning}")
     chosen = config.group(group)
     repos = discover(config, group)[group]
     if repo is not None:
@@ -127,6 +130,8 @@ def status() -> None:
             typer.echo(f"  {prompt.name}: {group.cadence_for(prompt)}")
     if config.skip_weekends:
         typer.echo("scheduled jobs skip Saturdays and Sundays")
+    if (warning := stale_checkout(ROOT)) is not None:
+        typer.secho(f"warning: {warning}", fg="yellow")
     state = load_state()
     typer.echo(f"\npending pull requests: {len(state.pending)}")
     for entry in state.pending:
