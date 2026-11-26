@@ -10,16 +10,20 @@ The owner's checkout runs the scheduled jobs. Keep it on `main` and clean.
 Create a separate worktree from `origin/main` for changes and remove it after
 the PR merges.
 
-- Run `make setup`, `make install`, `make self-update`, `make uninstall`,
-  `make run`, or `make cleanup` only when explicitly asked. These commands
-  change the live installation, execute agents with automatic approvals, or
-  delete checkouts. Use `make dry-run GROUP=python` to inspect the run plan.
+- Update the live macOS checkout after verifying a merge, or after verifying
+  publication for a release. If the scheduler launched this session, report
+  that the update is blocked until the parent job exits. Otherwise, run
+  `make self-update` yourself. Wait for independent jobs to finish if the
+  command reports one is active, then retry.
 
-- Use the owner's `make self-update` workflow to bring merged changes into
-  the live checkout. For changes to `app/`, `Brewfile`, uv's
-  `required-version`, `config.yaml`, `launchd.py`, or `macos_app.py`, state
-  the relevant [update steps](docs/setup.md#update-llm-dependabot) in the PR.
-  An app rebuild requires a fresh Full Disk Access grant.
+- Verify the live checkout is current and use `launchctl print` to confirm
+  the jobs are loaded. Flag owner-only steps in the PR, such as a fresh
+  Full Disk Access grant after an app rebuild. See the
+  [update steps](docs/setup.md#update-llm-dependabot).
+
+- Run `make setup`, `make install`, `make uninstall`, `make run`, or
+  `make cleanup` directly only when explicitly asked. Use
+  `make dry-run GROUP=python` to inspect the run plan.
 
 - Keep private repository names in the ignored `private.yaml`. Exclude
   them from commits, files staged for commit, and PR text.
