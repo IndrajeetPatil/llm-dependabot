@@ -1,7 +1,7 @@
 """Repositories and pull requests, read and changed through the gh CLI."""
 
 import datetime as dt
-from typing import TYPE_CHECKING, Literal, cast
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import BaseModel, ConfigDict, TypeAdapter
 from pydantic.alias_generators import to_camel
@@ -61,8 +61,13 @@ class GitHubRepo(GitHubModel):
 
     def repo(self, owner: str) -> Repo:
         """The repository, for one that has a default branch."""
-        branch = cast("BranchRef", self.default_branch_ref)
-        return Repo(owner=owner, name=self.name, default_branch=branch.name)
+        if self.default_branch_ref is None:
+            raise ValueError(f"{self.name} is empty and has no default branch")
+        return Repo(
+            owner=owner,
+            name=self.name,
+            default_branch=self.default_branch_ref.name,
+        )
 
 
 class PullRequest(GitHubModel):

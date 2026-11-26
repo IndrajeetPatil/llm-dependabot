@@ -10,7 +10,7 @@ SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
 
 .DEFAULT_GOAL := help
-.PHONY: help setup self-update update-deps install uninstall list status dashboard cleanup clean-logs run dry-run lint format format-check typecheck typecoverage test deadcode audit build check hooks hooks-install actions-lock-install actions-lock actions-lock-verify check-actions-lock-version docs docs-serve
+.PHONY: help setup self-update update-deps install uninstall list status dashboard cleanup clean-logs run dry-run lint format format-check typecheck typecoverage test mutation-test deadcode audit build check hooks hooks-install actions-lock-install actions-lock actions-lock-verify check-actions-lock-version docs docs-serve
 
 ##@ General
 
@@ -108,6 +108,19 @@ typecoverage: ## Require complete strict type coverage with pyrefly
 test: ## Run the pytest suite, requiring full line and branch coverage
 	uv run --locked coverage run -m pytest
 	uv run --locked coverage report
+
+# mutmut lists every mutant it did not kill; each must be killed, so the
+# target shows their diffs and fails while any remain.
+mutation-test: ## Mutate the source with mutmut, failing unless the tests kill every mutant
+	rm -rf mutants
+	uv run --locked mutmut run
+	@survivors=$$(uv run --locked mutmut results | cut -d: -f1); \
+	if [[ -n "$$survivors" ]]; then \
+		for mutant in $$survivors; do uv run --locked mutmut show "$$mutant"; done; \
+		echo "$$(wc -w <<< "$$survivors" | tr -d ' ') mutant(s) not killed; see docs/development.md#mutation-testing" >&2; \
+		exit 1; \
+	fi; \
+	echo "The tests killed every mutant"
 
 deadcode: ## Find unused code with unref
 	uv run --locked unref

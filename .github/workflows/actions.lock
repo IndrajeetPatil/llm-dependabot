@@ -14,6 +14,9 @@ workflows:
     '.github/workflows/link-check.yml':
         - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
         - 'lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8'
+    '.github/workflows/mutation-test.yml':
+        - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
+        - 'astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d'
     '.github/workflows/prek.yml':
         - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
         - 'astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d'

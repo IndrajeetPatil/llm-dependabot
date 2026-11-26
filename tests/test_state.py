@@ -1,7 +1,8 @@
 """Tests for due-state tracking and the state file."""
 
 import datetime as dt
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -13,6 +14,7 @@ if TYPE_CHECKING:
 
     from llm_dependabot.config import Cadence, Config
     from llm_dependabot.github import Repo
+    from tests.conftest import Spy
 
 TODAY = dt.date(2026, 11, 26)
 
@@ -81,12 +83,21 @@ def test_a_missing_state_file_is_an_empty_state() -> None:
     assert load_state() == State()
 
 
-def test_state_survives_a_round_trip() -> None:
+def test_state_survives_a_round_trip(spy: Callable[[Any, str], Spy]) -> None:
     """Saving and loading returns the same state, atomically."""
+    write_text = spy(Path, "write_text")
     state = State(managed_clones=[], last_runs={"update-deps octo/a": TODAY})
     save_state(state)
     assert load_state() == state
-    assert not state_module.STATE_FILE.with_suffix(".tmp").exists()
+    [((written, _), _)] = write_text.calls
+    assert written == state_module.STATE_FILE.with_suffix(".tmp")
+    assert not written.exists()
+
+
+def test_the_state_file_is_indented() -> None:
+    """The state file is indented, so people can read it."""
+    save_state(State())
+    assert state_module.STATE_FILE.read_text().startswith('{\n  "pending": [],\n')
 
 
 def test_existing_state_without_recovery_still_loads() -> None:

@@ -17,3 +17,6 @@ dist/
 # Coverage data from `make test`.
 .coverage
 htmlcov/
+
+# Mutation testing output from `make mutation-test`.
+mutants/

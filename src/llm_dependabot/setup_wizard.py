@@ -132,7 +132,7 @@ def choose_private_repos(config: Config) -> None:
     data = {"repos": chosen}
     PRIVATE_FILE.write_text(
         "# Private repositories to include; git-ignored, never commit it.\n\n"
-        + yaml.safe_dump(data, sort_keys=False),
+        + yaml.safe_dump(data),
     )
     config.private_repos = frozenset(chosen)
     typer.echo(f"wrote {PRIVATE_FILE.name} with {len(chosen)} repositories")

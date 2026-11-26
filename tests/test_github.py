@@ -11,7 +11,6 @@ from llm_dependabot import github
 from llm_dependabot.config import PullRequestLabel
 from llm_dependabot.github import (
     GitHubRepo,
-    PullRequest,
     add_label,
     find_pr,
     gh_json,
@@ -55,14 +54,21 @@ def test_gh_json_validates_camel_case_output(monkeypatch: pytest.MonkeyPatch) ->
     assert item.repo("octo").default_branch == "trunk"
 
 
-def pull_request(number: int, created: dt.datetime) -> PullRequest:
-    """A pull request of octo/project, as gh reports it."""
-    return PullRequest.model_validate({
+def test_an_empty_repository_has_no_repo() -> None:
+    """An empty repository has no default branch to run prompts on."""
+    item = GitHubRepo.model_validate(listing_entry("empty", default_branch=None))
+    with pytest.raises(ValueError, match=r"^empty is empty and has no default branch$"):
+        item.repo("octo")
+
+
+def pull_request(number: int, created: dt.datetime) -> dict[str, Any]:
+    """A pull request of octo/project, as gh pr list --json reports it."""
+    return {
         "number": number,
         "url": f"https://github.com/octo/project/pull/{number}",
         "state": "OPEN",
-        "createdAt": created,
-    })
+        "createdAt": created.isoformat(),
+    }
 
 
 BEFORE: dt.datetime = STARTED - dt.timedelta(minutes=1)
@@ -88,25 +94,36 @@ BEFORE: dt.datetime = STARTED - dt.timedelta(minutes=1)
     ],
 )
 def test_find_pr(
-    monkeypatch: pytest.MonkeyPatch,
+    commands: FakeCommands,
     make_repo: Callable[..., Repo],
     by_head: list[tuple[int, dt.datetime]],
     recent: list[tuple[int, dt.datetime]],
     expected: int | None,
 ) -> None:
     """The run branch's newest pull request, else one opened since the run started."""
-    answers = {
-        True: list(starmap(pull_request, by_head)),
-        False: list(starmap(pull_request, recent)),
-    }
-
-    def gh(_kind: object, *args: str) -> list[PullRequest]:
-        """Answer gh pr list, by head branch or by recent author."""
-        return answers["--head" in args]
-
-    monkeypatch.setattr(github, "gh_json", gh)
+    commands.on("gh", "--head", stdout=json.dumps(list(starmap(pull_request, by_head))))
+    commands.on(
+        "gh",
+        "--author",
+        stdout=json.dumps(list(starmap(pull_request, recent))),
+    )
     found = find_pr(make_repo(), "chore/update-deps", STARTED)
     assert (found.number if found else None) == expected
+    base = [
+        "pr",
+        "list",
+        "-R",
+        "octo/project",
+        "--state",
+        "all",
+        "--json",
+        "number,url,state,createdAt",
+    ]
+    by_author = [[*base, "--author", "@me", "--limit", "20"]] if not by_head else []
+    assert commands.calls("gh") == [
+        [*base, "--head", "chore/update-deps"],
+        *by_author,
+    ]
 
 
 def listing_entry(name: str, *, default_branch: str | None = "main") -> dict[str, Any]:
@@ -137,13 +154,26 @@ def test_owned_repos(
     listing = [
         listing_entry("beta"),
         listing_entry("Alpha"),
+        listing_entry("_tools"),
         listing_entry("empty", default_branch=None),
     ]
     commands.on("gh", "repo list", stdout=json.dumps(listing))
-    assert [repo.name for repo in owned_repos(config, visibility)] == ["Alpha", "beta"]
-    [call] = commands.calls("gh")
-    assert call[:3] == ["repo", "list", "octo"]
-    assert call[7:-2] == flags
+    names = [repo.name for repo in owned_repos(config, visibility)]
+    assert names == ["_tools", "Alpha", "beta"]
+    assert commands.calls("gh") == [
+        [
+            "repo",
+            "list",
+            "octo",
+            "--source",
+            "--no-archived",
+            "--limit",
+            "1000",
+            *flags,
+            "--json",
+            "name,visibility,primaryLanguage,defaultBranchRef",
+        ],
+    ]
 
 
 @pytest.mark.parametrize(("code", "expected"), [(0, True), (1, False)])
