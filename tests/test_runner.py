@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 import threading
+import time
 from typing import TYPE_CHECKING, NamedTuple, override
 
 import pytest
@@ -359,11 +360,20 @@ def test_process_repo(
     assert removed == ([] if case.pr else [checkout])
 
 
+@pytest.mark.parametrize(
+    "ignore_term",
+    [
+        pytest.param(False, id="cooperative"),
+        pytest.param(True, id="ignores sigterm"),
+    ],
+)
 def test_run_agent_stops_an_agent_that_outlasts_its_timeout(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
+    *,
+    ignore_term: bool,
 ) -> None:
-    """A hung agent's whole process group is stopped, and the run reports -1."""
+    """A timed-out agent is stopped even when it ignores graceful termination."""
 
     class QuickTimeout(subprocess.Popen[str]):
         """Time out after a fraction of a second instead of hours."""
@@ -376,14 +386,32 @@ def test_run_agent_stops_an_agent_that_outlasts_its_timeout(
         ) -> tuple[str, str]:
             """Wait briefly, whatever timeout the caller asked for."""
             del timeout
-            return super().communicate(input, timeout=0.2)
+            deadline = time.monotonic() + 5
+            while not (tmp_path / "ready").exists():
+                if time.monotonic() > deadline:
+                    self.kill()
+                    pytest.fail("agent did not initialise")
+                time.sleep(0.01)
+            return super().communicate(input, timeout=0.1)
 
     monkeypatch.setattr(runner.subprocess, "Popen", QuickTimeout)
+    monkeypatch.setattr(runner, "TERMINATE_GRACE_SECONDS", 0.1)
+    handler = "signal.SIG_IGN" if ignore_term else "signal.SIG_DFL"
     agent = Agent(
         name="sleepy",
-        command=[sys.executable, "-c", "import time; time.sleep(30)"],
+        command=[
+            sys.executable,
+            "-c",
+            (
+                "import signal,time; from pathlib import Path; "
+                f"signal.signal(signal.SIGTERM, {handler}); "
+                "Path('ready').touch(); time.sleep(30)"
+            ),
+        ],
     )
+    started = time.monotonic()
     assert run_agent(agent, tmp_path, "prompt", tmp_path / "run.log", 1) == -1
+    assert time.monotonic() - started < 10
 
 
 def test_agent_pass_runs_the_committed_prompt(
@@ -417,12 +445,12 @@ def test_agent_pass_runs_the_committed_prompt(
     assert found == ["agent/branch"]
 
 
-def test_process_repo_removes_the_checkout_when_the_agent_cannot_run(
+def test_process_repo_retains_the_checkout_when_the_agent_cannot_run(
     config: Config,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    """An error during the agent pass removes the worktree, then propagates."""
+    """An error retains a tracked checkout for recovery, then propagates."""
     checkout = checkout_in(tmp_path)
     removed: list[Checkout] = []
 
@@ -436,7 +464,8 @@ def test_process_repo_removes_the_checkout_when_the_agent_cannot_run(
     repo = Repo(owner="octo", name="project", default_branch="main", prompts=("p",))
     with pytest.raises(FileNotFoundError):
         process_repo(repo, Prompt(name="p", path="p.md"), config, State(), tmp_path)
-    assert removed == [checkout]
+    assert removed == []
+    assert load_state().recovery == [checkout]
 
 
 def test_run_plan_keeps_going_after_a_repository_fails(
@@ -520,3 +549,85 @@ def test_cleanup_waits_for_no_run(
     runner.cleanup()
     assert len(cleaned) == (1 if cleans else 0)
     assert ("a run is in progress" in capsys.readouterr().out) is not cleans
+
+
+@pytest.mark.parametrize(
+    "exit_code",
+    [
+        pytest.param(0, id="success"),
+        pytest.param(3, id="failure"),
+        pytest.param(-1, id="timeout"),
+    ],
+)
+@pytest.mark.parametrize(
+    "has_pr",
+    [
+        pytest.param(False, id="no pr"),
+        pytest.param(True, id="pr opened"),
+    ],
+)
+def test_only_successful_agents_complete_the_monthly_cadence(
+    config: Config,
+    commands: FakeCommands,
+    monkeypatch: pytest.MonkeyPatch,
+    exit_code: int,
+    *,
+    has_pr: bool,
+) -> None:
+    """Failures stay due; PRs remain tracked, and failures without PRs are retained."""
+    commands.install("caffeinate")
+    config.label = None
+    checkout = checkout_in(config.clone_root)
+    pr = pull_request(4) if has_pr else None
+    removed: list[Checkout] = []
+    monkeypatch.setattr(runner, "prepare_checkout", lambda *_args: checkout)
+
+    def agent_pass(*_args: object) -> tuple[int, PullRequest | None, set[int]]:
+        """Model the agent switching to a branch of its own."""
+        checkout.final_branch = "agent/own-branch"
+        return exit_code, pr, set()
+
+    monkeypatch.setattr(runner, "agent_pass", agent_pass)
+    monkeypatch.setattr(runner, "remove_checkout", removed.append)
+    monkeypatch.setattr(runner, "cleanup_finished", lambda _state: None)
+    repo = Repo(owner="octo", name="project", default_branch="main")
+    prompt = config.prompt("simplify-codebase")
+
+    [summary] = run_plan(config, "python", [(repo, prompt)])
+
+    saved = load_state()
+    assert saved.is_due(prompt, repo, "monthly") is (exit_code != 0)
+    assert ("failed" in summary) is (exit_code != 0)
+    assert [entry.pr_number for entry in saved.pending] == ([4] if has_pr else [])
+    retained = exit_code != 0 and not has_pr
+    assert saved.recovery == ([checkout] if retained else [])
+    assert removed == ([checkout] if exit_code == 0 and not has_pr else [])
+
+
+def test_timeout_tolerates_an_agent_exiting_before_the_signal(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """A process that exits at the deadline does not turn a timeout into an error."""
+
+    def gone(_pid: int, _signal: int) -> None:
+        """Simulate the process group disappearing before each signal."""
+        raise ProcessLookupError
+
+    class Expired(subprocess.Popen[str]):
+        """Report a deadline after reaping a short-lived real process."""
+
+        @override
+        def communicate(
+            self,
+            input: str | None = None,
+            timeout: float | None = None,
+        ) -> tuple[str, str]:
+            """Let the process exit, then simulate the timeout race."""
+            super().communicate(input, timeout=timeout)
+            raise subprocess.TimeoutExpired(self.args, 0)
+
+    monkeypatch.setattr(runner.subprocess, "Popen", Expired)
+    monkeypatch.setattr(runner.os, "killpg", gone)
+    agent = Agent(name="quick", command=[sys.executable, "-c", "pass"])
+    assert run_agent(agent, tmp_path, "prompt", tmp_path / "run.log", 1) == -1

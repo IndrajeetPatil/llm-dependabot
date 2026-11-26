@@ -137,8 +137,8 @@ def clone_is_disposable(clone: Path) -> tuple[bool, str]:
 
 
 def delete_unused_managed_clones(state: State) -> None:
-    """Delete clones this tool created once no pending pull request needs them."""
-    in_use = {entry.clone for entry in state.pending}
+    """Delete managed clones once no pending PR or recovery checkout needs them."""
+    in_use = {entry.clone for entry in [*state.pending, *state.recovery]}
     kept = []
     for clone in state.managed_clones:
         if clone in in_use:

@@ -13,7 +13,7 @@ is merged or closed.
 
 | Command | Does |
 | --- | --- |
-| `make status` | Show the schedule, each group's prompt cadences, pending pull requests, and clones awaiting deletion |
+| `make status` | Show the schedule, each group's prompt cadences, pending pull requests, recovery checkouts, and clones awaiting deletion |
 | `make dashboard` | Build `dashboard.html` (git-ignored) from the logs and open it: past runs, each job's duration, exit code, pull request and its latest known state, and transcript, plus the upcoming schedule; it follows the system's light or dark mode, with a button to switch |
 | `make list` | Show which repositories fall into which group, and which prompts each has |
 | `make dry-run GROUP=python` | List the repositories and prompts a group would run, without running anything; add `PROMPT=<name>` to preview one prompt |
@@ -30,8 +30,10 @@ CLI, which also works directly (`uv run llm-dependabot --help`).
 
 `make run` without `PROMPT` runs what a scheduled run would: every weekly
 prompt, and each monthly prompt that has not yet run in that repository this
-calendar month. Every completed run counts towards the cadence, so a monthly
-prompt run by hand does not run again that month.
+calendar month. Every successful agent run counts towards the cadence,
+including one that opens no pull request, so a successful monthly prompt run
+by hand does not run again that month. Failed and timed-out agents remain due,
+even if they opened a pull request.
 
 ## When jobs run
 
@@ -80,7 +82,7 @@ whole run. Each agent's own output goes to its transcript,
 | `~/Library/LaunchAgents/<bundle_id_prefix>.llm-dependabot.*.plist` | Generated launchd agents |
 | `~/Library/Logs/llm-dependabot/` | One log per group and one for cleanup, plus a folder per run with one agent transcript per repository and prompt; kept until `make clean-logs` deletes them |
 | `~/Library/Application Support/llm-dependabot/` | State (`state.json`), concurrency lock, and the LLM Dependabot app (`LLM Dependabot.app`) |
-| `~/Library/Caches/llm-dependabot/worktrees/` | Worktrees for in-flight pull requests |
+| `~/Library/Caches/llm-dependabot/worktrees/` | Worktrees for active runs, in-flight pull requests, and manual recovery |
 
 ## Troubleshooting
 
@@ -92,3 +94,29 @@ whole run. Each agent's own output goes to its transcript,
 | A run opened no pull request | Read the agent transcript in the run's folder under `~/Library/Logs/llm-dependabot/` |
 | `make install` says a job is running | Wait until it finishes; `make status` shows the schedule |
 | A log or `make status` warns about the checkout | Switch it back to `main`, then run `make self-update` |
+
+## Recovering a failed run
+
+If the agent fails without a known pull request, or its final pull request
+lookup fails, the worktree and its branches are kept. Interrupted runs are
+also recorded before the agent starts. `make status` lists these recovery
+checkouts and their transcript paths. They are never removed by automatic
+cleanup, and their managed clones are retained, even if you remove the worktree.
+
+1. Inspect the transcript and worktree, and check GitHub for a pull request.
+   Push or copy any useful work before removing anything.
+
+2. Once no run or cleanup is active, remove a worktree you no longer need
+   with `git -C <clone> worktree remove <worktree>`. Git refuses if it still
+   contains uncommitted changes. Delete its local branches only after their
+   work is safely preserved.
+
+3. With runs and cleanup still stopped, remove only that checkout's entry
+   from the `recovery` array in
+   `~/Library/Application Support/llm-dependabot/state.json`. Leave the other
+   entries and fields intact. This releases its managed clone for normal
+   cleanup.
+
+Failed agents do not advance the monthly cadence. Check for an existing pull
+request before retrying with `make run GROUP=<group> PROMPT=<name>`; otherwise
+the next scheduled run retries it automatically.
