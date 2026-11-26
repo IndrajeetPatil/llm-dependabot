@@ -8,7 +8,7 @@ import threading
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
-lazy import filelock
+import filelock
 
 from llm_dependabot.checkouts import (
     SkipRepoError,
@@ -67,7 +67,7 @@ def run_agent(
     A run that outlasts its timeout is stopped and returns -1.
     """
     argv, via_stdin = agent.argv(prompt, timeout_hours)
-    with log_path.open("w") as out:
+    with log_path.open("w", encoding="utf-8") as out:
         proc = subprocess.Popen(
             argv,
             cwd=worktree,
@@ -75,7 +75,7 @@ def run_agent(
             stdout=out,
             stderr=subprocess.STDOUT,
             start_new_session=True,
-            text=True,
+            encoding="utf-8",
         )
         try:
             # Agents with a timeout of their own stop first; this stops the rest.

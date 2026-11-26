@@ -8,7 +8,7 @@ authors = [
 ]
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.15"
+requires-python = ">=3.14"
 keywords = ["automation", "coding-agent", "dependencies", "launchd", "maintenance"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -16,6 +16,7 @@ classifiers = [
   "Intended Audience :: Developers",
   "Operating System :: MacOS",
   "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: 3.15",
   "Topic :: Software Development :: Build Tools",
   "Topic :: Utilities",
@@ -98,7 +99,7 @@ skip_covered = true
 skip_empty = true
 
 [tool.ruff]
-target-version = "py315"
+target-version = "py314"
 line-length = 88
 preview = true
 
@@ -122,8 +123,6 @@ ignore = [
   "raise-vanilla-args",
   # Local wall-clock time is intended for logs and branch names.
   "call-datetime-now-without-tzinfo",
-  # Python 3.15 opens text files as UTF-8 by default (PEP 686).
-  "unspecified-encoding",
   # Running git, gh, launchctl, and the agent is the CLI's job. Arguments are
   # built from lists, never a shell, and the tools are resolved from the
   # login PATH.
@@ -167,7 +166,9 @@ docstring-code-format = true
 exclude = [".venv", "build", "dist", "docs"]
 
 [tool.ty.environment]
-python-version = "3.15"
+# The oldest supported version, so newer-only APIs are flagged; .python-version
+# picks the newer interpreter that development and scheduled runs use.
+python-version = "3.14"
 # The CLI runs only on macOS; check it against macOS APIs on any runner.
 python-platform = "darwin"
 

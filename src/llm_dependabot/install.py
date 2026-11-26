@@ -1,7 +1,7 @@
 """Install the app and the launchd agents together."""
 
+import plistlib
 from typing import TYPE_CHECKING
-lazy import plistlib
 
 from llm_dependabot.launchd import (
     desired_agents,

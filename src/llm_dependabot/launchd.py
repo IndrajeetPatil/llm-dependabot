@@ -2,9 +2,9 @@
 
 import os
 import re
+import shlex
 import subprocess
 from typing import TYPE_CHECKING, Any
-lazy import shlex
 
 from llm_dependabot.config import WEEKDAYS
 from llm_dependabot.paths import LAUNCH_AGENTS, LAUNCHER, LOG_DIR, NAME, ROOT
@@ -20,7 +20,7 @@ def launchctl(*args: str | Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["launchctl", *args],
         capture_output=True,
-        text=True,
+        encoding="utf-8",
         check=False,
     )
 

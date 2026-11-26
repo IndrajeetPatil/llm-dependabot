@@ -5,7 +5,7 @@ import shutil
 from typing import TYPE_CHECKING
 
 import typer
-lazy import yaml
+import yaml
 
 from llm_dependabot.discovery import prompts_in
 from llm_dependabot.github import owned_repos

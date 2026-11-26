@@ -1,14 +1,14 @@
 """The LLM Dependabot app, which holds the Full Disk Access grant."""
 
+import hashlib
 import json
+import plistlib
 import re
 import shutil
+import tempfile
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
-lazy import hashlib
-lazy import plistlib
-lazy import tempfile
 
 import typer
 

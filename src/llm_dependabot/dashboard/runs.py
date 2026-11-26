@@ -51,7 +51,7 @@ def read_log(path: Path) -> list[tuple[dt.datetime, str]]:
     """The timestamped lines of a log, skipping noise from the login shell."""
     return [
         (dt.datetime.fromisoformat(match[1]), match[2])
-        for line in path.read_text(errors="replace").splitlines()
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines()
         if (match := LOG_LINE.fullmatch(line))
     ]
 
