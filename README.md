@@ -137,6 +137,7 @@ The full documentation is at <https://www.indrapatil.com/llm-dependabot/>.
 | [Architecture](https://www.indrapatil.com/llm-dependabot/architecture/) | How a run works and why it is built this way |
 | [Development](https://www.indrapatil.com/llm-dependabot/development/) | Toolchain, checks, CI, and the documentation site |
 | [FAQ](https://www.indrapatil.com/llm-dependabot/faq/) | Why it runs locally and on macOS, why not an agent product's scheduled tasks, agent choice, and safety |
+| [Changelog](https://www.indrapatil.com/llm-dependabot/changelog/) | Notable changes in each release |
 | [LLMs](https://www.indrapatil.com/llm-dependabot/integrations/llms/) | The documentation in the `llms.txt` format |
 
 ## License
