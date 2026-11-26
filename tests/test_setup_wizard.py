@@ -37,11 +37,16 @@ class Answers:
         monkeypatch.setattr(setup_wizard.typer, "prompt", self.prompt)
 
     def confirm(self, question: str, *, default: bool = False) -> bool:
-        """Answer the next scripted reply."""
+        """Answer the next scripted reply.
+
+        The replies are read, never popped: they may be a parametrised case's
+        list, which must stay intact for the next run of the same test.
+        """
         del default
         self.questions.append(question)
-        assert self.replies, f"unexpected question: {question}"
-        return self.replies.pop(0)
+        asked = len(self.questions)
+        assert asked <= len(self.replies), f"unexpected question: {question}"
+        return self.replies[asked - 1]
 
     def prompt(self, _text: str, **_kwargs: object) -> str:
         """Count a press of Enter."""
