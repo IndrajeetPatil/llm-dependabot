@@ -213,6 +213,8 @@ def run_plan(config: Config, group: str, plan: list[tuple[Repo, Prompt]]) -> lis
                 results.append(f"{label}: failed")
         cleanup_finished(state)
         caffeinate.terminate()
+        # Reap it, so it does not linger as a zombie until this process exits.
+        caffeinate.wait()
     return results
 
 
