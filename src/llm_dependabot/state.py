@@ -1,4 +1,4 @@
-"""What runs left behind: pending pull requests, managed clones, and last runs."""
+"""What runs left behind: pull requests, recovery checkouts, clones, and dates."""
 
 import datetime as dt
 from pathlib import Path
@@ -38,6 +38,8 @@ class State(Strict):
     """Everything runs leave behind, kept in state.json."""
 
     pending: list[Pending] = Field(default_factory=list)
+    # Interrupted or failed runs whose work needs manual recovery.
+    recovery: list[Checkout] = Field(default_factory=list)
     managed_clones: list[Path] = Field(default_factory=list)
     # When each prompt last ran in each repository, keyed "prompt owner/repo".
     last_runs: dict[str, dt.date] = Field(default_factory=dict)

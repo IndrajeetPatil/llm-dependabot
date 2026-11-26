@@ -5,7 +5,7 @@ import os
 import signal
 import subprocess
 import threading
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from typing import TYPE_CHECKING
 
 import filelock
@@ -23,6 +23,8 @@ from llm_dependabot.state import Pending, load_state, save_state
 
 # How often to look for the run's pull request while the agent works.
 LABEL_POLL_SECONDS = 180
+# Give agents time to flush their logs before forcing the process group to stop.
+TERMINATE_GRACE_SECONDS = 30
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -84,7 +86,14 @@ def run_agent(
                 timeout=timeout_hours * 3600 + 600,
             )
         except subprocess.TimeoutExpired:
-            os.killpg(proc.pid, signal.SIGTERM)
+            with suppress(ProcessLookupError):
+                os.killpg(proc.pid, signal.SIGTERM)
+            with suppress(subprocess.TimeoutExpired):
+                proc.wait(timeout=TERMINATE_GRACE_SECONDS)
+            # The leader may exit while its children keep running. Stop the
+            # whole group even when waiting for the leader succeeded.
+            with suppress(ProcessLookupError):
+                os.killpg(proc.pid, signal.SIGKILL)
             proc.wait()
             return -1
         return proc.wait()
@@ -197,24 +206,42 @@ def process_repo(
     label = f"{repo.name} {prompt.name}"
     log_path = run_dir / f"{repo.name}-{prompt.name}.log"
     checkout = prepare_checkout(repo, prompt, config, state, log_path)
+    # Persist before running: an interruption or uncertain PR lookup must not
+    # leave useful work untracked or let cleanup delete its managed clone.
+    state.recovery.append(checkout)
+    save_state(state)
     try:
         code, pr, labelled = agent_pass(checkout, repo, prompt, config, label)
     except Exception:
-        remove_checkout(checkout)
+        save_state(state)
+        log(f"{label}: retaining {checkout.worktree} for recovery (see `status`)")
         raise
 
     if pr is None:
+        if code != 0:
+            save_state(state)
+            msg = (
+                f"agent exited with code {code};"
+                f" retained {checkout.worktree} for recovery"
+            )
+            raise RuntimeError(msg)
         log(f"{label}: no pull request was opened; removing the worktree")
         remove_checkout(checkout)
+        state.recovery.remove(checkout)
+        save_state(state)
         return f"{label}: no PR (exit {code})"
 
     log(f"{label}: {pr.state.lower()} pull request {pr.url}")
     state.pending.append(
         Pending(**checkout.model_dump(), pr_number=pr.number, pr_url=pr.url),
     )
+    state.recovery.remove(checkout)
     save_state(state)
     if config.label is not None and pr.number not in labelled:
         label_pr(repo, pr, config.label, label)
+    if code != 0:
+        msg = f"agent exited with code {code}; tracking {pr.url} for cleanup"
+        raise RuntimeError(msg)
     return f"{label}: PR #{pr.number}"
 
 

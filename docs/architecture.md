@@ -61,14 +61,16 @@ validate the configuration, state, and `gh` output, [PyYAML](https://pyyaml.org)
   any pull request still unlabelled.
 
 - **Repositories and prompts run one after another.** A failure in one is
-  logged, and the run moves on. A failed run is not recorded, so it is
-  retried at the next scheduled run.
+  logged, and the run moves on. Only an agent that exits successfully counts
+  towards its cadence, including one that needs no pull request. Failed and
+  timed-out agents remain due, even if they opened a pull request.
 
 - **Weekends:** with `skip_weekends`, scheduled runs and cleanups started on a
   Saturday or Sunday exit without doing anything.
 
 - **A timeout** bounds each agent run, backed by a hard stop in case the CLI's
-  own timeout does not fire.
+  own timeout does not fire. The runner sends `SIGTERM`, waits up to 30
+  seconds, then sends `SIGKILL` to any remaining processes in the agent's group.
 
 ## Cleanup
 
@@ -83,5 +85,9 @@ skips that turn.
 
 `state.json` records pending pull requests (with their worktree and branch),
 the clones llm-dependabot created, and the date each prompt last ran in each
-repository. It is written atomically, and a lock
+repository. It also records recovery checkouts before starting their agents;
+failed or interrupted runs, and runs whose pull request lookup fails, retain
+these checkouts for manual recovery. `make status` lists their paths and logs,
+and cleanup keeps their managed clones. See [Recovery](usage.md#recovering-a-failed-run).
+It is written atomically, and a lock
 keeps a scheduled run and a cleanup from changing it at the same time.

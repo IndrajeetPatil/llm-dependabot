@@ -87,3 +87,12 @@ def test_state_survives_a_round_trip() -> None:
     save_state(state)
     assert load_state() == state
     assert not state_module.STATE_FILE.with_suffix(".tmp").exists()
+
+
+def test_existing_state_without_recovery_still_loads() -> None:
+    """State files from earlier versions gain an empty recovery list."""
+    state_module.STATE_FILE.parent.mkdir(parents=True)
+    state_module.STATE_FILE.write_text(
+        '{"pending": [], "managed_clones": [], "last_runs": {}}',
+    )
+    assert load_state() == State()

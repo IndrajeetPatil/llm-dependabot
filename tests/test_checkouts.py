@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from llm_dependabot import checkouts
+from llm_dependabot import checkouts, runner
 from llm_dependabot.checkouts import (
     SkipRepoError,
     cleanup_finished,
@@ -16,7 +16,8 @@ from llm_dependabot.checkouts import (
     remove_checkout,
     stale_checkout,
 )
-from llm_dependabot.state import Checkout, Pending, State, load_state
+from llm_dependabot.config import Prompt
+from llm_dependabot.state import Checkout, Pending, State, load_state, save_state
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
 
     from llm_dependabot.config import Config
     from llm_dependabot.github import Repo
+    from tests.conftest import FakeCommands
 
 
 def git(*args: str | Path) -> str:
@@ -338,3 +340,50 @@ def test_stale_checkout_ignores_a_directory_that_is_not_a_clone(
 ) -> None:
     """Outside a git checkout, such as an unpacked copy, there is nothing to check."""
     assert stale_checkout(tmp_path) is None
+
+
+def test_a_failed_final_lookup_preserves_agent_work_and_its_managed_clone(
+    clone: Path,
+    config: Config,
+    commands: FakeCommands,
+    make_repo: Callable[..., Repo],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An API outage preserves committed and uncommitted work through cleanup."""
+    commands.install("caffeinate")
+    config.label = None
+    save_state(State(managed_clones=[clone]))
+
+    def agent(_agent: object, worktree: Path, *_args: object) -> int:
+        """Leave both a local commit and an uncommitted file."""
+        assert load_state().recovery[0].worktree == worktree
+        (worktree / "README.md").write_text("agent commit\n")
+        git("-C", worktree, "commit", "--quiet", "-am", "agent work")
+        (worktree / "notes.txt").write_text("unfinished work\n")
+        git("-C", worktree, "switch", "--quiet", "-c", "agent/own-branch")
+        return 0
+
+    def offline(*_args: object) -> None:
+        """Fail the final PR lookup as a transient GitHub outage would."""
+        raise subprocess.CalledProcessError(1, "gh", stderr="offline")
+
+    monkeypatch.setattr(runner, "run_agent", agent)
+    monkeypatch.setattr(runner, "find_pr", offline)
+    prompt = Prompt(name="p", path="README.md", cadence="monthly")
+    repo = make_repo()
+    assert runner.run_plan(config, "python", [(repo, prompt)]) == ["project p: failed"]
+
+    saved = load_state()
+    [checkout] = saved.recovery
+    assert checkout.final_branch == "agent/own-branch"
+    assert (checkout.worktree / "notes.txt").read_text() == "unfinished work\n"
+    assert git("-C", checkout.worktree, "log", "-1", "--format=%s") == "agent work"
+    assert saved.managed_clones == [clone]
+    assert saved.is_due(prompt, repo, "monthly")
+
+    # Even a user removing the worktree must not make cleanup discard the
+    # clone containing the retained local branches.
+    git("-C", clone, "worktree", "remove", "--force", checkout.worktree)
+    cleanup_finished(saved)
+    assert clone.exists()
+    assert load_state().recovery == [checkout]

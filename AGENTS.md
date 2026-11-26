@@ -49,7 +49,7 @@ Each module depends only on those above it; `cli.py` holds no logic of its own.
 | `shell.py` | Logging, failing, and running external commands |
 | `config.py` | `config.yaml` and `private.yaml` models, validation, and loading |
 | `github.py` | Repository and pull request models, and every `gh` call |
-| `state.py` | Pending pull requests, managed clones, and last runs in `state.json` |
+| `state.py` | Pending pull requests, recovery checkouts, managed clones, and last runs in `state.json` |
 | `discovery.py` | Sorting owned repositories that carry prompts into groups |
 | `checkouts.py` | Worktrees for runs, and cleanup once pull requests finish |
 | `runner.py` | Planning due prompts, running the agent, and the run lock |
@@ -113,6 +113,10 @@ whatever is checked out there is what the scheduled runs execute.
   never import from a module further down the map. Prefer widely used,
   maintained libraries (Rust-backed where available) over hand-written code;
   the current ones are Typer, pydantic, PyYAML, and filelock.
+
+- Preserve and track agent work when its outcome is uncertain. Only successful
+  agent exits count towards cadence; timeout tests must include processes that
+  ignore graceful termination, and cleanup tests must preserve recovery work.
 
 - Cover every change in behaviour with a test in the module's `tests/` file;
   `make test` requires 100% line and branch coverage. Tests run on Linux in

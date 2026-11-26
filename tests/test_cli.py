@@ -10,7 +10,7 @@ from typer.testing import CliRunner
 
 from llm_dependabot import __version__, cli
 from llm_dependabot.cli import app
-from llm_dependabot.state import Pending, State, save_state
+from llm_dependabot.state import Checkout, Pending, State, save_state
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -273,3 +273,20 @@ def test_stale_checkout_warnings_are_shown(
     result = runner.invoke(app, args)
     assert result.exit_code == 0, result.output
     assert "warning: it is behind" in result.output
+
+
+def test_status_lists_checkouts_retained_for_recovery(home: Path) -> None:
+    """Recovery paths and transcripts are visible without inspecting the state file."""
+    checkout = Checkout(
+        repo="octo/project",
+        clone=home / "clone",
+        worktree=home / "wt",
+        branch="agent/work",
+        log=home / "agent.log",
+        started=dt.datetime(2026, 11, 26, tzinfo=dt.UTC),
+    )
+    save_state(State(recovery=[checkout]))
+    result = runner.invoke(app, ["status"])
+    assert result.exit_code == 0, result.output
+    assert "checkouts retained for manual recovery:" in result.output
+    assert f"octo/project: {checkout.worktree} (log: {checkout.log})" in result.output

@@ -139,6 +139,10 @@ def status() -> None:
     typer.echo(f"\npending pull requests: {len(state.pending)}")
     for entry in state.pending:
         typer.echo(f"  {entry.pr_url}")
+    if state.recovery:
+        typer.echo("checkouts retained for manual recovery:")
+        for entry in state.recovery:
+            typer.echo(f"  {entry.repo}: {entry.worktree} (log: {entry.log})")
     if state.managed_clones:
         typer.echo("clones to delete after their PRs finish:")
         for path in state.managed_clones:
