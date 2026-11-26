@@ -224,20 +224,22 @@ def test_runs_started_by_hand_are_read_from_their_transcripts(
 ) -> None:
     """A run folder no group log mentions becomes a run of its transcripts.
 
-    macOS reports when each transcript was created; other systems do not, so
-    the test adds a creation time a minute before each modification.
+    macOS reports when each transcript was created and Linux does not, so the
+    test sets the creation time, on either system, to a minute before each
+    modification.
     """
     real_stat = Path.stat
 
     def stat(path: Path, *, follow_symlinks: bool = True) -> SimpleNamespace:
-        """The real stat result, plus a birth time."""
+        """The real stat result, with the birth time set or replaced."""
         result = real_stat(path, follow_symlinks=follow_symlinks)
         fields = {
             name: getattr(result, name)
             for name in dir(result)
             if name.startswith("st_")
         }
-        return SimpleNamespace(**fields, st_birthtime=result.st_mtime - 60)
+        fields["st_birthtime"] = result.st_mtime - 60
+        return SimpleNamespace(**fields)
 
     monkeypatch.setattr(Path, "stat", stat)
     monkeypatch.setattr(runs, "running_jobs", list)

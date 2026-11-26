@@ -98,7 +98,9 @@ owner's Mac.
   `commands` fixture, which puts fake executables first on `PATH`; use
   `monkeypatch` on the importing module for Python-level fakes; and use real
   `git` against a local bare repository instead of faking it. Never let a
-  test touch the real home directory or `config.yaml`.
+  test touch the real home directory or `config.yaml`. Tests also run on the
+  owner's Mac, so a fake must hold on both systems: replace platform-specific
+  values such as `st_birthtime` rather than assume they are missing.
 
 - pytest runs strictly (see `[tool.pytest]`): every warning is an error,
   tests run in random order, and markers, parametrisation ids, and config
