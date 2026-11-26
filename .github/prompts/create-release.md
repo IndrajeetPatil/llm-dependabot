@@ -42,10 +42,14 @@ published to PyPI: do not run `uv publish` or upload the built distributions.
    section lists every user-facing change under the Keep a Changelog
    categories, without inventing entries.
 
-6. Check open code-scanning alerts with
-   `gh api repos/{owner}/{repo}/code-scanning/alerts?state=open`. Fix
-   legitimate findings first; dismiss an alert only when the repository
-   proves the dismissal reason.
+6. Check the open security alerts with
+   `gh api "repos/{owner}/{repo}/<kind>/alerts?state=open"`, where `<kind>`
+   is `code-scanning`, `dependabot`, and `secret-scanning` in turn. Where
+   code scanning is not set up, the first returns a 404 with "no analysis
+   found" (add `-i` to see it), which `gh` misreports as a missing
+   `admin:repo_hook` scope; that means there is nothing to check, so do not
+   request more scopes. Fix legitimate findings first; dismiss an alert only when the
+   repository proves the dismissal reason.
 
 7. Run `make check`, `make hooks`, and `make docs`, and confirm that the
    built files in `dist/` carry the new version.
