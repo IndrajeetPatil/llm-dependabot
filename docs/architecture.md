@@ -55,7 +55,10 @@ validate the configuration, state, and `gh` output, [PyYAML](https://pyyaml.org)
 
 - **Pull request detection** looks for a pull request from the run's branch,
   falling back to one opened by you since the run started, in case the agent
-  chose its own branch name.
+  chose its own branch name. It checks every few minutes while the agent
+  works, so the pull request is labelled as soon as it opens, even if the
+  agent keeps working on it for hours; the check once the agent exits labels
+  any pull request still unlabelled.
 
 - **Repositories and prompts run one after another.** A failure in one is
   logged, and the run moves on. A failed run is not recorded, so it is

@@ -100,8 +100,9 @@ owner's Mac.
 
 - Give every module, class, and function a Google-style docstring: a summary
   line saying what it does, plus paragraphs on why when the behaviour is not
-  obvious. Leave out `Args:`, `Returns:`, and `Raises:` sections, which only
-  restate the signature; Ruff's rules for them are ignored for that reason.
+  obvious. Leave out `Args:`, `Returns:`, `Yields:`, and `Raises:` sections,
+  which only restate the signature; Ruff's rules for them are ignored for
+  that reason.
 
 - Add type annotations everywhere; `ty check` and pyrefly's strict type
   coverage must pass. If they disagree, ty wins.
