@@ -6,6 +6,8 @@ All notable changes to llm-dependabot are recorded here. The format follows
 
 ## Unreleased
 
+## [1.0.0] - 2026-11-26
+
 The first stable release.
 
 ### Added
