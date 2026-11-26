@@ -75,6 +75,22 @@ When switching agents, also replace `antigravity-cli` in the
 `agent_timeout_hours` by ten minutes is stopped, so agents without a timeout
 of their own are bounded too.
 
+### Model selection
+
+Use a capable frontier model for your coding agent. Scheduled maintenance
+prompts—such as upgrading dependencies, simplifying codebases, and refactoring
+across multiple files—demand sustained multi-step reasoning, careful diffs, and
+strict adherence to repository guidance and quality gates.
+
+> [!IMPORTANT]
+> Smaller, lightweight, or budget models (such as Haiku, Flash, or mini tiers)
+> perform noticeably worse on extensive refactoring and large maintenance tasks.
+> They are more prone to incomplete edits, subtle regressions, and failing to
+> resolve test or linter breakages autonomously. For reliable unattended runs,
+> configure your agent to use a flagship model (such as Claude Sonnet or Opus,
+> GPT-4o, or Gemini Pro). Configure the model through your agent's global
+> settings or by passing its model flag (such as `--model`) in `command`.
+
 ## Prompts and cadence
 
 Each prompt is a file that repositories opt into by committing it at `path`.

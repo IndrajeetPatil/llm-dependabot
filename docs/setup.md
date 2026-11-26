@@ -73,6 +73,8 @@ to ensure they match your local environment and preferred agent:
 
     1. Update `agent` in `config.yaml` with your agent's `command` and its
        sign-in `check` (see [The coding agent](configuration.md#the-coding-agent)).
+       Ensure it is configured with a capable frontier model rather than a
+       lightweight tier (see [Model selection](configuration.md#model-selection)).
 
     2. In [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile),
        replace `cask "antigravity-cli"` with your agent's package, or remove the

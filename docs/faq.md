@@ -64,8 +64,11 @@ accept the trade-offs above.
 
 Any agent with a non-interactive mode. Antigravity CLI is the default, and
 [the coding agent](configuration.md#the-coding-agent) lists the commands for
-Claude Code, Codex CLI, and GitHub Copilot CLI. Nothing else in llm-dependabot
-or in the prompts depends on which agent runs them.
+Claude Code, Codex CLI, and GitHub Copilot CLI. Whichever agent you choose, pair
+it with a capable frontier model rather than a lightweight tier; large
+refactoring and maintenance tasks require strong reasoning to pass quality
+gates reliably. Nothing else in llm-dependabot or in the prompts depends on
+which agent runs them.
 
 ## Does it work with GitLab, Bitbucket, or GitHub Enterprise?
 
