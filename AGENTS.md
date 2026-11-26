@@ -10,13 +10,16 @@ The owner's checkout runs the scheduled jobs. Keep it on `main` and clean.
 Create a separate worktree from `origin/main` for changes and remove it after
 the PR merges.
 
-- After verifying a merge, run `make self-update` yourself from the owner's
-  live macOS checkout. For a release, do this after verifying publication.
-  If the scheduler launched this session, defer the update and report that
-  it is blocked until the parent job exits. Wait for independent jobs to
-  finish and retry. Verify the checkout is current and the `launchd` jobs
-  are loaded. Report blockers that require the owner, such as a fresh
-  Full Disk Access grant. See the [update steps](docs/setup.md#update-llm-dependabot).
+- Update the live macOS checkout after verifying a merge, or after verifying
+  publication for a release. If the scheduler launched this session, report
+  that the update is blocked until the parent job exits. Otherwise, run
+  `make self-update` yourself. Wait for independent jobs to finish if the
+  command reports one is active, then retry.
+
+- Verify the live checkout is current and use `launchctl print` to confirm
+  the jobs are loaded. Flag owner-only steps in the PR, such as a fresh
+  Full Disk Access grant after an app rebuild. See the
+  [update steps](docs/setup.md#update-llm-dependabot).
 
 - Run `make setup`, `make install`, `make uninstall`, `make run`, or
   `make cleanup` directly only when explicitly asked. Use
