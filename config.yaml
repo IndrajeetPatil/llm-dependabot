@@ -12,6 +12,11 @@
 
 owner: IndrajeetPatil
 
+# A reverse-DNS prefix you own. With the tool's name appended, it identifies
+# the LLM Dependabot app and prefixes the launchd agents' labels. Changing it
+# rebuilds the app, which then needs Full Disk Access granted again.
+bundle_id_prefix: com.indrajeetpatil
+
 # Prompts that repositories opt into by committing them at `path`. A weekly
 # prompt runs at every scheduled run of its repository's group; a monthly one at
 # the group's first scheduled run of each calendar month. Groups can override

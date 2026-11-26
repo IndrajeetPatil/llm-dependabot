@@ -264,7 +264,7 @@ def test_ensure_full_disk_access_waits_for_the_grant(
         setup_wizard, "install_agents", lambda _config: events.append("install")
     )
     monkeypatch.setattr(
-        setup_wizard, "full_disk_access_granted", lambda _root: grants.pop(0)
+        setup_wizard, "full_disk_access_granted", lambda _config: grants.pop(0)
     )
     monkeypatch.setattr(
         setup_wizard, "show_full_disk_access_steps", lambda: events.append("steps")

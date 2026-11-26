@@ -13,24 +13,29 @@ if TYPE_CHECKING:
     from llm_dependabot.config import Config
     from tests.conftest import FakeCommands
 
-PYTHON = "com.indrajeetpatil.llm-dependabot.python"
+PYTHON = "com.example.llm-dependabot.python"
 
 
 @pytest.fixture
 def launchctl(commands: FakeCommands, monkeypatch: pytest.MonkeyPatch) -> FakeCommands:
     """Fake launchctl, with the app already built."""
     commands.install("launchctl")
-    monkeypatch.setattr(install, "build_app", lambda: False)
+    monkeypatch.setattr(install, "build_app", lambda _config: False)
     return commands
 
 
 def test_install_replaces_every_agent(launchctl: FakeCommands, config: Config) -> None:
     """Stale agents are unloaded, and every desired one is written and loaded."""
     install.LAUNCH_AGENTS.mkdir(parents=True)
-    stale = install.LAUNCH_AGENTS / "com.indrajeetpatil.llm-dependabot.old.plist"
-    stale.write_bytes(b"")
+    # One from a removed group, and one installed under an earlier prefix.
+    stale = [
+        install.LAUNCH_AGENTS / "com.example.llm-dependabot.old.plist",
+        install.LAUNCH_AGENTS / "org.previous.llm-dependabot.python.plist",
+    ]
+    for path in stale:
+        path.write_bytes(b"")
     install_agents(config)
-    assert not stale.exists()
+    assert not any(path.exists() for path in stale)
     plist = plistlib.loads((install.LAUNCH_AGENTS / f"{PYTHON}.plist").read_bytes())
     assert plist["Label"] == PYTHON
     loaded = [call for call in launchctl.calls("launchctl") if call[0] == "bootstrap"]
@@ -45,7 +50,7 @@ def test_install_reports_a_new_app_build(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """A rebuilt app is logged, since it needs Full Disk Access again."""
-    monkeypatch.setattr(install, "build_app", lambda: True)
+    monkeypatch.setattr(install, "build_app", lambda _config: True)
     install_agents(config)
     assert f"built {install.APP_BUNDLE}" in capsys.readouterr().out
     assert launchctl.calls("launchctl")

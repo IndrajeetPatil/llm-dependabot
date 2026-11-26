@@ -152,9 +152,9 @@ owner's Mac.
 - Changing anything under `app/` rebuilds the app and invalidates its Full
   Disk Access grant, so the user must grant it again; avoid needless changes.
 
-- Do not hard-code the owner, clone root, schedule, or agent in code; they
-  belong in `config.yaml`. Keep code and docs agent-neutral, naming
-  Antigravity CLI only as the default.
+- Do not hard-code the owner, bundle identifier, clone root, schedule, or
+  agent in code; they belong in `config.yaml`. Keep code and docs
+  agent-neutral, naming Antigravity CLI only as the default.
 
 - Never name a private repository in any committed file, commit message, or
   pull request; private repositories are listed only in `private.yaml`.

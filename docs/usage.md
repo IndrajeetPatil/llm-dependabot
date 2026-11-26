@@ -76,7 +76,7 @@ whole run. Each agent's own output goes to its transcript,
 
 | Path | Contents |
 | --- | --- |
-| `~/Library/LaunchAgents/com.indrajeetpatil.llm-dependabot.*.plist` | Generated launchd agents |
+| `~/Library/LaunchAgents/<bundle_id_prefix>.llm-dependabot.*.plist` | Generated launchd agents |
 | `~/Library/Logs/llm-dependabot/` | One log per group and one for cleanup, plus a folder per run with one agent transcript per repository and prompt; kept until `make clean-logs` deletes them |
 | `~/Library/Application Support/llm-dependabot/` | State (`state.json`), concurrency lock, and the LLM Dependabot app (`LLM Dependabot.app`) |
 | `~/Library/Caches/llm-dependabot/worktrees/` | Worktrees for in-flight pull requests |

@@ -16,7 +16,7 @@ from pydantic import (
 )
 lazy import yaml
 
-from llm_dependabot.paths import BUNDLE_ID, CONFIG_FILE, PRIVATE_FILE
+from llm_dependabot.paths import CONFIG_FILE, NAME, PRIVATE_FILE
 from llm_dependabot.shell import fail, local_today
 
 type Weekday = Literal[
@@ -61,11 +61,6 @@ class Group(Strict):
     # Per-prompt cadence overrides for this group, by prompt name.
     cadence: dict[str, Cadence] = {}
 
-    @property
-    def label(self) -> str:
-        """The launchd label of the group's scheduled run."""
-        return f"{BUNDLE_ID}.{self.name}"
-
     def cadence_for(self, prompt: Prompt) -> Cadence:
         """How often the prompt runs in this group, after any override."""
         return self.cadence.get(prompt.name, prompt.cadence)
@@ -109,6 +104,8 @@ class Config(Strict):
     """The validated contents of config.yaml, plus the private repositories."""
 
     owner: str
+    # A reverse-DNS prefix you own, such as com.example; see bundle_id.
+    bundle_id_prefix: str = Field(pattern=r"^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*$")
     prompts: list[Prompt] = Field(min_length=1)
     clone_root: Path
     agent: Agent
@@ -119,6 +116,15 @@ class Config(Strict):
     groups: list[Group]
     # Filled in from private.yaml, never from config.yaml.
     private_repos: frozenset[str] = Field(default=frozenset(), exclude=True)
+
+    @property
+    def bundle_id(self) -> str:
+        """The app's bundle identifier, which also prefixes the launchd labels."""
+        return f"{self.bundle_id_prefix}.{NAME}"
+
+    def launchd_label(self, job: str) -> str:
+        """The launchd label of a job, such as a group's run or the cleanup."""
+        return f"{self.bundle_id}.{job}"
 
     @field_validator("clone_root")
     @classmethod

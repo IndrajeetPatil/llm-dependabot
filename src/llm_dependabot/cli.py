@@ -119,7 +119,9 @@ def status() -> None:
     config = load_config()
     loaded = set(installed_labels())
     for group in config.groups:
-        mark = "loaded" if group.label in loaded else "NOT INSTALLED"
+        mark = (
+            "loaded" if config.launchd_label(group.name) in loaded else "NOT INSTALLED"
+        )
         typer.echo(f"{group.name:<10} {group.weekday:<10} {group.time:%H:%M}  {mark}")
         for prompt in config.prompts:
             typer.echo(f"  {prompt.name}: {group.cadence_for(prompt)}")
@@ -154,7 +156,7 @@ def install() -> None:
     """Build the app, then write and load the launchd agents."""
     config = load_config()
     install_agents(config)
-    if not full_disk_access_granted(config.clone_root):
+    if not full_disk_access_granted(config):
         show_full_disk_access_steps()
     status()
 

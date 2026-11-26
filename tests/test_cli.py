@@ -196,7 +196,7 @@ def test_install(monkeypatch: pytest.MonkeyPatch, *, granted: bool) -> None:
     """Install loads the agents, then shows the access steps if still needed."""
     calls: list[str] = []
     monkeypatch.setattr(cli, "install_agents", lambda _config: calls.append("install"))
-    monkeypatch.setattr(cli, "full_disk_access_granted", lambda _root: granted)
+    monkeypatch.setattr(cli, "full_disk_access_granted", lambda _config: granted)
     monkeypatch.setattr(
         cli, "show_full_disk_access_steps", lambda: calls.append("steps")
     )
@@ -208,7 +208,7 @@ def test_install(monkeypatch: pytest.MonkeyPatch, *, granted: bool) -> None:
 
 def test_uninstall_removes_every_agent(monkeypatch: pytest.MonkeyPatch) -> None:
     """Uninstall unloads each installed agent."""
-    labels = ["com.indrajeetpatil.llm-dependabot.python"]
+    labels = ["com.example.llm-dependabot.python"]
     unloaded: list[str] = []
     monkeypatch.setattr(cli, "installed_labels", lambda: labels)
     monkeypatch.setattr(cli, "unload", unloaded.append)

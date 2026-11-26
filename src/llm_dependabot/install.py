@@ -27,7 +27,7 @@ def install_agents(config: Config) -> None:
             " Try again once it finishes (see `status`)."
         )
     LOG_DIR.mkdir(parents=True, exist_ok=True)
-    if build_app():
+    if build_app(config):
         log(f"built {APP_BUNDLE}")
     for label in installed_labels():
         unload(label)

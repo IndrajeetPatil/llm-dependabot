@@ -13,7 +13,6 @@ DASHBOARD_FILE = ROOT / "dashboard.html"
 
 NAME = "llm-dependabot"
 APP_NAME = "LLM Dependabot"
-BUNDLE_ID = f"com.indrajeetpatil.{NAME}"
 LAUNCH_AGENTS = Path.home() / "Library/LaunchAgents"
 LOG_DIR = Path.home() / "Library/Logs" / NAME
 STATE_DIR = Path.home() / "Library/Application Support" / NAME
