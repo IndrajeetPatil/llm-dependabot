@@ -24,8 +24,8 @@ is merged or closed.
 | `make clean-logs` | Delete logs older than 30 days; set `DAYS=<n>` to change the cut-off |
 | `make install` | Reload the agents after editing the configuration |
 
-Except for `make clean-logs`, each everyday target wraps `./llm_dependabot.py`,
-which also works directly (`./llm_dependabot.py --help`).
+Except for `make clean-logs`, each everyday target wraps the `llm-dependabot`
+CLI, which also works directly (`uv run llm-dependabot --help`).
 
 `make run` without `PROMPT` runs what a scheduled run would: every weekly
 prompt, and each monthly prompt that has not yet run in that repository this
@@ -61,7 +61,7 @@ like this:
 LLM Dependabot
 └─ zsh
    └─ uv
-      └─ python        llm_dependabot.py run GROUP
+      └─ python        llm-dependabot run GROUP
          ├─ caffeinate keeps the Mac awake during the run
          └─ the agent  whichever config.yaml names
             └─ git, gh, uv, pnpm, Rscript, …  tools the agent runs

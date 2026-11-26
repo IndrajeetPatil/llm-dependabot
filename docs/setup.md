@@ -125,7 +125,7 @@ already has Full Disk Access.
 The scheduled jobs therefore start through a tiny app, **LLM Dependabot**,
 which setup builds into `~/Library/Application Support/llm-dependabot/`.
 
-During setup, the script opens **System Settings › Privacy & Security › Full Disk Access**
+During setup, the CLI opens **System Settings › Privacy & Security › Full Disk Access**
 and reveals the app in Finder:
 
 1. If **LLM Dependabot** is already listed in the settings pane, toggle its
