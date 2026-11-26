@@ -37,10 +37,11 @@ published to PyPI: do not run `uv publish` or upload the built distributions.
 
 5. Turn the `Unreleased` section of `CHANGELOG.md` into a section headed
    `## [x.y.z] - YYYY-MM-DD`, with today's date, and start a new empty
-   `## Unreleased` section above it. Review the pull requests merged since
-   the latest release (`gh pr list --state merged`), and make sure the
-   section lists every user-facing change under the Keep a Changelog
-   categories, without inventing entries.
+   `## Unreleased` section above it. For the first release, describe the
+   user-facing capabilities it ships under `Added` and omit pre-release
+   fixes. For later releases, review pull requests merged since the previous
+   release (`gh pr list --state merged`) and record user-facing changes
+   relative to that version under the Keep a Changelog categories.
 
 6. Check the open security alerts with
    `gh api "repos/{owner}/{repo}/<kind>/alerts?state=open"`, where `<kind>`
