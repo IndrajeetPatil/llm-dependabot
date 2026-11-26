@@ -263,16 +263,14 @@ def test_choose_private_repos_without_candidates(
 
 @pytest.mark.parametrize("code", [0, 1])
 def test_install_git_hooks(commands: FakeCommands, code: int) -> None:
-    """Prek, run from uv.lock, installs the hooks, and a failure stops setup."""
-    commands.on("uv", code=code)
+    """Prek installs the hooks, and a failure stops setup."""
+    commands.on("prek", code=code)
     if code == 0:
         install_git_hooks()
     else:
         with pytest.raises(typer.Exit):
             install_git_hooks()
-    assert commands.calls("uv") == [
-        ["run", "--project", str(setup_wizard.ROOT), "--locked", "prek", "install"],
-    ]
+    assert commands.calls("prek") == [["install"]]
 
 
 def test_ensure_full_disk_access_waits_for_the_grant(

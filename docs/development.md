@@ -35,9 +35,7 @@
   **[deptry](https://deptry.com)** checks that `pyproject.toml` declares
   exactly the dependencies the package imports.
 
-- **[prek](https://prek.j178.dev)** runs the git hooks. It is a dev
-  dependency like Ruff and ty, which its hooks run from the project's
-  environment, so `uv.lock` pins all three.
+- **[prek](https://prek.j178.dev)** runs the git hooks.
 
 - **[actionlint](https://github.com/rhysd/actionlint)**,
   **[zizmor](https://docs.zizmor.sh)**, and
@@ -58,7 +56,9 @@
 
 Every check runs locally, and the GitHub Actions workflows in
 [`.github/workflows/`](https://github.com/IndrajeetPatil/llm-dependabot/tree/main/.github/workflows)
-run them again on each pull request:
+run them again on each pull request. `astral-sh/setup-uv` installs uv,
+supplies uv-managed Python, and caches both dependencies and interpreters
+between runs, keyed on `uv.lock` and the hook script's lockfile:
 
 | Workflow | Runs | Trigger |
 | --- | --- | --- |
@@ -102,6 +102,7 @@ If your account allows only selected actions, allow these:
 - `actions/checkout`, `actions/upload-pages-artifact`, and
   `actions/deploy-pages` (and the `actions/upload-artifact` they use)
 - `astral-sh/setup-uv`
+- `j178/prek-action`
 - `lycheeverse/lychee-action`
 - `zizmorcore/zizmor-action` (and the `github/codeql-action` it uses)
 

@@ -25,7 +25,8 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
-          enable-cache: false
+          enable-cache: true
+          cache-python: true
 
       - name: Run checks
         run: make check
@@ -43,13 +44,11 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
-          enable-cache: false
+          enable-cache: true
+          cache-python: true
+          # make check runs on .python-version; this job runs the suite on
+          # the requires-python floor in pyproject.toml.
+          python-version: "3.14"
 
-      # make check runs on .python-version; this runs the suite on the
-      # requires-python floor, read from pyproject.toml so it never drifts.
       - name: Run tests
-        run: |
-          UV_PYTHON=$(sed -n 's/^requires-python = ">=\(.*\)"$/\1/p' pyproject.toml)
-          test -n "$UV_PYTHON"
-          export UV_PYTHON
-          make test
+        run: make test

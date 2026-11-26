@@ -14,13 +14,7 @@ from llm_dependabot.macos_app import (
     full_disk_access_granted,
     show_full_disk_access_steps,
 )
-from llm_dependabot.paths import (
-    APP_NAME,
-    BREWFILE,
-    CONFIG_FILE,
-    PRIVATE_FILE,
-    ROOT,
-)
+from llm_dependabot.paths import APP_NAME, BREWFILE, CONFIG_FILE, PRIVATE_FILE
 from llm_dependabot.shell import fail, interactive, sh, succeeds
 
 if TYPE_CHECKING:
@@ -147,8 +141,7 @@ def choose_private_repos(config: Config) -> None:
 def install_git_hooks() -> None:
     """Install the prek git hooks."""
     step("Git hooks")
-    # prek is a dev dependency, locked in uv.lock like the other tools.
-    if interactive("uv", "run", "--project", str(ROOT), "--locked", "prek", "install"):
+    if interactive("prek", "install") != 0:
         fail("prek install failed")
 
 

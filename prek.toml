@@ -1,3 +1,4 @@
+minimum_prek_version = "0.5.11"
 default_install_hook_types = ["pre-commit", "commit-msg"]
 default_stages = ["pre-commit"]
 
@@ -14,6 +15,17 @@ id = "check-hooks-apply"
 
 [[repos.hooks]]
 id = "check-useless-excludes"
+
+[[repos]]
+repo = "https://github.com/astral-sh/ruff-pre-commit"
+rev = "9026c9127e153371d7a78dfcb0c45ae2046a3d10" # frozen: v0.17.6
+
+[[repos.hooks]]
+id = "ruff-check"
+args = ["--fix"]
+
+[[repos.hooks]]
+id = "ruff-format"
 
 [[repos]]
 repo = "https://github.com/rhysd/actionlint"
@@ -84,24 +96,7 @@ entry = "submodules are not allowed in this repository:"
 language = "fail"
 types = ["directory"]
 
-# Ruff and ty run from the project's environment, so uv.lock alone pins
-# their versions.
-[[repos.hooks]]
-id = "ruff-check"
-name = "ruff check"
-entry = "uv run --locked ruff check --fix"
-language = "system"
-types_or = ["python", "pyi"]
-require_serial = true
-
-[[repos.hooks]]
-id = "ruff-format"
-name = "ruff format"
-entry = "uv run --locked ruff format"
-language = "system"
-types_or = ["python", "pyi"]
-require_serial = true
-
+# ty runs in the project's own environment, which holds its dependencies.
 [[repos.hooks]]
 id = "ty"
 name = "ty"
