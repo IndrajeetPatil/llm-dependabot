@@ -1,8 +1,10 @@
 Use case: infographic-diagram. Asset type: documentation infographic for the llm-dependabot usage guide. Create a landscape 3:2 editorial infographic with warm paper #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, restrained teal #14584d, Fraunces-like serif headings, Hanken-like sans labels, generous whitespace, flat outline icons, and no cards, shadows, gradients, texture, 3D, emoji, or decorative footer. British English.
 
 Title “Using llm-dependabot”. Show three sections:
-- “Check the schedule”, summary “See groups, prompt cadences, and pending pull requests”: “Schedule status” → “Project groups”.
-- “Run work on demand”, summary “Preview first or start a group or repository”: “Preview Python group” → “Run Python group” → “Pull request”. Add branch “Choose one project or one prompt” with muted note “REPO= / PROMPT=”. Place accurate official Python logos beside both Python group labels and a recognizable GitHub mark beside Pull request.
+- “Check the schedule and history”, summary “See upcoming groups, past runs, and pending pull requests”: “Schedule status” → “Dashboard” (note “Upcoming schedule · run history · transcripts”).
+
+- “Run work on demand”, summary “Preview first or start a group or repository”: “Preview Python group” → “Run Python group” → “Pull request”. Add branch “Choose one project or one prompt” with muted note “REPO= / PROMPT=”. Draw recognisable Python marks beside both Python group labels as flat, single-colour teal outline icons without blue or yellow fills. Keep the GitHub mark accurate, single-colour teal, and secondary to its Pull request label.
+
 - “Finish the lifecycle”, summary “Review pull requests; cleanup handles finished work”: “Review and merge or close PR” → “Scheduled cleanup” → “Worktree and run-only clone removed”. Add muted note “Agent transcripts in ~/Library/Logs/llm-dependabot”.
 
 Keep text and arrows exact, legible, and correctly directed.

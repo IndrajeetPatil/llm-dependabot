@@ -2,7 +2,7 @@ Use case: infographic-diagram. Asset type: documentation diagram for llm-dependa
 
 Title exactly: “Development toolchain and tech stack”
 
-Band “Runtime & dependencies”, summary “A Python 3.15 package with locked dependencies”: “Python 3.15” (note “Modern language runtime”) → “uv project” (note “src/llm_dependabot · pyproject.toml”) → “Locked dependencies” (note “uv.lock · CLI, dev, and docs groups”).
+Band “Runtime & dependencies”, summary “Python package and locked project dependencies”: “Python 3.15” (note “Modern language runtime”) → “llm_dependabot package” (note “src/llm_dependabot/”) → “uv project” (note “pyproject.toml · uv.lock”).
 
 Band “Libraries & native app”, summary “Rust-backed validation, CLI tooling, and macOS launcher”: “Typer & PyYAML” (note “CLI commands & config parsing”) → “Pydantic & filelock” (note “Rust-core validation & concurrency gate”) → “Native launcher” (note “app/launcher.c · Full Disk Access”).
 
