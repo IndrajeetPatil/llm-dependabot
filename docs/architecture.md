@@ -27,7 +27,7 @@ validate the configuration, state, and `gh` output, [PyYAML](https://pyyaml.org)
 
 ## Process tree
 
-![Process and run: launchd starts the LLM Dependabot app, login shell, the CLI under uv, and coding agent, with caffeinate keeping the Mac awake; each discovered prompt is checked for due status, and due prompts get an isolated worktree, pull-request decision, and recorded run date.](images/process-and-run.webp)
+![Process and run: launchd starts the LLM Dependabot app, login shell, and `uv run llm-dependabot`, with caffeinate keeping the Mac awake; each discovered prompt is checked for due status, and due prompts get an isolated worktree and coding-agent run, with pull requests labelled while the agent works, before the pull-request decision and recorded run date.](images/process-and-run.webp)
 
 - **The app** starts the job as a child process rather than replacing itself,
   so macOS treats it as the "responsible process" and applies its Full Disk

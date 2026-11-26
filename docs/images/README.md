@@ -14,11 +14,11 @@ The hex sticker is drawn by hand; see [hextools](../../hextools/README.md).
 | [`architecture-overview.webp`](architecture-overview.webp) | Scheduled trigger, due-prompt discovery, worktree isolation, and agent lifecycle | [README.md](../../README.md), [architecture.md](../architecture.md) |
 | [`giga-factory.webp`](giga-factory.webp) | The schedule coordinating a software factory inside each project | [README.md](../../README.md) |
 | [`execution-lifecycle.webp`](execution-lifecycle.webp) | Permission boundary, repository isolation, and state locking | [architecture.md](../architecture.md) |
-| [`tech-stack.webp`](tech-stack.webp) | Runtime, dependencies, core libraries, local checks, and CI supply-chain checks | [development.md](../development.md) |
+| [`tech-stack.webp`](tech-stack.webp) | Python package, project dependencies, core libraries, local checks, and CI supply-chain checks | [development.md](../development.md) |
 | [`ecosystem-schedule.webp`](ecosystem-schedule.webp) | Three shipped prompts across configured project-group schedules and pull-request cleanup | [configuration.md](../configuration.md) |
 | [`multiple-prompts.webp`](multiple-prompts.webp) | The isolated run pattern for update-deps, simplify-codebase, gsc-analysis, and more | [configuration.md](../configuration.md) |
 | [`process-and-run.webp`](process-and-run.webp) | Responsible process tree, prompt cadence decisions, per-prompt worktrees, and run tracking | [architecture.md](../architecture.md) |
-| [`usage-overview.webp`](usage-overview.webp) | Schedule status, on-demand project or prompt runs, transcripts, and cleanup | [usage.md](../usage.md) |
+| [`usage-overview.webp`](usage-overview.webp) | Schedule and dashboard, on-demand runs, transcripts, and cleanup | [usage.md](../usage.md) |
 | [`setup-checklist.webp`](setup-checklist.webp) | Local setup choices, repository opt-in, prompt conventions, and project readiness | [setup.md](../setup.md) |
 | [`autonomous-evolution.webp`](autonomous-evolution.webp) | Signal, prompt, agent, checks, review, merge, production, and feedback | [autonomy.md](../autonomy.md) |
 | [`learn-from-mistakes.webp`](learn-from-mistakes.webp) | Code and guidance fixes converge on the same gates and review | [autonomy.md](../autonomy.md) |
@@ -95,9 +95,8 @@ Footer note exactly “Weekly group schedules; monthly prompts run when due; one
 ### Process and run
 
 - **File:** `docs/images/process-and-run.webp`
+
 - **Companion:** [`process-and-run.prompt.txt`](process-and-run.prompt.txt)
-
-
 
 
 ```text
@@ -105,24 +104,25 @@ Use case: infographic-diagram. Asset type: documentation diagram for llm-dependa
 
 Title exactly “Process and run”.
 
-Top band “Responsible process”: “launchd” → “LLM Dependabot app” (note “Responsible process · Full Disk Access”) → “Login shell” (note “Uses the user's login environment”) → “llm-dependabot CLI (uv run)” → “Coding agent” (note “Runs in a Git worktree”). Branch from “llm-dependabot CLI (uv run)” to “caffeinate” with note “keeps the Mac awake”.
+Top band “Responsible process”: “launchd” → “LLM Dependabot app” (note “Responsible process · Full Disk Access”) → “Login shell” (note “Uses the user's login environment”) → “uv run llm-dependabot” → “Coding agent” (note “Runs in a Git worktree”). Branch from “uv run llm-dependabot” to “caffeinate” with note “keeps the Mac awake”.
 
-Bottom band “One repository run”: “Discover repository and prompt” → decision “Prompt due?” (note “weekly, or monthly not yet run this month”). “No” leads to “Skip”. “Yes” continues to decision “Project copy exists?” with “Yes → Update existing copy” and “No → Prepare a new copy”; rejoin at “Create Git worktree” → “Run coding agent with a time limit” → decision “Pull request opened?”. Yes branch: “Record pending state” → “Record run date”. No branch: “Remove worktree” → “Record run date”. Put the note “Every completed run counts towards the cadence” beside the date outcomes. Mark the segment “Create Git worktree” → agent → pull-request decision as repeating for each due prompt in the repository. Footer exactly “Failures are logged and not recorded; the next prompt or repository still runs”. Make all branches distinct, non-crossing, and legible.
+Bottom band “One repository run”: “Discover repository and prompt” → decision “Prompt due?” (note “weekly, or monthly not yet run this month”). “No” leads to “Skip”. “Yes” continues to decision “Project copy exists?” with “Yes → Update existing copy” and “No → Prepare a new copy”; rejoin at “Create Git worktree” → “Run coding agent with a time limit” → decision “Pull request opened?”. Yes branch: “Record pending state” → “Record run date”. No branch: “Remove worktree” → “Record run date”. Put the note “Every completed run counts towards the cadence” beside the date outcomes. Mark the segment “Create Git worktree” → agent → pull-request decision as repeating for each due prompt in the repository. Add muted note “Pull requests are labelled while the agent works” inside the dashed repeat area, below the coding-agent node. Footer exactly “Failures are logged and not recorded; the next prompt or repository still runs”. Make all branches distinct, non-crossing, and legible.
 ```
 ### Usage overview
 
 - **File:** `docs/images/usage-overview.webp`
+
 - **Companion:** [`usage-overview.prompt.txt`](usage-overview.prompt.txt)
-
-
 
 
 ```text
 Use case: infographic-diagram. Asset type: documentation infographic for the llm-dependabot usage guide. Create a landscape 3:2 editorial infographic with warm paper #faf8f4, ink #201d18, muted ink #5d574c, hairlines #e3ded2, restrained teal #14584d, Fraunces-like serif headings, Hanken-like sans labels, generous whitespace, flat outline icons, and no cards, shadows, gradients, texture, 3D, emoji, or decorative footer. British English.
 
 Title “Using llm-dependabot”. Show three sections:
-- “Check the schedule”, summary “See groups, prompt cadences, and pending pull requests”: “Schedule status” → “Project groups”.
-- “Run work on demand”, summary “Preview first or start a group or repository”: “Preview Python group” → “Run Python group” → “Pull request”. Add branch “Choose one project or one prompt” with muted note “REPO= / PROMPT=”. Place accurate official Python logos beside both Python group labels and a recognizable GitHub mark beside Pull request.
+- “Check the schedule and history”, summary “See upcoming groups, past runs, and pending pull requests”: “Schedule status” → “Dashboard” (note “Upcoming schedule · run history · transcripts”).
+
+- “Run work on demand”, summary “Preview first or start a group or repository”: “Preview Python group” → “Run Python group” → “Pull request”. Add branch “Choose one project or one prompt” with muted note “REPO= / PROMPT=”. Draw recognisable Python marks beside both Python group labels as flat, single-colour teal outline icons without blue or yellow fills. Keep the GitHub mark accurate, single-colour teal, and secondary to its Pull request label.
+
 - “Finish the lifecycle”, summary “Review pull requests; cleanup handles finished work”: “Review and merge or close PR” → “Scheduled cleanup” → “Worktree and run-only clone removed”. Add muted note “Agent transcripts in ~/Library/Logs/llm-dependabot”.
 
 Keep text and arrows exact, legible, and correctly directed.
@@ -150,9 +150,8 @@ Use a clock, app shield, terminal, repository, Git worktree, untouched checkout,
 ### Development toolchain and tech stack
 
 - **File:** `docs/images/tech-stack.webp`
+
 - **Companion:** [`tech-stack.prompt.txt`](tech-stack.prompt.txt)
-
-
 
 
 ```text
@@ -160,7 +159,7 @@ Use case: infographic-diagram. Asset type: documentation diagram for llm-dependa
 
 Title exactly: “Development toolchain and tech stack”
 
-Band “Runtime & dependencies”, summary “A Python 3.15 package with locked dependencies”: “Python 3.15” (note “Modern language runtime”) → “uv project” (note “src/llm_dependabot · pyproject.toml”) → “Locked dependencies” (note “uv.lock · CLI, dev, and docs groups”).
+Band “Runtime & dependencies”, summary “Python package and locked project dependencies”: “Python 3.15” (note “Modern language runtime”) → “llm_dependabot package” (note “src/llm_dependabot/”) → “uv project” (note “pyproject.toml · uv.lock”).
 
 Band “Libraries & native app”, summary “Rust-backed validation, CLI tooling, and macOS launcher”: “Typer & PyYAML” (note “CLI commands & config parsing”) → “Pydantic & filelock” (note “Rust-core validation & concurrency gate”) → “Native launcher” (note “app/launcher.c · Full Disk Access”).
 
