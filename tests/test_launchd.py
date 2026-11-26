@@ -1,8 +1,9 @@
 """Tests for the launchd agents' plists."""
 
 import shlex
+import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -10,8 +11,10 @@ from llm_dependabot import launchd
 from llm_dependabot.launchd import cli_command, desired_agents
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from llm_dependabot.config import Config
-    from tests.conftest import FakeCommands
+    from tests.conftest import FakeCommands, Spy
 
 
 def test_there_is_one_agent_per_group_plus_the_cleanup(config: Config) -> None:
@@ -40,6 +43,7 @@ def test_each_group_runs_on_its_weekday_and_time(
     plist = desired_agents(config)[f"com.example.llm-dependabot.{group}"]
     assert plist["StartCalendarInterval"] == when
     assert plist["StandardOutPath"] == str(launchd.LOG_DIR / f"{group}.log")
+    assert plist["StandardErrorPath"] == plist["StandardOutPath"]
     assert shlex.split(plist["ProgramArguments"][-1])[-3:] == [
         "run",
         group,
@@ -58,6 +62,8 @@ def test_jobs_start_through_the_app_in_a_login_shell(config: Config) -> None:
 def test_the_cleanup_runs_at_load_and_on_an_interval(config: Config) -> None:
     """The cleanup agent runs at load and every interval."""
     cleanup = desired_agents(config)["com.example.llm-dependabot.cleanup"]
+    assert cleanup["Label"] == "com.example.llm-dependabot.cleanup"
+    assert cleanup["StandardOutPath"] == str(launchd.LOG_DIR / "cleanup.log")
     assert cleanup["StartInterval"] == 3 * 3600
     assert cleanup["RunAtLoad"] is True
     assert shlex.split(cleanup["ProgramArguments"][-1])[-2:] == [
@@ -122,8 +128,36 @@ def test_unload_boots_the_agent_out_and_deletes_its_plist(
     assert launchd.installed_labels() == []
 
 
-def test_running_jobs_reads_each_agents_state(commands: FakeCommands) -> None:
+def test_unload_tolerates_a_missing_plist(commands: FakeCommands) -> None:
+    """Unloading an agent whose plist is already gone still succeeds."""
+    commands.install("launchctl")
+    launchd.unload("com.example.llm-dependabot.rest")
+    assert commands.calls("launchctl")
+
+
+def test_launchctl_options(
+    commands: FakeCommands,
+    spy: Callable[[Any, str], Spy],
+) -> None:
+    """Launchctl's output is decoded as UTF-8, and a failure is returned."""
+    commands.on("launchctl", stdout="out", code=3)
+    run = spy(subprocess, "run")
+    result = launchd.launchctl("print", Path("x"))
+    assert (result.returncode, result.stdout) == (3, "out")
+    assert run.calls == [
+        (
+            (["launchctl", "print", Path("x")],),
+            {"capture_output": True, "encoding": "utf-8", "check": False},
+        ),
+    ]
+
+
+def test_running_jobs_reads_each_agents_state(
+    commands: FakeCommands,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """A job counts as running only when launchctl says its state is running."""
+    monkeypatch.setattr(launchd.os, "getuid", lambda: 501)
     install_plists(
         "com.example.llm-dependabot.python",
         "com.example.llm-dependabot.rest",
@@ -131,3 +165,7 @@ def test_running_jobs_reads_each_agents_state(commands: FakeCommands) -> None:
     commands.on("launchctl", ".python", stdout="{\n\tstate = running\n}\n")
     commands.on("launchctl", ".rest", stdout="{\n\tstate = waiting\n}\n")
     assert launchd.running_jobs() == ["com.example.llm-dependabot.python"]
+    assert commands.calls("launchctl") == [
+        ["print", "gui/501/com.example.llm-dependabot.python"],
+        ["print", "gui/501/com.example.llm-dependabot.rest"],
+    ]

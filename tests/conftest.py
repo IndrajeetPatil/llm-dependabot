@@ -200,3 +200,39 @@ def commands(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> FakeCommands:
     monkeypatch.setenv("FAKE_COMMANDS", str(fake.root))
     monkeypatch.setenv("PATH", f"{fake.bin}{os.pathsep}{os.environ['PATH']}")
     return fake
+
+
+class Spy:
+    """The arguments of each call to a spied-on function, which still runs.
+
+    Some mutants change only arguments with the same runtime effect, such as
+    check=None for check=False, so tests pin them through a spy.
+    """
+
+    def __init__(self) -> None:
+        """Start with no calls."""
+        self.calls: list[tuple[tuple[Any, ...], dict[str, Any]]] = []
+
+
+@pytest.fixture
+def spy(monkeypatch: pytest.MonkeyPatch) -> Callable[[Any, str], Spy]:
+    """Replace an attribute with a function that records each call to it.
+
+    A plain function, unlike a callable object, also binds as a method, so
+    methods record self as their first argument.
+    """
+
+    def install(target: Any, name: str) -> Spy:
+        """Spy on target.name."""
+        record = Spy()
+        function = getattr(target, name)
+
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            """Record the call, then make it."""
+            record.calls.append((args, kwargs))
+            return function(*args, **kwargs)
+
+        monkeypatch.setattr(target, name, wrapper)
+        return record
+
+    return install

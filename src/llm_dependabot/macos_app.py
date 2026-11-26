@@ -111,18 +111,22 @@ def full_disk_access_granted(config: Config) -> bool:
     target = f"{gui_domain()}/{label}"
     launchctl("bootout", target)
     launchctl("bootstrap", gui_domain(), plist_path)
-    code = None
+    granted = job_succeeded(target)
+    launchctl("bootout", target)
+    plist_path.unlink()
+    return granted
+
+
+def job_succeeded(target: str) -> bool:
+    """Whether a launchd job exits successfully within about ten seconds."""
     for _ in range(100):
         if match := re.search(
             r"last exit code = (\d+)",
             launchctl("print", target).stdout,
         ):
-            code = int(match[1])
-            break
+            return int(match[1]) == 0
         time.sleep(0.1)
-    launchctl("bootout", target)
-    plist_path.unlink(missing_ok=True)
-    return code == 0
+    return False
 
 
 def show_full_disk_access_steps() -> None:

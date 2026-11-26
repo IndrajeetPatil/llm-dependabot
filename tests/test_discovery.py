@@ -46,7 +46,7 @@ def listing(*items: tuple[str, str, str | None]) -> list[GitHubRepo]:
 
 
 @pytest.fixture
-def github(monkeypatch: pytest.MonkeyPatch) -> dict[str, set[str]]:
+def github(monkeypatch: pytest.MonkeyPatch, config: Config) -> dict[str, set[str]]:
     """Fake gh: the listing below, and the prompts each repository carries."""
     prompts = {
         "app": {".github/prompts/update-deps.md"},
@@ -57,6 +57,7 @@ def github(monkeypatch: pytest.MonkeyPatch) -> dict[str, set[str]]:
         "secret": {".github/prompts/update-deps.md"},
         "hidden": {".github/prompts/update-deps.md"},
         "tool": {".github/prompts/update-deps.md"},
+        "notes": {".github/prompts/update-deps.md"},
     }
     repos = listing(
         ("app", "PUBLIC", "Python"),
@@ -65,8 +66,15 @@ def github(monkeypatch: pytest.MonkeyPatch) -> dict[str, set[str]]:
         ("secret", "PRIVATE", "Python"),
         ("hidden", "PRIVATE", "Python"),
         ("tool", "PUBLIC", "Go"),
+        ("notes", "PUBLIC", None),
     )
-    monkeypatch.setattr(discovery, "owned_repos", lambda _config: repos)
+
+    def owned_repos(listed_for: Config) -> list[GitHubRepo]:
+        """The listing, for the configured owner."""
+        assert listed_for is config
+        return repos
+
+    monkeypatch.setattr(discovery, "owned_repos", owned_repos)
 
     def has_prompt(repo: Repo, path: str) -> bool:
         """Whether the fake repository carries the prompt."""
@@ -77,14 +85,23 @@ def github(monkeypatch: pytest.MonkeyPatch) -> dict[str, set[str]]:
 
 
 @pytest.mark.usefixtures("github")
-def test_discover_groups_repositories_that_carry_prompts(config: Config) -> None:
-    """Only public or listed private repositories with prompts are grouped."""
-    config.private_repos = frozenset({"secret", "gone"})
+def test_discover_groups_repositories_that_carry_prompts(
+    config: Config,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Only public or listed private repositories with prompts are grouped.
+
+    A repository without a language joins the catch-all group.
+    """
+    config.private_repos = frozenset({"secret", "gone", "app"})
     grouped = discover(config)
     assert {name: [r.name for r in repos] for name, repos in grouped.items()} == {
         "python": ["app", "lib", "secret"],
-        "rest": ["tool"],
+        "rest": ["tool", "notes"],
     }
+    assert capsys.readouterr().out.endswith(
+        "] private.yaml: not owned private repositories: ['app', 'gone']\n",
+    )
     lib = grouped["python"][1]
     assert lib.prompts == ("update-deps", "simplify-codebase")
     assert lib.full_name == "octo/lib"
@@ -95,5 +112,5 @@ def test_discover_one_group(config: Config) -> None:
     """Discovering one group leaves the others empty."""
     assert discover(config, "rest") == {
         "python": [],
-        "rest": [discover(config)["rest"][0]],
+        "rest": discover(config)["rest"],
     }

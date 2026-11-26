@@ -44,7 +44,8 @@ def discover(config: Config, group: str | None = None) -> dict[str, list[Repo]]:
     for item in listing:
         if item.visibility != "PUBLIC" and item.name not in private:
             continue
-        language = item.primary_language.name if item.primary_language else ""
+        # A repository without a language belongs to the catch-all group.
+        language = item.primary_language.name if item.primary_language else CATCH_ALL
         name = group_for(language, config)
         if name is None or (group is not None and name != group):
             continue

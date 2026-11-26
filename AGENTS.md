@@ -46,8 +46,10 @@ the PR merges.
   discover targets and `uv run pytest -k NAME` for focused test runs.
 
 - Test every behaviour change and maintain 100% line and branch coverage.
-  Isolate tests from the real home directory and `config.yaml`. Use the
-  `commands` fixture for external commands and real Git on local bare
+  Kill every mutant (`make mutation-test`) without excluding code from
+  mutation. Isolate tests from the real home directory and `config.yaml`.
+  Use the `commands` fixture for external commands, the `spy` fixture for
+  arguments with no observable effect, and real Git on local bare
   repositories. Keep tests portable across Linux and macOS. Parametrise cases
   of a single behaviour with explicit IDs and fix warning or order-dependent
   failures at their source.
@@ -69,6 +71,7 @@ the PR merges.
 | When | Read |
 | --- | --- |
 | Changing workflows | [Workflow security and maintenance](docs/development.md#workflow-security) |
+| Acting on surviving mutants | [Mutation testing](docs/development.md#mutation-testing) |
 | Changing documentation | [Documentation site conventions](docs/development.md#documentation-site) |
 | Changing visuals | [Design guidelines](DESIGN.md) |
 | Generating documentation figures | [Documentation illustrations skill](.agents/skills/documentation-illustrations/SKILL.md) |

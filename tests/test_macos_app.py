@@ -1,9 +1,12 @@
 """Tests for building the app and checking its Full Disk Access grant."""
 
+import hashlib
+import json
 import plistlib
 import subprocess
+from pathlib import Path
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -15,8 +18,6 @@ from llm_dependabot.macos_app import (
 )
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from llm_dependabot.config import Config
     from tests.conftest import FakeCommands
 
@@ -62,6 +63,77 @@ def test_build_app_builds_once_until_its_sources_change(
     assert info["CFBundleIdentifier"] == "org.example.llm-dependabot"
 
 
+INFO: dict[str, Any] = {
+    "CFBundleName": "LLM Dependabot",
+    "CFBundleDisplayName": "LLM Dependabot",
+    "CFBundleIdentifier": "com.example.llm-dependabot",
+    "CFBundleExecutable": "llm-dependabot",
+    "CFBundleIconFile": "AppIcon",
+    "CFBundlePackageType": "APPL",
+    "CFBundleShortVersionString": "1.0",
+    "LSUIElement": True,
+}
+
+
+def test_build_app_commands(toolchain: FakeCommands, config: Config) -> None:
+    """The bundle's layout, and the exact compile, icon, and signing commands."""
+    build_app(config)
+    bundle = macos_app.APP_BUNDLE
+    assert sorted(str(p.relative_to(bundle)) for p in bundle.rglob("*")) == [
+        "Contents",
+        "Contents/Info.plist",
+        "Contents/MacOS",
+        "Contents/Resources",
+    ]
+    info_plist = (bundle / "Contents/Info.plist").read_bytes()
+    assert plistlib.loads(info_plist) == INFO
+    source = macos_app.APP_SOURCE
+    assert toolchain.calls("clang") == [
+        [
+            "-O2",
+            "-Wall",
+            "-Werror",
+            "-o",
+            str(macos_app.LAUNCHER),
+            str(source / "launcher.c"),
+        ],
+    ]
+    sips = toolchain.calls("sips")
+    iconset = Path(sips[0][-1]).parent
+    assert iconset.name.endswith(".iconset")
+    assert sips == [
+        ["-z", pixels, pixels, str(source / "icon.png"), "--out", str(iconset / name)]
+        for size in (16, 32, 128, 256, 512)
+        for pixels, name in (
+            (str(size), f"icon_{size}x{size}.png"),
+            (str(size * 2), f"icon_{size}x{size}@2x.png"),
+        )
+    ]
+    icns = bundle / "Contents/Resources/AppIcon.icns"
+    assert toolchain.calls("iconutil") == [
+        ["-c", "icns", str(iconset), "-o", str(icns)],
+    ]
+    assert toolchain.calls("codesign") == [
+        [
+            "--force",
+            "--sign",
+            "-",
+            "--identifier",
+            "com.example.llm-dependabot",
+            str(bundle),
+        ],
+    ]
+    digest = hashlib.sha256()
+    for name in ("launcher.c", "icon.png"):
+        digest.update((source / name).read_bytes())
+    digest.update(json.dumps(INFO, sort_keys=True).encode())
+    assert [p.name for p in macos_app.STATE_DIR.iterdir() if p.is_file()] == [
+        "app.sha256",
+    ]
+    stamp = macos_app.STATE_DIR / "app.sha256"
+    assert stamp.read_text() == digest.hexdigest()
+
+
 @pytest.mark.parametrize(
     ("printed", "granted", "polls"),
     [
@@ -83,20 +155,47 @@ def test_full_disk_access_granted(
     launchctl is faked in-process here: the check polls it up to a hundred
     times, and test_launchd already runs the real subprocess path.
     """
-    verbs: list[str] = []
+    calls: list[tuple[str | Path, ...]] = []
+    loaded: list[dict[str, Any]] = []
+    label = "com.example.llm-dependabot.access-check"
+    plist = macos_app.STATE_DIR / f"{label}.plist"
 
     def launchctl(*args: str | Path) -> subprocess.CompletedProcess[str]:
-        """Record the verb, and report the job's state when printed."""
-        verbs.append(str(args[0]))
+        """Record the call, and report the job's state when printed."""
+        calls.append(args)
+        if args[0] == "bootstrap":
+            loaded.append(plistlib.loads(plist.read_bytes()))
         stdout = printed if args[0] == "print" else ""
         return subprocess.CompletedProcess(list(map(str, args)), 0, stdout, "")
 
+    sleeps: list[float] = []
     monkeypatch.setattr(macos_app, "launchctl", launchctl)
+    monkeypatch.setattr(macos_app, "gui_domain", lambda: "gui/501")
     # Skip the waits between polls without touching the shared time module.
-    monkeypatch.setattr(macos_app, "time", SimpleNamespace(sleep=lambda _s: None))
+    monkeypatch.setattr(macos_app, "time", SimpleNamespace(sleep=sleeps.append))
     macos_app.STATE_DIR.mkdir(parents=True)
     assert full_disk_access_granted(config) is granted
-    assert verbs == ["bootout", "bootstrap", *["print"] * polls, "bootout"]
+    target = f"gui/501/{label}"
+    assert calls == [
+        ("bootout", target),
+        ("bootstrap", "gui/501", plist),
+        *[("print", target)] * polls,
+        ("bootout", target),
+    ]
+    assert sleeps == [0.1] * (polls if polls > 1 else 0)
+    assert loaded == [
+        {
+            "Label": label,
+            "ProgramArguments": [
+                str(macos_app.LAUNCHER),
+                "/bin/ls",
+                str(config.clone_root),
+            ],
+            "RunAtLoad": True,
+            "StandardOutPath": "/dev/null",
+            "StandardErrorPath": "/dev/null",
+        },
+    ]
     assert list(macos_app.STATE_DIR.iterdir()) == []
 
 
@@ -116,4 +215,13 @@ def test_show_full_disk_access_steps_opens_settings_and_the_app(
         (macos_app.FULL_DISK_ACCESS_PANE, False),
         (str(macos_app.APP_BUNDLE), True),
     ]
-    assert str(macos_app.APP_BUNDLE) in capsys.readouterr().out
+    assert capsys.readouterr().out == (
+        "\nmacOS blocks launchd jobs from ~/Documents and similar folders unless"
+        " their program has Full Disk Access. Drag LLM Dependabot from the Finder"
+        " window into System Settings > Privacy & Security > Full Disk Access"
+        " (or click + and choose it), then switch it on:\n"
+        f"  {macos_app.APP_BUNDLE}\n"
+        "If macOS instead asks whether LLM Dependabot may access a folder, the"
+        " check timed out waiting for it; dismiss the prompt and use the"
+        " setting above.\n\n"
+    )

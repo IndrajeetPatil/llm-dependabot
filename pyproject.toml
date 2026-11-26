@@ -44,6 +44,7 @@ Changelog = "https://www.indrapatil.com/llm-dependabot/changelog/"
 dev = [
   "coverage>=7.17.5",
   "deptry>=0.25.1",
+  "mutmut>=3.8.1",
   "pyrefly>=1.5.0",
   "pytest>=9.2.0",
   "pytest-random-order>=1.2.0",
@@ -101,6 +102,20 @@ precision = 2
 show_missing = true
 skip_covered = true
 skip_empty = true
+
+[tool.mutmut]
+source_paths = ["src/llm_dependabot/"]
+# Tests compile the app bundle's sources and validate the committed config.
+also_copy = [
+  "app/",
+  "config.yaml",
+]
+pytest_add_cli_args_test_selection = ["tests/"]
+# Mutate only lines the suite runs; full coverage makes this every line.
+mutate_only_covered_lines = true
+# Nothing is excluded: do_not_mutate takes only whole-file globs. Kill a
+# surviving mutant with a test, or restructure the source so it cannot
+# express the mutation.
 
 [tool.ruff]
 target-version = "py314"

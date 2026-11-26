@@ -58,9 +58,7 @@ def read_log(path: Path) -> list[tuple[dt.datetime, str]]:
 
 def local_time(timestamp: float) -> dt.datetime:
     """A POSIX timestamp as a naive local time, like the log timestamps."""
-    return (
-        dt.datetime.fromtimestamp(timestamp, dt.UTC).astimezone().replace(tzinfo=None)
-    )
+    return dt.datetime.fromtimestamp(timestamp)  # ruff: ignore[call-datetime-fromtimestamp] (naive local time is intended)
 
 
 def record_job_event(
@@ -102,20 +100,20 @@ def record_job_event(
 def parse_group_log(group: str, lines: list[tuple[dt.datetime, str]]) -> list[GroupRun]:
     """Split a group log's lines into the runs they record."""
     runs: list[GroupRun] = []
-    run: GroupRun | None = None
-    jobs: dict[str, Job] = {}
+    # The run in progress and its jobs by label, until its summary.
+    current: tuple[GroupRun, dict[str, Job]] | None = None
     for at, message in lines:
         label, _, event = message.partition(": ")
         if label == f"group {group}":
             run = GroupRun(group=group, started=at)
-            jobs = {}
             runs.append(run)
+            current = (run, {})
             if event == "nothing due" or event.startswith("skipped"):
-                run.note, run.finished, run = event, at, None
-        elif run is not None and label == "summary":
-            run.finished, run = at, None
-        elif run is not None:
-            record_job_event(run, jobs, at, label, event)
+                run.note, run.finished, current = event, at, None
+        elif current is not None and label == "summary":
+            current[0].finished, current = at, None
+        elif current is not None:
+            record_job_event(*current, at, label, event)
     return runs
 
 
@@ -123,7 +121,7 @@ def manual_runs(config: Config, logged: set[Path]) -> list[GroupRun]:
     """Runs started by hand, which leave only their transcripts behind."""
     suffixes = sorted((f"-{p.name}" for p in config.prompts), key=len, reverse=True)
     runs = []
-    for folder in LOG_DIR.iterdir():
+    for folder in sorted(LOG_DIR.iterdir()):
         match = RUN_FOLDER.fullmatch(folder.name)
         if not folder.is_dir() or match is None or folder in logged:
             continue
@@ -156,7 +154,7 @@ def collect_runs(config: Config) -> tuple[list[GroupRun], dict[str, str]]:
     runs: list[GroupRun] = []
     final: dict[str, str] = {}
     running = {label.rpartition(".")[2] for label in running_jobs()}
-    for path in LOG_DIR.glob("*.log") if LOG_DIR.is_dir() else []:
+    for path in LOG_DIR.glob("*.log"):
         lines = read_log(path)
         for _, message in lines:
             if match := PR_FINISHED.fullmatch(message):

@@ -3,7 +3,7 @@
 import datetime as dt
 import json
 from pathlib import Path
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import pytest
 import typer
@@ -13,6 +13,11 @@ from pydantic import ValidationError
 from llm_dependabot import config as config_module
 from llm_dependabot.config import Agent, Config, is_weekend, load_config
 from llm_dependabot.paths import ROOT
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from tests.conftest import Spy
 
 # YAML reads an unquoted 9:00 as the sexagesimal integer 540.
 UNQUOTED_TIME: int = cast("int", yaml.safe_load("time: 9:00")["time"])
@@ -144,11 +149,25 @@ def test_a_group_overrides_a_prompt_cadence(
     assert config.group(group).cadence_for(config.prompt("update-deps")) == cadence
 
 
-@pytest.mark.parametrize("method", ["group", "prompt"])
-def test_an_unknown_name_fails(config: Config, method: str) -> None:
-    """Looking up an unknown group or prompt fails."""
+@pytest.mark.parametrize(
+    ("method", "choices"),
+    [
+        pytest.param("group", "['python', 'rest']", id="group"),
+        pytest.param("prompt", "['update-deps', 'simplify-codebase']", id="prompt"),
+    ],
+)
+def test_an_unknown_name_fails(
+    config: Config,
+    method: str,
+    choices: str,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Looking up an unknown group or prompt fails, listing the known ones."""
     with pytest.raises(typer.Exit):
         getattr(config, method)("missing")
+    assert capsys.readouterr().err == (
+        f"unknown {method} 'missing'; choose from {choices}\n"
+    )
 
 
 @pytest.mark.parametrize(
@@ -242,6 +261,7 @@ def test_load_config_reports_invalid_configuration(
     raw_config: dict[str, Any],
     config_text: str | None,
     private: str | None,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """load_config fails on an invalid config.yaml or private.yaml."""
     config_file, private_file = config_files
@@ -250,3 +270,19 @@ def test_load_config_reports_invalid_configuration(
         private_file.write_text(private)
     with pytest.raises(typer.Exit):
         load_config()
+    err = capsys.readouterr().err
+    assert err.startswith("invalid configuration: ")
+    assert "validation error" in err
+
+
+def test_yaml_is_read_as_utf8(
+    config_files: tuple[Path, Path],
+    raw_config: dict[str, Any],
+    spy: Callable[[Any, str], Spy],
+) -> None:
+    """config.yaml is read as UTF-8 whatever the locale."""
+    config_file, _ = config_files
+    config_file.write_text(yaml.safe_dump(raw_config), encoding="utf-8")
+    read_text = spy(Path, "read_text")
+    load_config()
+    assert read_text.calls == [((config_file,), {"encoding": "utf-8"})]

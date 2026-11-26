@@ -6,7 +6,9 @@ import subprocess
 import sys
 import threading
 import time
-from typing import TYPE_CHECKING, NamedTuple, override
+from pathlib import Path
+from types import SimpleNamespace
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, override
 
 import pytest
 import typer
@@ -28,14 +30,20 @@ from llm_dependabot.state import Checkout, State, load_state
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
-    from pathlib import Path
+
+    import filelock
 
     from llm_dependabot.config import Config
-    from tests.conftest import FakeCommands
+    from tests.conftest import FakeCommands, Spy
 
 TODAY: dt.date = dt.datetime.now().astimezone().date()
 STARTED: dt.datetime = dt.datetime(2026, 11, 26, 9, tzinfo=dt.UTC)
 LABEL: PullRequestLabel = PullRequestLabel(name="bot", color="5fbfae")
+
+
+def logged(capsys: pytest.CaptureFixture[str]) -> list[str]:
+    """The messages logged so far, without their timestamps."""
+    return [line.partition("] ")[2] for line in capsys.readouterr().out.splitlines()]
 
 
 @pytest.fixture
@@ -140,6 +148,63 @@ def test_run_agent(
     assert log.read_text() == "the prompt\n"
 
 
+class RecordingPopen(subprocess.Popen[str]):
+    """A real process that records what it was sent, and how long it had."""
+
+    sent: ClassVar[list[tuple[str | None, float | None]]] = []
+
+    @override
+    def communicate(
+        self,
+        input: str | None = None,
+        timeout: float | None = None,
+    ) -> tuple[str, str]:
+        """Record the input and timeout, then talk to the process."""
+        self.sent.append((input, timeout))
+        return super().communicate(input, timeout=timeout)
+
+
+@pytest.mark.parametrize(
+    ("argument", "stdin"),
+    [
+        pytest.param("{prompt}", subprocess.DEVNULL, id="argument"),
+        pytest.param("-", subprocess.PIPE, id="stdin"),
+    ],
+)
+def test_run_agent_options(
+    monkeypatch: pytest.MonkeyPatch,
+    spy: Callable[[Any, str], Spy],
+    tmp_path: Path,
+    argument: str,
+    stdin: int,
+) -> None:
+    """The agent runs in its own session, logging both streams as UTF-8.
+
+    Its deadline leaves ten minutes beyond the agent's own timeout.
+    """
+    monkeypatch.setattr(RecordingPopen, "sent", [])
+    monkeypatch.setattr(runner.subprocess, "Popen", RecordingPopen)
+    popen = spy(runner.subprocess, "Popen")
+    opened = spy(Path, "open")
+    log = tmp_path / "run.log"
+    script = "import sys; print('out', flush=True); print('err', file=sys.stderr)"
+    agent = Agent(name="python", command=[sys.executable, "-c", script, argument])
+    assert run_agent(agent, tmp_path, "the prompt", log, 1.5) == 0
+    assert opened.calls == [((log, "w"), {"encoding": "utf-8"})]
+    [(_, options)] = popen.calls
+    assert options.pop("stdout").name == str(log)
+    assert options == {
+        "cwd": tmp_path,
+        "stdin": stdin,
+        "stderr": subprocess.STDOUT,
+        "start_new_session": True,
+        "encoding": "utf-8",
+    }
+    sent = "the prompt" if stdin == subprocess.PIPE else None
+    assert RecordingPopen.sent == [(sent, 1.5 * 3600 + 600)]
+    assert log.read_text(encoding="utf-8") == "out\nerr\n"
+
+
 def pull_request(number: int) -> PullRequest:
     """An open pull request of octo/project, as gh reports it."""
     return PullRequest.model_validate({
@@ -179,6 +244,18 @@ def test_current_branch(tmp_path: Path, switch_to: str | None, expected: str) ->
     assert current_branch(checkout_in(tmp_path)) == expected
 
 
+def test_current_branch_tolerates_git_failing(
+    spy: Callable[[Any, str], Spy],
+    tmp_path: Path,
+) -> None:
+    """Outside a Git worktree, the run's own branch is assumed."""
+    sh = spy(runner, "sh")
+    assert current_branch(checkout_in(tmp_path)) == "chore/update-deps-1"
+    assert sh.calls == [
+        (("git", "-C", tmp_path, "branch", "--show-current"), {"check": False}),
+    ]
+
+
 @pytest.mark.parametrize("works", [True, False])
 def test_label_pr(
     monkeypatch: pytest.MonkeyPatch,
@@ -188,14 +265,18 @@ def test_label_pr(
     works: bool,
 ) -> None:
     """Labelling reports success, and logs a gh failure instead of raising it."""
+    repo = make_repo()
+    added: list[tuple[Repo, int, PullRequestLabel]] = []
 
-    def add_label(_repo: Repo, _number: int, _label: PullRequestLabel) -> None:
+    def add_label(to: Repo, number: int, label: PullRequestLabel) -> None:
         """Fail like gh does, unless labelling works."""
+        added.append((to, number, label))
         if not works:
             raise subprocess.CalledProcessError(1, "gh", stderr="no permission")
 
     monkeypatch.setattr(runner, "add_label", add_label)
-    assert label_pr(make_repo(), pull_request(7), LABEL, "project p") is works
+    assert label_pr(repo, pull_request(7), LABEL, "project p") is works
+    assert added == [(repo, 7, LABEL)]
     assert ("no permission" in capsys.readouterr().out) is not works
 
 
@@ -324,37 +405,51 @@ def test_process_repo(
     config: Config,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
     case: RunCase,
 ) -> None:
     """A run records its pull request and labels it unless the watcher did."""
     checkout = checkout_in(tmp_path)
     removed: list[Checkout] = []
     labels: list[int] = []
+    repo = Repo(owner="octo", name="project", default_branch="main", prompts=("p",))
+    prompt = Prompt(name="p", path="prompt.md")
+    state = State()
 
     def record_label(
-        _repo: Repo,
+        to: Repo,
         pr: PullRequest,
-        _label: PullRequestLabel,
-        _name: str,
+        label: PullRequestLabel,
+        name: str,
     ) -> bool:
         """Record which pull request was labelled after the run."""
+        assert (to, label, name) == (repo, LABEL, "project p")
         labels.append(pr.number)
         return True
 
-    monkeypatch.setattr(runner, "prepare_checkout", lambda *_args: checkout)
-    monkeypatch.setattr(
-        runner,
-        "agent_pass",
-        lambda *_args: (0, case.pr, case.labelled_early),
-    )
+    def prepare_checkout(*args: object) -> Checkout:
+        """The checkout, prepared for this run."""
+        assert args == (repo, prompt, config, state, tmp_path / "project-p.log")
+        return checkout
+
+    def agent_pass(*args: object) -> tuple[int, PullRequest | None, set[int]]:
+        """The scripted outcome of the agent's run."""
+        assert args == (checkout, repo, prompt, config, "project p")
+        return 0, case.pr, case.labelled_early
+
+    monkeypatch.setattr(runner, "prepare_checkout", prepare_checkout)
+    monkeypatch.setattr(runner, "agent_pass", agent_pass)
     monkeypatch.setattr(runner, "remove_checkout", removed.append)
     monkeypatch.setattr(runner, "label_pr", record_label)
     config.label = case.pr_label
 
-    repo = Repo(owner="octo", name="project", default_branch="main", prompts=("p",))
-    prompt = Prompt(name="p", path="prompt.md")
-    assert process_repo(repo, prompt, config, State(), tmp_path) == case.summary
+    assert process_repo(repo, prompt, config, state, tmp_path) == case.summary
     assert labels == case.labelled_after
+    assert logged(capsys) == (
+        [f"project p: open pull request {case.pr.url}"]
+        if case.pr
+        else ["project p: no pull request was opened; removing the worktree"]
+    )
     pending = [entry.pr_number for entry in load_state().pending]
     assert pending == ([case.pr.number] if case.pr else [])
     assert removed == ([] if case.pr else [checkout])
@@ -376,7 +471,27 @@ def test_run_agent_stops_an_agent_that_outlasts_its_timeout(
     """A timed-out agent is stopped even when it ignores graceful termination."""
 
     class QuickTimeout(subprocess.Popen[str]):
-        """Time out after a fraction of a second instead of hours."""
+        """Time out after a fraction of a second instead of hours.
+
+        Records the waits after the timeout, bounding the final one so a
+        process left running fails the test instead of hanging it.
+        """
+
+        waits: ClassVar[list[float | None]] = []
+
+        def __init__(self, args: list[str], **options: Any) -> None:
+            """Start the process, which must lead its own process group."""
+            assert options["start_new_session"] is True
+            super().__init__(args, **options)
+
+        @override
+        def wait(self, timeout: float | None = None) -> int:
+            """Record the timeout, then wait at most a few seconds."""
+            if self.timed_out:
+                self.waits.append(timeout)
+            return super().wait(5 if timeout is None else timeout)
+
+        timed_out = False
 
         @override
         def communicate(
@@ -392,9 +507,13 @@ def test_run_agent_stops_an_agent_that_outlasts_its_timeout(
                     self.kill()
                     pytest.fail("agent did not initialise")
                 time.sleep(0.01)
-            return super().communicate(input, timeout=0.1)
+            try:
+                return super().communicate(input, timeout=0.1)
+            finally:
+                self.timed_out = True
 
     monkeypatch.setattr(runner.subprocess, "Popen", QuickTimeout)
+    monkeypatch.setattr(QuickTimeout, "waits", [])
     monkeypatch.setattr(runner, "TERMINATE_GRACE_SECONDS", 0.1)
     handler = "signal.SIG_IGN" if ignore_term else "signal.SIG_DFL"
     agent = Agent(
@@ -412,26 +531,31 @@ def test_run_agent_stops_an_agent_that_outlasts_its_timeout(
     started = time.monotonic()
     assert run_agent(agent, tmp_path, "prompt", tmp_path / "run.log", 1) == -1
     assert time.monotonic() - started < 10
+    # A grace period for the leader, then a wait for the killed group.
+    assert QuickTimeout.waits == [0.1, None]
 
 
 def test_agent_pass_runs_the_committed_prompt(
     config: Config,
     monkeypatch: pytest.MonkeyPatch,
+    spy: Callable[[Any, str], Spy],
     tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """The agent gets the prompt file's text, then the run's pull request is found."""
     (tmp_path / "prompt.md").write_text("Update everything.")
     checkout = checkout_in(tmp_path)
-    found: list[str] = []
+    found: list[tuple[Repo, str, dt.datetime]] = []
 
-    def find_pr(_repo: Repo, branch: str, _started: dt.datetime) -> PullRequest:
-        """Record the branch looked up, and find pull request 5."""
-        found.append(branch)
+    def find_pr(repo: Repo, branch: str, started: dt.datetime) -> PullRequest:
+        """Record the lookup, and find pull request 5."""
+        found.append((repo, branch, started))
         return pull_request(5)
 
     monkeypatch.setattr(runner, "find_pr", find_pr)
     monkeypatch.setattr(runner, "current_branch", lambda _checkout: "agent/branch")
-    config.label = None
+    watched = spy(runner, "labelling_early")
+    config.label = LABEL
     config.agent = Agent(
         name="echo",
         command=[sys.executable, "-c", "import sys; print(sys.argv[1])", "{prompt}"],
@@ -442,13 +566,19 @@ def test_agent_pass_runs_the_committed_prompt(
     assert (code, pr, labelled) == (0, pull_request(5), set())
     assert checkout.log.read_text() == "Update everything.\n"
     assert checkout.final_branch == "agent/branch"
-    assert found == ["agent/branch"]
+    assert found == [(repo, "agent/branch", STARTED)]
+    assert watched.calls == [((checkout, repo, LABEL, "project p"), {})]
+    assert logged(capsys) == [
+        f"project p: running agent in {tmp_path} (log: {tmp_path / 'run.log'})",
+        "project p: agent exited with code 0",
+    ]
 
 
 def test_process_repo_retains_the_checkout_when_the_agent_cannot_run(
     config: Config,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """An error retains a tracked checkout for recovery, then propagates."""
     checkout = checkout_in(tmp_path)
@@ -466,21 +596,71 @@ def test_process_repo_retains_the_checkout_when_the_agent_cannot_run(
         process_repo(repo, Prompt(name="p", path="p.md"), config, State(), tmp_path)
     assert removed == []
     assert load_state().recovery == [checkout]
+    assert logged(capsys) == [
+        f"project p: retaining {tmp_path} for recovery (see `status`)",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("pr", "message"),
+    [
+        pytest.param(
+            None,
+            "agent exited with code 3; retained {worktree} for recovery",
+            id="no pull request",
+        ),
+        pytest.param(
+            pull_request(4),
+            "agent exited with code 3; tracking"
+            " https://github.com/octo/project/pull/4 for cleanup",
+            id="pull request",
+        ),
+    ],
+)
+def test_process_repo_reports_a_failed_agent(
+    config: Config,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    pr: PullRequest | None,
+    message: str,
+) -> None:
+    """A failed agent's run fails, saying what happened to its work."""
+    monkeypatch.setattr(runner, "prepare_checkout", lambda *_: checkout_in(tmp_path))
+    monkeypatch.setattr(runner, "agent_pass", lambda *_: (3, pr, set()))
+    monkeypatch.setattr(runner, "label_pr", lambda *_: True)
+    repo = Repo(owner="octo", name="project", default_branch="main", prompts=("p",))
+    with pytest.raises(RuntimeError) as error:
+        process_repo(repo, Prompt(name="p", path="p.md"), config, State(), tmp_path)
+    assert str(error.value) == message.format(worktree=tmp_path)
 
 
 def test_run_plan_keeps_going_after_a_repository_fails(
     commands: FakeCommands,
     config: Config,
     monkeypatch: pytest.MonkeyPatch,
-    make_repo: Callable[..., Repo],
+    spy: Callable[[Any, str], Spy],
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """Every planned run is attempted, only successes count as run, then cleanup."""
+    """Every planned run is attempted, only successes count as run, then cleanup.
+
+    The run's log folder may exist already, from an earlier run that minute.
+    """
     commands.install("caffeinate")
     outcomes: dict[str, Exception | str] = {
         "ok": "ok update-deps: PR #1",
         "skip": SkipRepoError("not a git clone"),
         "boom": subprocess.CalledProcessError(1, "git", stderr="fetch failed"),
+        "quiet": subprocess.CalledProcessError(1, "git", stderr=""),
+        "bug": KeyError("x"),
     }
+    monkeypatch.setattr(
+        runner,
+        "dt",
+        SimpleNamespace(datetime=SimpleNamespace(now=lambda: STARTED)),
+    )
+    run_dir = runner.LOG_DIR / "2026-11-26-0900-python"
+    run_dir.mkdir(parents=True)
+    popen = spy(runner.subprocess, "Popen")
 
     def process_repo(repo: Repo, *_args: object) -> str:
         """Succeed, skip, or fail, by repository name."""
@@ -493,18 +673,28 @@ def test_run_plan_keeps_going_after_a_repository_fails(
     monkeypatch.setattr(runner, "process_repo", process_repo)
     monkeypatch.setattr(runner, "cleanup_finished", cleaned.append)
     prompt = config.prompt("update-deps")
-    plan = [(make_repo(name, "update-deps"), prompt) for name in outcomes]
+    plan = [
+        (Repo(owner="octo", name=name, default_branch="main"), prompt)
+        for name in outcomes
+    ]
 
     assert run_plan(config, "python", plan) == [
         "ok update-deps: PR #1",
         "skip update-deps: skipped",
         "boom update-deps: failed",
+        "quiet update-deps: failed",
+        "bug update-deps: failed",
     ]
     assert list(load_state().last_runs) == ["update-deps octo/ok"]
     assert len(cleaned) == 1
-    assert commands.calls("caffeinate") in ([], [["-i", "-w", str(os.getpid())]])
-    [run_dir] = runner.LOG_DIR.iterdir()
-    assert run_dir.name.endswith("-python")
+    assert popen.calls == [((["caffeinate", "-i", "-w", str(os.getpid())],), {})]
+    assert list(runner.LOG_DIR.iterdir()) == [run_dir]
+    assert logged(capsys) == [
+        "skip update-deps: skipped: not a git clone",
+        "boom update-deps: failed: fetch failed",
+        "quiet update-deps: failed: Command 'git' returned non-zero exit status 1.",
+        "bug update-deps: failed: 'x'",
+    ]
 
 
 @pytest.fixture
@@ -546,9 +736,19 @@ def test_cleanup_waits_for_no_run(
         request.getfixturevalue(fixture)
     cleaned: list[State] = []
     monkeypatch.setattr(runner, "cleanup_finished", cleaned.append)
+    lock = runner.filelock.FileLock
+
+    def file_lock(path: Path, **options: Any) -> filelock.FileLock:
+        """The run lock, which cleanup must not wait for."""
+        assert options == {"timeout": 0}
+        return lock(path, **options)
+
+    monkeypatch.setattr(runner.filelock, "FileLock", file_lock)
     runner.cleanup()
-    assert len(cleaned) == (1 if cleans else 0)
-    assert ("a run is in progress" in capsys.readouterr().out) is not cleans
+    assert cleaned == ([State()] if cleans else [])
+    assert logged(capsys) == (
+        [] if cleans else ["a run is in progress; skipping cleanup"]
+    )
 
 
 @pytest.mark.parametrize(

@@ -3,7 +3,9 @@
 import datetime as dt
 import shutil
 import subprocess
-from typing import TYPE_CHECKING
+from pathlib import Path
+from types import SimpleNamespace
+from typing import TYPE_CHECKING, Any, override
 
 import pytest
 
@@ -21,11 +23,10 @@ from llm_dependabot.state import Checkout, Pending, State, load_state, save_stat
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from pathlib import Path
 
     from llm_dependabot.config import Config
     from llm_dependabot.github import Repo
-    from tests.conftest import FakeCommands
+    from tests.conftest import FakeCommands, Spy
 
 
 def git(*args: str | Path) -> str:
@@ -82,6 +83,116 @@ def test_prepare_checkout_adds_a_worktree_off_the_default_branch(
     remove_checkout(checkout)
     assert not checkout.worktree.exists()
     assert checkout.branch not in git("-C", clone, "branch", "--list")
+
+
+class FixedClock(dt.datetime):
+    """A datetime whose now is 26 November 2026, 10:30:15.5 local, 09:30 UTC."""
+
+    @override
+    @classmethod
+    def now(cls, tz: dt.tzinfo | None = None) -> FixedClock:
+        """The fixed time, in UTC if asked, else as naive local time."""
+        if tz is None:
+            return cls(2026, 11, 26, 10, 30, 15, 500000)
+        return cls(2026, 11, 26, 9, 30, 15, 500000, tzinfo=tz)
+
+
+def test_prepare_checkout_commands(
+    clone: Path,
+    config: Config,
+    make_repo: Callable[..., Repo],
+    monkeypatch: pytest.MonkeyPatch,
+    spy: Callable[[Any, str], Spy],
+) -> None:
+    """The worktree is named after the local minute, and the start is in UTC.
+
+    An existing worktree folder, from an earlier run, is reused.
+    """
+    monkeypatch.setattr(
+        checkouts,
+        "dt",
+        SimpleNamespace(datetime=FixedClock, UTC=dt.UTC),
+    )
+    checkouts.WORKTREE_ROOT.mkdir(parents=True)
+    sh = spy(checkouts, "sh")
+    exists = spy(Path, "exists")
+    log = clone.parent / "a.log"
+    checkout = prepare_checkout(
+        make_repo(),
+        config.prompt("update-deps"),
+        config,
+        State(),
+        log,
+    )
+    assert exists.calls[0] == ((clone / ".git",), {})
+    worktree = checkouts.WORKTREE_ROOT / "project-update-deps-20261126-1030"
+    assert checkout == Checkout(
+        repo="octo/project",
+        clone=clone,
+        worktree=worktree,
+        branch="chore/update-deps-20261126-1030",
+        log=log,
+        started=dt.datetime(2026, 11, 26, 9, 30, 15, tzinfo=dt.UTC),
+    )
+    assert [args for args, _ in sh.calls] == [
+        ("git", "-C", clone, "remote", "get-url", "origin"),
+        ("git", "-C", clone, "fetch", "--prune", "--quiet", "origin"),
+        (
+            "git",
+            "-C",
+            clone,
+            "worktree",
+            "add",
+            "--quiet",
+            "--no-track",
+            "-b",
+            "chore/update-deps-20261126-1030",
+            worktree,
+            "origin/main",
+        ),
+    ]
+    assert [options for _, options in sh.calls] == [{"check": False}, {}, {}]
+
+
+def test_remove_checkout_commands(
+    clone: Path,
+    spy: Callable[[Any, str], Spy],
+    tmp_path: Path,
+) -> None:
+    """The worktree is forced out, then the run's and the agent's branches go."""
+    worktree = tmp_path / "wt"
+    git("-C", clone, "worktree", "add", "--quiet", "-b", "run", worktree)
+    (worktree / "README.md").write_text("unsaved\n")
+    git("-C", clone, "branch", "agent")
+    git("-C", clone, "switch", "--quiet", "-c", "unmerged")
+    git("-C", clone, "commit", "--quiet", "--allow-empty", "-m", "unmerged")
+    git("-C", clone, "switch", "--quiet", "main")
+    checkout = Checkout(
+        repo="octo/project",
+        clone=clone,
+        worktree=worktree,
+        branch="run",
+        final_branch="unmerged",
+        log=tmp_path / "l",
+        started=dt.datetime(2026, 11, 26, tzinfo=dt.UTC),
+    )
+    sh = spy(checkouts, "sh")
+    remove_checkout(checkout)
+    assert not worktree.exists()
+    assert git("-C", clone, "branch", "--format=%(refname:short)").split() == [
+        "agent",
+        "main",
+    ]
+    calls = [(args, options) for args, options in sh.calls]
+    check = {"check": False}
+    assert calls[:2] == [
+        (("git", "-C", clone, "worktree", "remove", "--force", worktree), check),
+        (("git", "-C", clone, "worktree", "prune"), check),
+    ]
+    assert sorted(calls[2:]) == [
+        (("git", "-C", clone, "branch", "-D", "run"), check),
+        (("git", "-C", clone, "branch", "-D", "unmerged"), check),
+    ]
 
 
 def foreign_clone(project: Path) -> None:
@@ -164,6 +275,33 @@ def test_clone_is_disposable(
     assert clone_is_disposable(clone) == expected
 
 
+def test_clone_is_disposable_commands(
+    clone: Path,
+    spy: Callable[[Any, str], Spy],
+) -> None:
+    """Each check reads git's output, whatever its exit code."""
+    sh = spy(checkouts, "sh")
+    assert clone_is_disposable(clone) == (True, "")
+    check = {"check": False}
+    assert sh.calls == [
+        (("git", "-C", clone, "status", "--porcelain"), check),
+        (("git", "-C", clone, "worktree", "list", "--porcelain"), check),
+        (
+            (
+                "git",
+                "-C",
+                clone,
+                "log",
+                "--branches",
+                "--not",
+                "--remotes",
+                "--oneline",
+            ),
+            check,
+        ),
+    ]
+
+
 def test_cleanup_removes_finished_pull_requests_and_their_managed_clones(
     clone: Path,
     config: Config,
@@ -205,16 +343,19 @@ def test_a_missing_clone_is_cloned_and_managed(
     config: Config,
     make_repo: Callable[..., Repo],
     monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """Without a local copy, gh clones one, and cleanup may later delete it."""
-    origin = tmp_path / "remote/octo/project.git"
+    origin = clone.parents[1] / "remote/octo/project.git"
     shutil.rmtree(clone)
     real_sh = checkouts.sh
 
+    cloned: list[tuple[str | Path, ...]] = []
+
     def sh(*args: str | Path, check: bool = True) -> str:
         """Clone from the local origin where gh would clone from GitHub."""
-        if args[:3] == ("gh", "repo", "clone"):
+        if args[0] == "gh":
+            cloned.append(args)
             return real_sh("git", "clone", "--quiet", origin, args[4])
         return real_sh(*args, check=check)
 
@@ -225,11 +366,15 @@ def test_a_missing_clone_is_cloned_and_managed(
         config.prompt("update-deps"),
         config,
         state,
-        tmp_path / "l",
+        clone.parent / "l",
     )
     assert (checkout.worktree / "README.md").exists()
     assert state.managed_clones == [clone]
     assert load_state().managed_clones == [clone]
+    assert cloned == [("gh", "repo", "clone", "octo/project", clone, "--", "--quiet")]
+    assert capsys.readouterr().out.endswith(
+        f"] project: no local copy, cloning into {clone}\n",
+    )
 
 
 def test_removing_a_checkout_of_a_deleted_clone_does_nothing(tmp_path: Path) -> None:
@@ -246,6 +391,55 @@ def test_removing_a_checkout_of_a_deleted_clone_does_nothing(tmp_path: Path) -> 
         ),
     )
     assert not gone.exists()
+
+
+def test_cleanup_goes_through_every_entry(
+    clone: Path,
+    config: Config,
+    make_repo: Callable[..., Repo],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A pull request or clone that must stay does not stop the rest's cleanup."""
+    tmp_path = clone.parents[1]
+    in_use = tmp_path / "in-use"
+    vanished = tmp_path / "vanished"
+    checkout = prepare_checkout(
+        make_repo(),
+        config.prompt("update-deps"),
+        config,
+        State(),
+        tmp_path / "l",
+    )
+    entries = [
+        Pending(**checkout.model_dump(), pr_number=number, pr_url=f"u/{number}")
+        for number in (1, 2)
+    ]
+    entries[0].clone = in_use
+    asked: list[tuple[str, int]] = []
+
+    def pr_state(repo: str, number: int) -> str:
+        """Fail for the first pull request; the second is merged."""
+        asked.append((repo, number))
+        if number == 1:
+            raise subprocess.CalledProcessError(1, "gh", stderr="offline")
+        return "MERGED"
+
+    monkeypatch.setattr(checkouts, "pr_state", pr_state)
+    state = State(pending=entries, managed_clones=[in_use, vanished, clone])
+    capsys.readouterr()
+    cleanup_finished(state)
+    assert asked == [("octo/project", 1), ("octo/project", 2)]
+    assert [entry.pr_number for entry in load_state().pending] == [1]
+    assert load_state().managed_clones == [in_use]
+    assert not clone.exists()
+    assert [
+        line.partition("] ")[2] for line in capsys.readouterr().out.splitlines()
+    ] == [
+        "octo/project#1: cannot check state: offline",
+        "octo/project#2 is merged; cleaning up",
+        f"deleting {clone}: it did not exist before its agent run",
+    ]
 
 
 def test_cleanup_keeps_what_it_cannot_safely_remove(
@@ -317,7 +511,11 @@ def follow_origin_head(clone: Path) -> None:
         pytest.param(follow_origin_head, None, id="current with origin/HEAD"),
         pytest.param(switch_branch, "has feat/x checked out, not main", id="branch"),
         pytest.param(detach, "has a detached HEAD checked out", id="detached"),
-        pytest.param(fall_behind, "is 1 commit(s) behind origin/main", id="behind"),
+        pytest.param(
+            fall_behind,
+            "is 1 commit(s) behind origin/main; run `make self-update` to use them",
+            id="behind",
+        ),
     ],
 )
 def test_stale_checkout_flags_code_scheduled_runs_would_miss(
@@ -337,9 +535,63 @@ def test_stale_checkout_flags_code_scheduled_runs_would_miss(
 
 def test_stale_checkout_ignores_a_directory_that_is_not_a_clone(
     tmp_path: Path,
+    spy: Callable[[Any, str], Spy],
 ) -> None:
     """Outside a git checkout, such as an unpacked copy, there is nothing to check."""
+    exists = spy(Path, "exists")
     assert stale_checkout(tmp_path) is None
+    assert exists.calls == [((tmp_path / ".git",), {})]
+
+
+def test_stale_checkout_without_a_remote(tmp_path: Path) -> None:
+    """A clone without a remote cannot be behind it."""
+    git("init", "--quiet", "--initial-branch=main", tmp_path)
+    git("-C", tmp_path, "commit", "--quiet", "--allow-empty", "-m", "initial")
+    assert stale_checkout(tmp_path) is None
+
+
+@pytest.mark.parametrize(
+    ("arrange", "commands"),
+    [
+        pytest.param(switch_branch, 2, id="branch"),
+        pytest.param(fall_behind, 4, id="behind"),
+    ],
+)
+def test_stale_checkout_commands(
+    clone: Path,
+    spy: Callable[[Any, str], Spy],
+    arrange: Callable[[Path], None],
+    commands: int,
+) -> None:
+    """The checks read git's output whatever its exit code; the branch check stops."""
+    arrange(clone)
+    git("-C", clone, "remote", "set-head", "origin", "main")
+    sh = spy(checkouts, "sh")
+    stale_checkout(clone)
+    git_in = ("git", "-C", clone)
+    assert (
+        sh.calls
+        == [
+            (
+                (*git_in, "symbolic-ref", "--short", "refs/remotes/origin/HEAD"),
+                {"check": False},
+            ),
+            ((*git_in, "branch", "--show-current"), {"check": False}),
+            ((*git_in, "fetch", "--quiet", "origin", "main"), {"check": False}),
+            ((*git_in, "rev-list", "--count", "HEAD..origin/main"), {"check": False}),
+        ][:commands]
+    )
+
+
+def test_stale_checkout_follows_origins_default_branch(clone: Path) -> None:
+    """The default branch is origin's, whatever its name."""
+    git("-C", clone, "push", "--quiet", "origin", "HEAD:trunk")
+    git("-C", clone, "fetch", "--quiet", "origin")
+    git("-C", clone, "remote", "set-head", "origin", "trunk")
+    assert stale_checkout(clone) == (
+        f"{clone} has main checked out, not trunk, and scheduled runs use that"
+        " code; run `git switch trunk`, then `make self-update`"
+    )
 
 
 def test_a_failed_final_lookup_preserves_agent_work_and_its_managed_clone(

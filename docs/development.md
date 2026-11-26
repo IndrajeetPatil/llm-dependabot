@@ -50,6 +50,9 @@ the other modules.
   **[coverage.py](https://coverage.readthedocs.io)** requires 100% line and
   branch coverage.
 
+- **[mutmut](https://mutmut.readthedocs.io)** mutates the source and requires
+  the tests to kill every mutant (see [mutation testing](#mutation-testing)).
+
 - **[ty](https://docs.astral.sh/ty/)** type-checks against the project's own
   environment, and **[pyrefly](https://pyrefly.org)** requires complete
   strict type coverage.
@@ -87,6 +90,7 @@ they are not cached between runs:
 | Workflow | Runs | Trigger |
 | --- | --- | --- |
 | `qa.yml` | `make check`, and `make test` on the minimum Python in `requires-python` | Pull requests |
+| `mutation-test.yml` | `make mutation-test` | Pull requests that change the source, tests, or their tooling |
 | `prek.yml` | The prek hooks other than Ruff and ty | Pull requests |
 | `security.yml` | Gitleaks over the full history and zizmor over the workflows | Pull requests |
 | `conventional-commits.yml` | Commit messages and the pull-request title | Pull requests |
@@ -156,6 +160,7 @@ If your account allows only selected actions, allow these:
 make hooks-install   # once per clone: install the git hooks
 make check           # lint, format check, type check and coverage, tests, dead code, audit, and build
 make test            # run the pytest suite and require full coverage
+make mutation-test   # require the tests to kill every mutant of the source
 make audit           # check dependencies for known vulnerabilities and declarations
 make build           # build the sdist and wheel into dist/
 make format          # apply ruff formatting
@@ -179,6 +184,32 @@ hook,
 [`hooks/check_private_names.py`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/hooks/check_private_names.py), fails any
 commit whose files or message name a repository listed in `private.yaml`, or
 that adds `private.yaml` itself.
+
+### Mutation testing
+
+`make mutation-test` runs [mutmut](https://mutmut.readthedocs.io) with the
+`[tool.mutmut]` settings in `pyproject.toml`. mutmut changes the source one
+small edit at a time, such as flipping a comparison or replacing a string,
+and runs the tests against each change. The target fails, showing each
+mutant's diff, unless the tests kill every one. A full run takes a few
+minutes, so `make check` leaves it out.
+
+Nothing is excluded from mutation, and no line carries a
+`# pragma: no mutate`. Kill a surviving mutant in one of these ways:
+
+- Add or tighten a test that fails on the changed behaviour, asserting exact
+  output, arguments, and log lines rather than fragments.
+
+- When the mutant changes nothing observable, such as `check=None` for
+  `check=False` or `"UTF-8"` for `"utf-8"`, pin the argument with the
+  `spy` fixture in `tests/conftest.py`, which records each call and still
+  makes it.
+
+- When the source can express the same behaviour without the mutated detail,
+  simplify it, so the mutant no longer exists.
+
+Investigate a mutant with `uv run mutmut show <name>`, and rerun the
+mutants of one module with `uv run mutmut run "llm_dependabot.<module>.*"`.
 
 ## Documentation site
 

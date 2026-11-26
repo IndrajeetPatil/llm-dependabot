@@ -263,7 +263,8 @@ def run_plan(config: Config, group: str, plan: list[tuple[Repo, Prompt]]) -> lis
                 log(f"{label}: skipped: {exc}")
                 results.append(f"{label}: skipped")
             except Exception as exc:  # ruff: ignore[blind-except] (keep going with the other repos)
-                detail = getattr(exc, "stderr", "") or exc
+                failed_command = isinstance(exc, subprocess.CalledProcessError)
+                detail = exc.stderr if failed_command and exc.stderr else exc
                 log(f"{label}: failed: {detail}")
                 results.append(f"{label}: failed")
         cleanup_finished(state)
