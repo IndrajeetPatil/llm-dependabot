@@ -27,6 +27,7 @@ from llm_dependabot.shell import sh
 
 
 def app_info() -> dict[str, Any]:
+    """The app's Info.plist."""
     return {
         "CFBundleName": APP_NAME,
         "CFBundleDisplayName": APP_NAME,
@@ -40,6 +41,7 @@ def app_info() -> dict[str, Any]:
 
 
 def build_icon(source: Path, icns: Path) -> None:
+    """Convert a PNG into the app's icns icon."""
     with tempfile.TemporaryDirectory(suffix=".iconset") as iconset:
         for size in (16, 32, 128, 256, 512):
             for scale, suffix in ((1, ""), (2, "@2x")):
@@ -112,6 +114,7 @@ def full_disk_access_granted(path: Path) -> bool:
 
 
 def show_full_disk_access_steps() -> None:
+    """Explain how to grant Full Disk Access, and open the settings."""
     typer.echo(
         "\nmacOS blocks launchd jobs from ~/Documents and similar folders unless"
         f" their program has Full Disk Access. Drag {APP_NAME} from the Finder"

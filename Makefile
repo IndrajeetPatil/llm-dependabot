@@ -10,7 +10,7 @@ SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
 
 .DEFAULT_GOAL := help
-.PHONY: help setup update-deps install uninstall list status dashboard cleanup clean-logs run dry-run lint format format-check typecheck audit check hooks hooks-install actions-lock-install actions-lock actions-lock-verify check-actions-lock-version docs docs-serve
+.PHONY: help setup update-deps install uninstall list status dashboard cleanup clean-logs run dry-run lint format format-check typecheck typecoverage deadcode audit build check hooks hooks-install actions-lock-install actions-lock actions-lock-verify check-actions-lock-version docs docs-serve
 
 ##@ General
 
@@ -35,6 +35,7 @@ setup: ## Interactive first-time setup (Brewfile, sign-ins, private repos, hooks
 
 update-deps: ## Upgrade the locked dependencies and the prek hook revisions
 	uv lock --upgrade
+	uv sync --locked
 	prek update
 
 ##@ Schedule
@@ -77,23 +78,32 @@ dry-run: ## List what a group would run: make dry-run GROUP=python [PROMPT=name]
 ##@ Development
 
 lint: ## Lint with ruff
-	uvx ruff check
+	uv run --locked ruff check
 
 format: ## Format with ruff
-	uvx ruff format
+	uv run --locked ruff format
 
 format-check: ## Check formatting with ruff
-	uvx ruff format --check
+	uv run --locked ruff format --check
 
 typecheck: ## Type-check with ty against the project's environment
-	uv sync --locked --no-dev --quiet
-	uvx ty check --python .venv
+	uv run --locked ty check
 
-audit: ## Check the locked dependencies for known vulnerabilities with uv audit
+typecoverage: ## Require complete strict type coverage with pyrefly
+	uv run --locked pyrefly coverage check --fail-under 100 --strict
+
+deadcode: ## Find unused code with unref
+	uv run --locked unref
+
+audit: ## Check dependencies for known vulnerabilities (uv audit) and declarations (deptry)
 	uv audit --preview-features audit-command --script hooks/check_private_names.py
 	uv audit --preview-features audit-command --locked
+	uv run --locked deptry src
 
-check: lint format-check typecheck audit ## Run all development checks
+build: ## Build the package's sdist and wheel into dist/
+	uv build --clear
+
+check: lint format-check typecheck typecoverage deadcode audit build ## Run all development checks and build the package
 
 hooks: ## Run every prek hook on all files
 	prek run --all-files

@@ -50,6 +50,8 @@ class Prompt(Strict):
 
 
 class Group(Strict):
+    """Repositories of some primary languages, run weekly at one time."""
+
     model_config = ConfigDict(frozen=True)
 
     name: str
@@ -61,7 +63,12 @@ class Group(Strict):
 
     @property
     def label(self) -> str:
+        """The launchd label of the group's scheduled run."""
         return f"{BUNDLE_ID}.{self.name}"
+
+    def cadence_for(self, prompt: Prompt) -> Cadence:
+        """How often the prompt runs in this group, after any override."""
+        return self.cadence.get(prompt.name, prompt.cadence)
 
 
 class Agent(Strict):
@@ -99,6 +106,8 @@ class PullRequestLabel(Strict):
 
 
 class Config(Strict):
+    """The validated contents of config.yaml, plus the private repositories."""
+
     owner: str
     prompts: list[Prompt] = Field(min_length=1)
     clone_root: Path
@@ -141,10 +150,8 @@ class Config(Strict):
                 raise ValueError(msg)
         return self
 
-    def cadence(self, group: Group, prompt: Prompt) -> Cadence:
-        return group.cadence.get(prompt.name, prompt.cadence)
-
     def prompt(self, name: str) -> Prompt:
+        """The prompt with this name, or fail listing the configured ones."""
         prompt = next((p for p in self.prompts if p.name == name), None)
         if prompt is None:
             choices = [p.name for p in self.prompts]
@@ -152,6 +159,7 @@ class Config(Strict):
         return prompt
 
     def group(self, name: str) -> Group:
+        """The group with this name, or fail listing the configured ones."""
         group = next((g for g in self.groups if g.name == name), None)
         if group is None:
             choices = [g.name for g in self.groups]
@@ -160,6 +168,8 @@ class Config(Strict):
 
 
 class PrivateRepos(Strict):
+    """The contents of private.yaml: names of private repositories to include."""
+
     repos: list[str] = []
 
 
@@ -187,4 +197,5 @@ def load_config() -> Config:
 
 
 def is_weekend(config: Config) -> bool:
+    """Whether scheduled jobs should do nothing today."""
     return config.skip_weekends and f"{local_today():%A}" in WEEKEND

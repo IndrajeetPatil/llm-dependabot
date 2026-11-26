@@ -28,6 +28,7 @@ class Repo(Strict):
 
     @property
     def full_name(self) -> str:
+        """The repository as owner/name."""
         return f"{self.owner}/{self.name}"
 
 
@@ -38,14 +39,20 @@ class GitHubModel(BaseModel):
 
 
 class Language(GitHubModel):
+    """A repository's primary language."""
+
     name: str
 
 
 class BranchRef(GitHubModel):
+    """A reference to a branch, such as the default one."""
+
     name: str
 
 
 class GitHubRepo(GitHubModel):
+    """A repository as gh repo list reports it."""
+
     name: str
     visibility: Literal["PUBLIC", "PRIVATE", "INTERNAL"]
     primary_language: Language | None
@@ -53,11 +60,14 @@ class GitHubRepo(GitHubModel):
     default_branch_ref: BranchRef | None
 
     def repo(self, owner: str) -> Repo:
+        """The repository, for one that has a default branch."""
         branch = cast("BranchRef", self.default_branch_ref)
         return Repo(owner=owner, name=self.name, default_branch=branch.name)
 
 
 class PullRequest(GitHubModel):
+    """A pull request as gh pr list reports it."""
+
     number: int
     url: str
     state: Literal["OPEN", "CLOSED", "MERGED"]
@@ -65,6 +75,8 @@ class PullRequest(GitHubModel):
 
 
 class PullRequestState(GitHubModel):
+    """The state of a pull request as gh pr view reports it."""
+
     state: Literal["OPEN", "CLOSED", "MERGED"]
 
 
@@ -74,6 +86,7 @@ def gh_json[T](kind: type[T], *args: str) -> T:
 
 
 def owned_repos(config: Config, visibility: str | None = None) -> list[GitHubRepo]:
+    """The owner's non-empty, non-archived source repositories, by name."""
     args = ["--visibility", visibility] if visibility is not None else []
     listing = gh_json(
         list[GitHubRepo],
@@ -95,6 +108,7 @@ def owned_repos(config: Config, visibility: str | None = None) -> list[GitHubRep
 
 
 def has_prompt(repo: Repo, prompt_path: str) -> bool:
+    """Whether the prompt is committed to the repository's default branch."""
     return succeeds(
         "gh",
         "api",
@@ -104,6 +118,7 @@ def has_prompt(repo: Repo, prompt_path: str) -> bool:
 
 
 def pr_state(repo: str, number: int) -> str:
+    """The state of a pull request: OPEN, CLOSED, or MERGED."""
     return gh_json(
         PullRequestState,
         "pr",
@@ -117,6 +132,7 @@ def pr_state(repo: str, number: int) -> str:
 
 
 def find_pr(repo: Repo, branch: str, started: dt.datetime) -> PullRequest | None:
+    """The pull request a run opened, if any."""
     fields = "number,url,state,createdAt"
     base = ["pr", "list", "-R", repo.full_name, "--state", "all", "--json", fields]
     prs = gh_json(list[PullRequest], *base, "--head", branch)

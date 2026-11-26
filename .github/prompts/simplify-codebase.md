@@ -105,7 +105,8 @@ follow:
 5. Run the relevant validation until the refactoring is demonstrated to be
    regression-free:
 
-   - `make check` (Ruff, formatting, ty, and `uv audit`)
+   - `make check` (Ruff, formatting, ty, pyrefly, unref, `uv audit`, deptry,
+     and the package build)
    - `make hooks`
    - `make docs`, if documentation changed
    - `make dry-run GROUP=python`, a smoke test that loads the configuration

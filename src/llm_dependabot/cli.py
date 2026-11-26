@@ -5,6 +5,7 @@ from typing import Annotated
 
 import typer
 
+from llm_dependabot import __version__
 from llm_dependabot.config import is_weekend, load_config
 from llm_dependabot.dashboard.render import render_dashboard
 from llm_dependabot.discovery import discover
@@ -25,7 +26,32 @@ app = typer.Typer(
     no_args_is_help=True,
     add_completion=False,
     pretty_exceptions_enable=False,
+    context_settings={"help_option_names": ["-h", "--help"]},
 )
+
+
+def show_version(value: bool) -> None:  # ruff: ignore[boolean-type-hint-positional-argument] (a Typer callback)
+    """Print the version and exit, for --version."""
+    if value:
+        typer.echo(f"llm-dependabot {__version__}")
+        raise typer.Exit
+
+
+@app.callback()
+def main(
+    *,
+    version: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            "-V",
+            callback=show_version,
+            is_eager=True,
+            help="Show the version and exit.",
+        ),
+    ] = False,
+) -> None:
+    """Handle the options shared by every command."""
 
 
 @app.command()
@@ -96,7 +122,7 @@ def status() -> None:
         mark = "loaded" if group.label in loaded else "NOT INSTALLED"
         typer.echo(f"{group.name:<10} {group.weekday:<10} {group.time:%H:%M}  {mark}")
         for prompt in config.prompts:
-            typer.echo(f"  {prompt.name}: {config.cadence(group, prompt)}")
+            typer.echo(f"  {prompt.name}: {group.cadence_for(prompt)}")
     if config.skip_weekends:
         typer.echo("scheduled jobs skip Saturdays and Sundays")
     state = load_state()
