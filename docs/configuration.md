@@ -24,7 +24,7 @@ Run `make install` after editing either file.
 | `agent_timeout_hours` | Upper bound for one repository's agent run |
 | `cleanup_interval_hours` | How often finished pull requests are cleaned up |
 | `skip_weekends` | Whether scheduled jobs do nothing on Saturdays and Sundays (default `true`) |
-| `label` | The label (`name`, six-digit hex `color`, and `description`) added to every pull request a run opens, created in each repository as needed; omit it to leave pull requests unlabelled |
+| `label` | The label (`name`, six-digit hex `color`, and `description`) added to every pull request a run opens, within a few minutes of the agent opening it, and created in each repository as needed; omit it to leave pull requests unlabelled |
 | `groups` | The schedule (see below) |
 
 ## The coding agent
