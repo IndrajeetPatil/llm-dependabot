@@ -11,7 +11,7 @@ Follow `AGENTS.md` throughout, especially its workflow rules.
 
 | Dependency | Where it is pinned | Keep aligned with |
 | --- | --- | --- |
-| CLI and docs dependencies | `dependencies` and the `docs` group in `pyproject.toml`, locked in `uv.lock` | The PyYAML minimum in `hooks/check_private_names.py` |
+| CLI, test, and docs dependencies | `dependencies` and the `dev` and `docs` groups in `pyproject.toml`, locked in `uv.lock` | The PyYAML minimum in `hooks/check_private_names.py` |
 | uv build backend | `uv_build` in `[build-system]` of `pyproject.toml` | The `required-version` of uv in `pyproject.toml` |
 | Python | `requires-python` in `pyproject.toml` and `hooks/check_private_names.py`, and `.python-version` | The latest stable CPython release |
 | prek hooks | Frozen `rev` commit SHAs in `prek.toml` | The latest release of each hook repository |

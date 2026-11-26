@@ -11,6 +11,11 @@
 - **[Ruff](https://docs.astral.sh/ruff/)** lints (with every rule enabled)
   and formats.
 
+- **[pytest](https://docs.pytest.org)** runs the test suite in `tests/`. It
+  fakes `gh` and `launchctl`, runs real `git` against local repositories, and
+  redirects every per-user path to a temporary directory, so it runs on any
+  OS.
+
 - **[ty](https://docs.astral.sh/ty/)** type-checks against the project's own
   environment.
 
@@ -87,7 +92,8 @@ If your account allows only selected actions, allow these:
 
 ```sh
 make hooks-install   # once per clone: install the git hooks
-make check           # ruff check, ruff format --check, ty check, and audit
+make check           # ruff check, ruff format --check, ty check, pytest, and audit
+make test            # run the pytest suite
 make audit           # check locked dependencies for known vulnerabilities
 make format          # apply ruff formatting
 make hooks           # run every prek hook on all files

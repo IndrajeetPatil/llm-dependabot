@@ -10,7 +10,7 @@ SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
 
 .DEFAULT_GOAL := help
-.PHONY: help setup update-deps install uninstall list status dashboard cleanup clean-logs run dry-run lint format format-check typecheck audit check hooks hooks-install actions-lock-install actions-lock actions-lock-verify check-actions-lock-version docs docs-serve
+.PHONY: help setup update-deps install uninstall list status dashboard cleanup clean-logs run dry-run lint format format-check typecheck test audit check hooks hooks-install actions-lock-install actions-lock actions-lock-verify check-actions-lock-version docs docs-serve
 
 ##@ General
 
@@ -85,15 +85,18 @@ format: ## Format with ruff
 format-check: ## Check formatting with ruff
 	uvx ruff format --check
 
-typecheck: ## Type-check with ty against the project's environment
-	uv sync --locked --no-dev --quiet
+typecheck: ## Type-check the package and tests with ty in the project's environment
+	uv sync --locked --quiet
 	uvx ty check --python .venv
 
 audit: ## Check the locked dependencies for known vulnerabilities with uv audit
 	uv audit --preview-features audit-command --script hooks/check_private_names.py
 	uv audit --preview-features audit-command --locked
 
-check: lint format-check typecheck audit ## Run all development checks
+test: ## Run the pytest suite
+	uv run --locked pytest
+
+check: lint format-check typecheck test audit ## Run all development checks
 
 hooks: ## Run every prek hook on all files
 	prek run --all-files
