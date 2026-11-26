@@ -38,12 +38,14 @@ self-update: ## Pull merged changes into this checkout, then reinstall the app a
 	@git diff --quiet HEAD || { echo "Commit or stash local changes first"; exit 1; }
 	git pull --ff-only --quiet
 	@brew bundle check --no-upgrade >/dev/null || brew bundle install --no-upgrade
+	@$(MAKE) --no-print-directory hooks-install
 	$(CLI) install
 
-update-deps: ## Upgrade the locked dependencies and the prek hook revisions
+update-deps: ## Upgrade the locked dependencies, the hook script's lock, and the prek hook revisions
 	uv lock --upgrade
+	uv lock --upgrade --script hooks/check_private_names.py
 	uv sync --locked
-	prek update
+	uv run --locked prek update
 
 ##@ Schedule
 
@@ -122,10 +124,10 @@ build: ## Build the package's sdist and wheel into dist/
 check: lint format-check typecheck typecoverage test deadcode audit build ## Run all development checks and build the package
 
 hooks: ## Run every prek hook on all files
-	prek run --all-files
+	uv run --locked prek run --all-files
 
 hooks-install: ## Install the prek git hooks (pre-commit and commit-msg)
-	prek install
+	uv run --locked prek install
 
 actions-lock-install: ## Install the pinned gh-actions-lock extension the actions.lock hook needs
 	@if [[ "$$(gh actions-lock --version 2>/dev/null)" == "actions-lock version $(ACTIONS_LOCK_VERSION)" ]]; then \

@@ -11,11 +11,11 @@ Follow `AGENTS.md` throughout, especially its workflow rules.
 
 | Dependency | Where it is pinned | Keep aligned with |
 | --- | --- | --- |
-| CLI, dev, and docs dependencies | `dependencies` and the `dev` and `docs` groups in `pyproject.toml`, locked in `uv.lock` | The PyYAML minimum in `hooks/check_private_names.py`, and the locked Ruff version with the `ruff-pre-commit` rev in `prek.toml` |
+| CLI, dev, and docs dependencies | `dependencies` and the `dev` and `docs` groups in `pyproject.toml`, locked in `uv.lock` | The PyYAML minimum in `hooks/check_private_names.py` |
 | uv build backend | `uv_build` in `[build-system]` of `pyproject.toml` | The `required-version` of uv in `pyproject.toml` |
 | Python | `.python-version`; the floor in `requires-python`, `target-version` of Ruff, and `python-version` of ty in `pyproject.toml`, and `requires-python` in `hooks/check_private_names.py` | `.python-version` on the latest stable CPython release, the floor one minor release below it |
 | prek hooks | Frozen `rev` commit SHAs in `prek.toml` | The latest release of each hook repository |
-| prek | `minimum_prek_version` in `prek.toml`; `prek-version: latest-known` in `prek.yml` follows the `prek-action` pin | The latest `j178/prek` release |
+| Hook script | `hooks/check_private_names.py.lock`, from its inline metadata | `make update-deps` upgrades it |
 | GitHub Actions | Every `uses:` line in `.github/workflows/` | `.github/workflows/actions.lock` and every other use of the same action |
 | Transitive GitHub Actions | `.github/workflows/actions.lock` | The action versions the workflows select |
 | gh-actions-lock | `ACTIONS_LOCK_VERSION` in the `Makefile` | The latest `github/gh-actions-lock` release |
@@ -48,10 +48,10 @@ Follow `AGENTS.md` throughout, especially its workflow rules.
 `make update-deps` runs `prek update`, and `[update] freeze = true` in
 `prek.toml` records each hook's resolved commit SHA in `rev` with a
 `# frozen: vX.Y.Z` comment. Never rewrite a frozen `rev` back to a bare
-mutable tag. Raise `minimum_prek_version` to the latest prek release, and
-keep the zizmor and conventional-pre-commit hooks on the same versions as
-`security.yml` and `conventional-commits.yml`, and the `ruff-pre-commit` rev
-on the Ruff version locked in `uv.lock`.
+mutable tag. prek itself, Ruff, and ty are dev dependencies locked in
+`uv.lock`, so they need no pins in `prek.toml`. Keep the zizmor and
+conventional-pre-commit hooks on the same versions as `security.yml` and
+`conventional-commits.yml`.
 
 ## Workflows
 
