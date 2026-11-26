@@ -164,9 +164,10 @@ whatever is checked out there is what the scheduled runs execute.
 - Python and its dependencies come only from uv: uv-managed interpreters
   (`python-preference` in `pyproject.toml`), and a script declares its
   dependencies inline and runs from its own lockfile (`uv lock --script`).
-  In CI, `astral-sh/setup-uv` supplies Python (`python-version`), and caches
-  dependencies and interpreters (`enable-cache`, `cache-python`); never add
-  `actions/setup-python`, `actions/cache`, pip, or another action for these.
+  In CI, `astral-sh/setup-uv` installs uv, selects Python (`python-version`),
+  and caches dependencies (`enable-cache`). Let uv download managed interpreters
+  on demand rather than caching them; never add `actions/setup-python`,
+  `actions/cache`, pip, or another action for these.
   Tools with an official action or prek hook, such as prek itself, Ruff's
   hooks, and zizmor, keep using it.
 
