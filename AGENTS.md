@@ -154,14 +154,17 @@ whatever is checked out there is what the scheduled runs execute.
 - Add type annotations everywhere; `ty check` and pyrefly's strict type
   coverage must pass. If they disagree, ty wins.
 
-- Get Python and every Python tool through uv. Interpreters are uv-managed
-  only (`python-preference` in `pyproject.toml`), locally and in CI; never
-  add `actions/setup-python`, pip, pipx, or a Homebrew Python tool.
-  Development tools, prek included, belong in the `dev` dependency group, so
-  `uv.lock` pins them; run them with `uv run --locked`, never `uvx`, and
-  have prek hooks call them the same way instead of pinning their own
-  copies. A standalone script declares its dependencies inline and runs from
-  its own lockfile (`uv lock --script`). Scheduled runs use `--no-dev`.
+- Development tools belong in the `dev` dependency group, so `uv.lock` pins
+  them; never run them with `uvx`. Scheduled runs use `--no-dev`.
+
+- Python and its dependencies come only from uv: uv-managed interpreters
+  (`python-preference` in `pyproject.toml`), and a script declares its
+  dependencies inline and runs from its own lockfile (`uv lock --script`).
+  In CI, `astral-sh/setup-uv` supplies Python (`python-version`), and caches
+  dependencies and interpreters (`enable-cache`, `cache-python`); never add
+  `actions/setup-python`, `actions/cache`, pip, or another action for these.
+  Tools with an official action or prek hook, such as prek itself, Ruff's
+  hooks, and zizmor, keep using it.
 
 - Keep the documentation site building with `make docs`: register new pages
   in `nav` and the `llmstxt` sections of `mkdocs.yml`, and link outside

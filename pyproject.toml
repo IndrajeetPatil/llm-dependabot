@@ -44,7 +44,6 @@ Changelog = "https://www.indrapatil.com/llm-dependabot/changelog/"
 dev = [
   "coverage>=7.17.5",
   "deptry>=0.25.1",
-  "prek>=0.5.11",
   "pyrefly>=1.5.0",
   "pytest>=9.2.0",
   "pytest-random-order>=1.2.0",
@@ -62,7 +61,8 @@ build-backend = "uv_build"
 [tool.uv]
 required-version = ">=0.13.0"
 # Use only Python builds that uv downloads and manages, never the system's or
-# Homebrew's, so development, CI, and scheduled runs share one interpreter.
+# Homebrew's, so development, CI, and scheduled runs share one interpreter,
+# and setup-uv can cache it in CI.
 python-preference = "only-managed"
 
 [tool.pytest]

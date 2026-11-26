@@ -21,8 +21,7 @@
 
 `make setup` automatically installs missing command-line tools from the
 [`Brewfile`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/Brewfile):
-`uv`, `gh`, `gitleaks`, and the default coding agent; uv then downloads
-Python and every Python tool, prek included, from `uv.lock`. It also
+`uv`, `gh`, `prek`, `gitleaks`, and the default coding agent. It also
 installs the pinned [`gh-actions-lock`](https://github.com/github/gh-actions-lock)
 extension that the workflow lockfile hook needs.
 
@@ -350,8 +349,7 @@ make self-update
 ```
 
 It requires `main` checked out without local changes, then pulls, installs
-anything new in the `Brewfile`, reinstalls the Git hooks, and runs
-`make install`. That covers every
+anything new in the `Brewfile`, and runs `make install`. That covers every
 kind of change:
 
 | Change | Handled by |
@@ -360,7 +358,6 @@ kind of change:
 | `config.yaml` and the launchd agents | `make install` rewrites and reloads the agents |
 | The app's sources in `app/` | `make install` rebuilds the app; then grant it Full Disk Access again |
 | The `Brewfile` | `brew bundle install` |
-| `prek.toml` and the locked prek | `make hooks-install` |
 
 `make status` and every run's log warn when this checkout is behind
 `origin/main` or has another branch checked out, since scheduled runs execute
