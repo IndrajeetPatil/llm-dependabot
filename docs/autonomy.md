@@ -165,7 +165,7 @@ serves as the public example. It is a template rather than a widely used
 system, but it shows what a minimal software factory looks like: its
 `AGENTS.md`, prompts, skills, quality gates, browser tests, and reviewer loop
 let the coding agent fix CI and review findings, then squash-merge once the
-review approves and the required checks pass.
+review approves and every check passes.
 
 > [!IMPORTANT]
 > Autonomy does not remove oversight. People own the boundaries, watch how
