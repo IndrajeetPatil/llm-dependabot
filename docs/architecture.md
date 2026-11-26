@@ -27,7 +27,14 @@ validate the configuration, state, and `gh` output, [PyYAML](https://pyyaml.org)
 
 ## Process tree
 
-![Process and run: launchd starts the LLM Dependabot app, login shell, and `uv run llm-dependabot`, with caffeinate keeping the Mac awake; each discovered prompt is checked for due status, and due prompts get an isolated worktree and coding-agent run, with pull requests labelled while the agent works, before the pull-request decision and recorded run date.](images/process-and-run.webp)
+```mermaid
+flowchart LR
+    launchd[launchd] --> app[LLM Dependabot app<br/>Full Disk Access]
+    app --> shell[Login zsh<br/>PATH and keychain]
+    shell --> cli[uv run llm-dependabot]
+    cli --> agent[Coding agent<br/>in Git worktree]
+    cli --> awake[caffeinate<br/>keeps Mac awake]
+```
 
 - **The app** starts the job as a child process rather than replacing itself,
   so macOS treats it as the "responsible process" and applies its Full Disk
@@ -38,6 +45,27 @@ validate the configuration, state, and `gh` output, [PyYAML](https://pyyaml.org)
   through environment variables.
 
 ## A run
+
+```mermaid
+flowchart TD
+    discover[Discover repository and prompts] --> due{Prompt due?}
+    due -- No --> skip[Skip]
+    due -- Yes --> copy{Project copy exists?}
+    copy -- Yes --> existing[Update existing copy]
+    copy -- No --> prepare[Prepare new copy]
+    existing --> worktree[Create Git worktree]
+    prepare --> worktree
+    worktree --> run[Run coding agent with a time limit]
+    run -. Pull requests are labelled while the agent works .-> pr
+    run --> success{Agent exited successfully?}
+    success -- No --> failed[Log failure; prompt remains due]
+    success -- Yes --> pr{Pull request opened?}
+    pr -- Yes --> pending[Record pending state]
+    pr -- No --> remove[Remove worktree]
+    pending --> date[Record run date]
+    remove --> date
+    date -. Every completed run counts towards the cadence .-> cadence[Next due check]
+```
 
 - **Discovery** lists the owner's repositories with `gh` and checks each for
   the configured prompts through the GitHub API, so repositories need not be

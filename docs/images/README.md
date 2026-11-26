@@ -17,7 +17,6 @@ The hex sticker is drawn by hand; see [hextools](../../hextools/README.md).
 | [`tech-stack.webp`](tech-stack.webp) | Python package, project dependencies, core libraries, local checks, and CI supply-chain checks | [development.md](../development.md) |
 | [`ecosystem-schedule.webp`](ecosystem-schedule.webp) | Three shipped prompts across configured project-group schedules and pull-request cleanup | [configuration.md](../configuration.md) |
 | [`multiple-prompts.webp`](multiple-prompts.webp) | The isolated run pattern for update-deps, simplify-codebase, gsc-analysis, and more | [configuration.md](../configuration.md) |
-| [`process-and-run.webp`](process-and-run.webp) | Responsible process tree, prompt cadence decisions, per-prompt worktrees, and run tracking | [architecture.md](../architecture.md) |
 | [`usage-overview.webp`](usage-overview.webp) | Schedule and dashboard, on-demand runs, transcripts, and cleanup | [usage.md](../usage.md) |
 | [`setup-checklist.webp`](setup-checklist.webp) | Local setup choices, repository opt-in, prompt conventions, and project readiness | [setup.md](../setup.md) |
 | [`autonomous-evolution.webp`](autonomous-evolution.webp) | Signal, prompt, agent, checks, review, merge, production, and feedback | [autonomy.md](../autonomy.md) |
@@ -91,22 +90,6 @@ Top band “A staggered schedule”: show a calendar/clock icon and four project
 Lower band “Each project has its own software factory”, summary exactly “Prompts drive dependency updates, refactoring, simplification, and more”. Make the entire project-local factory prominent and unmistakable. Show every stage in this exact order, with a separate clear outline icon and readable label for each: “Committed prompt + project guidance” → “Coding agent in isolated worktree” → “Pull request” → “Project checks” → “Independent LLM reviewer” → “Updated project”. Show “Independent LLM reviewer” with a friendly outline robot with simple glasses. Draw clear feedback loops from both “Project checks” and “Independent LLM reviewer” back to “Coding agent in isolated worktree”, labelled “Findings”. This represents project-local fixes before merge; llm-dependabot does not approve or merge pull requests. Keep the scheduled groups and project-local factory as separate levels.
 
 Footer note exactly “Weekly group schedules; monthly prompts run when due; one repository and due prompt at a time”. Do not show Mac, Apple, launchd, shell commands, private repository names, credentials, or exact monthly dates. Ensure every label is exact, spelling is correct, arrows are distinct and clear, and all factory stages are visible at README width.
-```
-### Process and run
-
-- **File:** `docs/images/process-and-run.webp`
-
-- **Companion:** [`process-and-run.prompt.txt`](process-and-run.prompt.txt)
-
-
-```text
-Use case: infographic-diagram. Asset type: documentation diagram for llm-dependabot's process tree and per-repository run. Create a landscape 3:2 editorial infographic with warm paper #faf8f4, ink #201d18, muted ink #5d574c, fine hairlines #e3ded2, sparse teal #14584d, and muted rust #9a3d2e for the worktree-removal icon. Use Fraunces-like serif title and band headings, Hanken-like sans labels, flat outline icons, and thin orthogonal arrows. Two horizontal bands, no cards, shadows, gradients, texture, 3D, emoji, or decorative footer. British English.
-
-Title exactly “Process and run”.
-
-Top band “Responsible process”: “launchd” → “LLM Dependabot app” (note “Responsible process · Full Disk Access”) → “Login shell” (note “Uses the user's login environment”) → “uv run llm-dependabot” → “Coding agent” (note “Runs in a Git worktree”). Branch from “uv run llm-dependabot” to “caffeinate” with note “keeps the Mac awake”.
-
-Bottom band “One repository run”: “Discover repository and prompt” → decision “Prompt due?” (note “weekly, or monthly not yet run this month”). “No” leads to “Skip”. “Yes” continues to decision “Project copy exists?” with “Yes → Update existing copy” and “No → Prepare a new copy”; rejoin at “Create Git worktree” → “Run coding agent with a time limit” → decision “Pull request opened?”. Yes branch: “Record pending state” → “Record run date”. No branch: “Remove worktree” → “Record run date”. Put the note “Every completed run counts towards the cadence” beside the date outcomes. Mark the segment “Create Git worktree” → agent → pull-request decision as repeating for each due prompt in the repository. Add muted note “Pull requests are labelled while the agent works” inside the dashed repeat area, below the coding-agent node. Footer exactly “Failures are logged and not recorded; the next prompt or repository still runs”. Make all branches distinct, non-crossing, and legible.
 ```
 ### Usage overview
 
