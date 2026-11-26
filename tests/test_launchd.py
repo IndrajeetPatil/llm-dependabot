@@ -11,6 +11,7 @@ from llm_dependabot.launchd import cli_command, desired_agents
 
 if TYPE_CHECKING:
     from llm_dependabot.config import Config
+    from tests.conftest import FakeCommands
 
 
 def test_there_is_one_agent_per_group_plus_the_cleanup(config: Config) -> None:
@@ -82,3 +83,48 @@ def test_the_cli_command_quotes_the_checkout(monkeypatch: pytest.MonkeyPatch) ->
         "web apps",
         "--scheduled",
     ]
+
+
+def install_plists(*labels: str) -> None:
+    """Write empty plists for these launchd labels, as install does."""
+    launchd.LAUNCH_AGENTS.mkdir(parents=True, exist_ok=True)
+    for label in labels:
+        (launchd.LAUNCH_AGENTS / f"{label}.plist").write_bytes(b"")
+
+
+def test_installed_labels_lists_only_this_tools_agents() -> None:
+    """Only plists with the bundle identifier's prefix count, sorted."""
+    install_plists(
+        "com.indrajeetpatil.llm-dependabot.rest",
+        "com.indrajeetpatil.llm-dependabot.cleanup",
+        "com.example.other",
+    )
+    assert launchd.installed_labels() == [
+        "com.indrajeetpatil.llm-dependabot.cleanup",
+        "com.indrajeetpatil.llm-dependabot.rest",
+    ]
+
+
+def test_unload_boots_the_agent_out_and_deletes_its_plist(
+    commands: FakeCommands, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Unloading stops the job in the user's GUI domain and removes the plist."""
+    monkeypatch.setattr(launchd.os, "getuid", lambda: 501)
+    commands.install("launchctl")
+    install_plists("com.indrajeetpatil.llm-dependabot.rest")
+    launchd.unload("com.indrajeetpatil.llm-dependabot.rest")
+    assert commands.calls("launchctl") == [
+        ["bootout", "gui/501/com.indrajeetpatil.llm-dependabot.rest"]
+    ]
+    assert launchd.installed_labels() == []
+
+
+def test_running_jobs_reads_each_agents_state(commands: FakeCommands) -> None:
+    """A job counts as running only when launchctl says its state is running."""
+    install_plists(
+        "com.indrajeetpatil.llm-dependabot.python",
+        "com.indrajeetpatil.llm-dependabot.rest",
+    )
+    commands.on("launchctl", ".python", stdout="{\n\tstate = running\n}\n")
+    commands.on("launchctl", ".rest", stdout="{\n\tstate = waiting\n}\n")
+    assert launchd.running_jobs() == ["com.indrajeetpatil.llm-dependabot.python"]

@@ -17,7 +17,7 @@ Guidance for AI coding agents working in this repository.
 | --- | --- |
 | `src/llm_dependabot/` | The CLI package (Python 3.15+); see the module map below |
 | `src/llm_dependabot/dashboard/templates/` | The dashboard's HTML, CSS, and JavaScript |
-| `tests/` | pytest suite, one file per module; `conftest.py` redirects every per-user path to a temporary directory |
+| `tests/` | pytest suite, one file per module; `conftest.py` redirects every per-user path to a temporary directory and provides the `commands` fixture of fake executables |
 | `config.yaml` | Shared settings and the source of truth for prompts, cadences, groups, weekdays, and times |
 | `private.example.yaml` | Template for the git-ignored `private.yaml` listing private repositories |
 | `app/` | Sources of the LLM Dependabot app (`launcher.c`, `icon.png`), which holds the Full Disk Access grant |
@@ -66,7 +66,7 @@ Prefer the Makefile targets over invoking tools directly:
 ```sh
 make help          # list all targets
 make check         # lint, format check, type check and coverage, tests, dead code, audit, and build
-make test          # the pytest suite alone (uv run pytest -k NAME for one test)
+make test          # the pytest suite with 100% line and branch coverage (uv run pytest -k NAME for one test)
 make build         # build the sdist and wheel into dist/
 make hooks         # every prek hook on all files; must pass before committing
 make format        # apply ruff formatting
@@ -92,11 +92,19 @@ owner's Mac.
   maintained libraries (Rust-backed where available) over hand-written code;
   the current ones are Typer, pydantic, PyYAML, and filelock.
 
-- Cover every change in behaviour with a test in the module's `tests/` file.
-  Tests run on Linux in CI, so fake `gh`, `launchctl`, and other macOS or
-  network calls with `monkeypatch` on the module that imports them, and use
-  real `git` against a local bare repository instead of faking it. Never let
-  a test touch the real home directory.
+- Cover every change in behaviour with a test in the module's `tests/` file;
+  `make test` requires 100% line and branch coverage. Tests run on Linux in
+  CI: script `gh`, `launchctl`, and other external commands with the
+  `commands` fixture, which puts fake executables first on `PATH`; use
+  `monkeypatch` on the importing module for Python-level fakes; and use real
+  `git` against a local bare repository instead of faking it. Never let a
+  test touch the real home directory or `config.yaml`.
+
+- pytest runs strictly (see `[tool.pytest]`): every warning is an error,
+  tests run in random order, and markers, parametrisation ids, and config
+  keys are checked. Fix a warning or an order dependence at its cause; never
+  filter it out or pin the order. Parametrise cases of one behaviour, with
+  `pytest.param(..., id=...)`, instead of copying a test.
 
 - Keep non-Python assets, such as the dashboard's HTML, CSS, and JavaScript,
   in their own files, loaded with `importlib.resources`, not in Python strings.

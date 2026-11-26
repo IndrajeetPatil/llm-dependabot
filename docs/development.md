@@ -18,9 +18,13 @@
   preview rules and Google-style docstring checks, enabled) and formats.
 
 - **[pytest](https://docs.pytest.org)** runs the test suite in `tests/`. It
-  fakes `gh` and `launchctl`, runs real `git` against local repositories, and
-  redirects every per-user path to a temporary directory, so it runs on any
-  OS.
+  puts fake `gh`, `launchctl`, and other external commands first on `PATH`,
+  runs real `git` against local repositories, and redirects every per-user
+  path to a temporary directory, so it runs on any OS. It runs in strict mode,
+  in random order ([pytest-random-order](https://github.com/jbasko/pytest-random-order)),
+  and turns every warning into an error, and
+  **[coverage.py](https://coverage.readthedocs.io)** requires 100% line and
+  branch coverage.
 
 - **[ty](https://docs.astral.sh/ty/)** type-checks against the project's own
   environment, and **[pyrefly](https://pyrefly.org)** requires complete
@@ -104,7 +108,7 @@ If your account allows only selected actions, allow these:
 ```sh
 make hooks-install   # once per clone: install the git hooks
 make check           # lint, format check, type check and coverage, tests, dead code, audit, and build
-make test            # run the pytest suite
+make test            # run the pytest suite and require full coverage
 make audit           # check dependencies for known vulnerabilities and declarations
 make build           # build the sdist and wheel into dist/
 make format          # apply ruff formatting

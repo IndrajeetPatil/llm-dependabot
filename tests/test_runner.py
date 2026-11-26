@@ -1,15 +1,17 @@
 """Tests for planning due prompts, running the agent, and labelling its pull request."""
 
 import datetime as dt
+import os
 import subprocess
 import sys
 import threading
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple, override
 
 import pytest
 import typer
 
 from llm_dependabot import runner
+from llm_dependabot.checkouts import SkipRepoError
 from llm_dependabot.config import Agent, Prompt, PullRequestLabel
 from llm_dependabot.github import PullRequest, Repo
 from llm_dependabot.runner import (
@@ -19,14 +21,16 @@ from llm_dependabot.runner import (
     planned_runs,
     process_repo,
     run_agent,
+    run_plan,
 )
 from llm_dependabot.state import Checkout, State, load_state
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterator
     from pathlib import Path
 
     from llm_dependabot.config import Config
+    from tests.conftest import FakeCommands
 
 TODAY: dt.date = dt.datetime.now().astimezone().date()
 STARTED: dt.datetime = dt.datetime(2026, 11, 26, 9, tzinfo=dt.UTC)
@@ -334,3 +338,160 @@ def test_process_repo(
     pending = [entry.pr_number for entry in load_state().pending]
     assert pending == ([case.pr.number] if case.pr else [])
     assert removed == ([] if case.pr else [checkout])
+
+
+def test_run_agent_stops_an_agent_that_outlasts_its_timeout(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A hung agent's whole process group is stopped, and the run reports -1."""
+
+    class QuickTimeout(subprocess.Popen[str]):
+        """Time out after a fraction of a second instead of hours."""
+
+        @override
+        def communicate(
+            self,
+            input: str | None = None,
+            timeout: float | None = None,
+        ) -> tuple[str, str]:
+            """Wait briefly, whatever timeout the caller asked for."""
+            del timeout
+            return super().communicate(input, timeout=0.2)
+
+    monkeypatch.setattr(runner.subprocess, "Popen", QuickTimeout)
+    agent = Agent(
+        name="sleepy", command=[sys.executable, "-c", "import time; time.sleep(30)"]
+    )
+    assert run_agent(agent, tmp_path, "prompt", tmp_path / "run.log", 1) == -1
+
+
+def test_agent_pass_runs_the_committed_prompt(
+    config: Config, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The agent gets the prompt file's text, then the run's pull request is found."""
+    (tmp_path / "prompt.md").write_text("Update everything.")
+    checkout = checkout_in(tmp_path)
+    found: list[str] = []
+
+    def find_pr(_repo: Repo, branch: str, _started: dt.datetime) -> PullRequest:
+        """Record the branch looked up, and find pull request 5."""
+        found.append(branch)
+        return pull_request(5)
+
+    monkeypatch.setattr(runner, "find_pr", find_pr)
+    monkeypatch.setattr(runner, "current_branch", lambda _checkout: "agent/branch")
+    config.label = None
+    config.agent = Agent(
+        name="echo",
+        command=[sys.executable, "-c", "import sys; print(sys.argv[1])", "{prompt}"],
+    )
+    repo = Repo(owner="octo", name="project", default_branch="main")
+    prompt = Prompt(name="p", path="prompt.md")
+    code, pr, labelled = runner.agent_pass(checkout, repo, prompt, config, "project p")
+    assert (code, pr, labelled) == (0, pull_request(5), set())
+    assert checkout.log.read_text() == "Update everything.\n"
+    assert checkout.final_branch == "agent/branch"
+    assert found == ["agent/branch"]
+
+
+def test_process_repo_removes_the_checkout_when_the_agent_cannot_run(
+    config: Config, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """An error during the agent pass removes the worktree, then propagates."""
+    checkout = checkout_in(tmp_path)
+    removed: list[Checkout] = []
+
+    def agent_pass(*_args: object) -> tuple[int, PullRequest | None, set[int]]:
+        """Fail as a missing prompt file would."""
+        raise FileNotFoundError("prompt.md")
+
+    monkeypatch.setattr(runner, "prepare_checkout", lambda *_args: checkout)
+    monkeypatch.setattr(runner, "agent_pass", agent_pass)
+    monkeypatch.setattr(runner, "remove_checkout", removed.append)
+    repo = Repo(owner="octo", name="project", default_branch="main", prompts=("p",))
+    with pytest.raises(FileNotFoundError):
+        process_repo(repo, Prompt(name="p", path="p.md"), config, State(), tmp_path)
+    assert removed == [checkout]
+
+
+def test_run_plan_keeps_going_after_a_repository_fails(
+    commands: FakeCommands,
+    config: Config,
+    monkeypatch: pytest.MonkeyPatch,
+    make_repo: Callable[..., Repo],
+) -> None:
+    """Every planned run is attempted, only successes count as run, then cleanup."""
+    commands.install("caffeinate")
+    outcomes: dict[str, Exception | str] = {
+        "ok": "ok update-deps: PR #1",
+        "skip": SkipRepoError("not a git clone"),
+        "boom": subprocess.CalledProcessError(1, "git", stderr="fetch failed"),
+    }
+
+    def process_repo(repo: Repo, *_args: object) -> str:
+        """Succeed, skip, or fail, by repository name."""
+        outcome = outcomes[repo.name]
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+    cleaned: list[State] = []
+    monkeypatch.setattr(runner, "process_repo", process_repo)
+    monkeypatch.setattr(runner, "cleanup_finished", cleaned.append)
+    prompt = config.prompt("update-deps")
+    plan = [(make_repo(name, "update-deps"), prompt) for name in outcomes]
+
+    assert run_plan(config, "python", plan) == [
+        "ok update-deps: PR #1",
+        "skip update-deps: skipped",
+        "boom update-deps: failed",
+    ]
+    assert list(load_state().last_runs) == ["update-deps octo/ok"]
+    assert len(cleaned) == 1
+    assert commands.calls("caffeinate") in ([], [["-i", "-w", str(os.getpid())]])
+    [run_dir] = runner.LOG_DIR.iterdir()
+    assert run_dir.name.endswith("-python")
+
+
+@pytest.fixture
+def lock_held() -> Iterator[None]:
+    """Hold the run lock from another process, as a running group would."""
+    runner.LOCK_FILE.parent.mkdir(parents=True)
+    code = (
+        "import fcntl, sys, time; f = open(sys.argv[1], 'w');"
+        " fcntl.flock(f, fcntl.LOCK_EX); print('held', flush=True); time.sleep(30)"
+    )
+    with subprocess.Popen(
+        [sys.executable, "-c", code, str(runner.LOCK_FILE)],
+        stdout=subprocess.PIPE,
+        text=True,
+    ) as holder:
+        assert holder.stdout is not None
+        assert holder.stdout.readline() == "held\n"
+        yield
+        holder.kill()
+
+
+@pytest.mark.parametrize(
+    ("fixtures", "cleans"),
+    [
+        pytest.param([], True, id="no run"),
+        pytest.param(["lock_held"], False, id="a run holds the lock"),
+    ],
+)
+def test_cleanup_waits_for_no_run(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    request: pytest.FixtureRequest,
+    fixtures: list[str],
+    *,
+    cleans: bool,
+) -> None:
+    """Cleanup runs unless a run holds the lock, in which case it skips."""
+    for fixture in fixtures:
+        request.getfixturevalue(fixture)
+    cleaned: list[State] = []
+    monkeypatch.setattr(runner, "cleanup_finished", cleaned.append)
+    runner.cleanup()
+    assert len(cleaned) == (1 if cleans else 0)
+    assert ("a run is in progress" in capsys.readouterr().out) is not cleans

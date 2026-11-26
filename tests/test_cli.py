@@ -1,12 +1,14 @@
 """Tests for the Typer commands, with discovery and runs faked."""
 
 import datetime as dt
+import runpy
+import sys
 from typing import TYPE_CHECKING
 
 import pytest
 from typer.testing import CliRunner
 
-from llm_dependabot import cli
+from llm_dependabot import __version__, cli
 from llm_dependabot.cli import app
 from llm_dependabot.state import Pending, State, save_state
 
@@ -120,9 +122,124 @@ def test_status_shows_the_schedule_and_pending_pull_requests(home: Path) -> None
     )
 
 
-def test_dashboard_writes_the_page(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The dashboard command writes the rendered page."""
+@pytest.mark.parametrize("flag", ["--version", "-V"])
+def test_version(flag: str) -> None:
+    """The version flag prints the version and exits."""
+    result = runner.invoke(app, [flag])
+    assert result.exit_code == 0
+    assert result.output == f"llm-dependabot {__version__}\n"
+
+
+def test_python_dash_m_runs_the_cli(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Python -m llm_dependabot runs the same app."""
+    monkeypatch.setattr(sys, "argv", ["llm_dependabot", "--version"])
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_module("llm_dependabot", run_name="__main__")
+    assert exit_info.value.code == 0
+
+
+@pytest.mark.parametrize(
+    ("args", "weekend", "cleans"),
+    [
+        pytest.param([], True, True, id="by hand, even at weekends"),
+        pytest.param(["--scheduled"], False, True, id="scheduled on a weekday"),
+        pytest.param(["--scheduled"], True, False, id="scheduled at the weekend"),
+    ],
+)
+def test_cleanup(
+    monkeypatch: pytest.MonkeyPatch,
+    args: list[str],
+    *,
+    weekend: bool,
+    cleans: bool,
+) -> None:
+    """Cleanup runs by hand any day, but a scheduled one skips weekends."""
+    cleaned: list[bool] = []
+    monkeypatch.setattr(cli, "is_weekend", lambda _config: weekend)
+    monkeypatch.setattr(cli, "cleanup_pending", lambda: cleaned.append(True))
+    result = runner.invoke(app, ["cleanup", *args])
+    assert result.exit_code == 0, result.output
+    assert cleaned == ([True] if cleans else [])
+
+
+def test_status_lists_clones_awaiting_deletion(home: Path) -> None:
+    """Clones this tool made are listed until their pull requests finish."""
+    save_state(State(managed_clones=[home / "clones/app"]))
+    result = runner.invoke(app, ["status"])
+    assert f"clones to delete after their PRs finish:\n  {home / 'clones/app'}" in (
+        result.output
+    )
+
+
+@pytest.mark.parametrize(
+    ("args", "opened"),
+    [
+        pytest.param([], True, id="opens by default"),
+        pytest.param(["--no-open"], False, id="--no-open"),
+    ],
+)
+def test_dashboard_writes_the_page(
+    monkeypatch: pytest.MonkeyPatch, args: list[str], *, opened: bool
+) -> None:
+    """The dashboard command writes the page, and opens it unless told not to."""
+    launched: list[str] = []
     monkeypatch.setattr(cli, "render_dashboard", lambda _config: "<!doctype html>")
-    result = runner.invoke(app, ["dashboard", "--no-open"])
+    monkeypatch.setattr(cli.typer, "launch", launched.append)
+    result = runner.invoke(app, ["dashboard", *args])
     assert result.exit_code == 0, result.output
     assert cli.DASHBOARD_FILE.read_text() == "<!doctype html>"
+    assert launched == ([cli.DASHBOARD_FILE.as_uri()] if opened else [])
+
+
+@pytest.mark.parametrize("granted", [True, False])
+def test_install(monkeypatch: pytest.MonkeyPatch, *, granted: bool) -> None:
+    """Install loads the agents, then shows the access steps if still needed."""
+    calls: list[str] = []
+    monkeypatch.setattr(cli, "install_agents", lambda _config: calls.append("install"))
+    monkeypatch.setattr(cli, "full_disk_access_granted", lambda _root: granted)
+    monkeypatch.setattr(
+        cli, "show_full_disk_access_steps", lambda: calls.append("steps")
+    )
+    result = runner.invoke(app, ["install"])
+    assert result.exit_code == 0, result.output
+    assert calls == (["install"] if granted else ["install", "steps"])
+    assert "pending pull requests: 0" in result.output
+
+
+def test_uninstall_removes_every_agent(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Uninstall unloads each installed agent."""
+    labels = ["com.indrajeetpatil.llm-dependabot.python"]
+    unloaded: list[str] = []
+    monkeypatch.setattr(cli, "installed_labels", lambda: labels)
+    monkeypatch.setattr(cli, "unload", unloaded.append)
+    result = runner.invoke(app, ["uninstall"])
+    assert result.exit_code == 0, result.output
+    assert unloaded == labels
+    assert f"removed {labels[0]}" in result.output
+
+
+@pytest.mark.parametrize("terminal", [True, False])
+def test_setup_needs_a_terminal(
+    monkeypatch: pytest.MonkeyPatch, *, terminal: bool
+) -> None:
+    """Setup runs its steps from a terminal, and refuses to run without one."""
+    ran: list[Config] = []
+    monkeypatch.setattr(cli.os, "isatty", lambda _fd: terminal)
+    monkeypatch.setattr(cli, "run_setup", ran.append)
+    result = runner.invoke(app, ["setup"])
+    assert result.exit_code == (0 if terminal else 1)
+    assert len(ran) == (1 if terminal else 0)
+    assert ("make dry-run" in result.output) is terminal
+
+
+@pytest.mark.parametrize("skip_weekends", [True, False])
+def test_status_mentions_skipped_weekends_only_when_on(
+    config: Config, *, skip_weekends: bool
+) -> None:
+    """The weekend note appears only when scheduled jobs skip weekends."""
+    config.skip_weekends = skip_weekends
+    config.groups = [
+        g for g in config.groups if g.weekday not in {"Saturday", "Sunday"}
+    ]
+    result = runner.invoke(app, ["status"])
+    assert ("skip Saturdays and Sundays" in result.output) is skip_weekends

@@ -1,6 +1,8 @@
 """Tests for reading runs back from the logs and rendering the dashboard."""
 
 import datetime as dt
+from pathlib import Path
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 import pytest
@@ -16,8 +18,6 @@ from llm_dependabot.dashboard.runs import Job, collect_runs, parse_group_log, re
 from llm_dependabot.state import Pending, State, save_state
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from llm_dependabot.config import Config
 
 
@@ -179,3 +179,83 @@ def test_render_dashboard(monkeypatch: pytest.MonkeyPatch, config: Config) -> No
     assert '<a href="https://github.com/octo/app/pull/12">#12</a>' in page
     assert '<span class="chip merged">merged</span>' in page
     assert render.template("style.css") in page
+
+
+@pytest.mark.parametrize(
+    ("lines", "expected"),
+    [
+        pytest.param(
+            [
+                "group python: app",
+                "app: running agent in /wt/app (log: /logs/run/app.log)",
+                "app: no pull request was opened; removing the worktree",
+            ],
+            "no pull request",
+            id="no pull request",
+        ),
+        pytest.param(
+            ["group python: app", "app: skipped: busy"],
+            "skipped: busy",
+            id="skipped before starting",
+        ),
+        pytest.param(
+            ["group python: app", "other: agent exited with code 0"],
+            None,
+            id="event for a job that never started",
+        ),
+    ],
+)
+def test_job_problems(lines: list[str], expected: str | None) -> None:
+    """Jobs record why they ended without a PR; stray events are ignored."""
+    [run] = parse_group_log("python", [(AT, line) for line in lines])
+    assert [job.problem for job in run.jobs] == ([] if expected is None else [expected])
+
+
+def test_collect_runs_without_any_logs(
+    monkeypatch: pytest.MonkeyPatch, config: Config
+) -> None:
+    """Before the first run there is no log directory, and so no runs."""
+    monkeypatch.setattr(runs, "running_jobs", list)
+    assert collect_runs(config) == ([], {})
+
+
+def test_runs_started_by_hand_are_read_from_their_transcripts(
+    monkeypatch: pytest.MonkeyPatch, config: Config
+) -> None:
+    """A run folder no group log mentions becomes a run of its transcripts.
+
+    macOS reports when each transcript was created; other systems do not, so
+    the test adds a creation time a minute before each modification.
+    """
+    real_stat = Path.stat
+
+    def stat(path: Path, *, follow_symlinks: bool = True) -> SimpleNamespace:
+        """The real stat result, plus a birth time."""
+        result = real_stat(path, follow_symlinks=follow_symlinks)
+        fields = {
+            name: getattr(result, name)
+            for name in dir(result)
+            if name.startswith("st_")
+        }
+        return SimpleNamespace(**fields, st_birthtime=result.st_mtime - 60)
+
+    monkeypatch.setattr(Path, "stat", stat)
+    monkeypatch.setattr(runs, "running_jobs", list)
+    folder = runs.LOG_DIR / "2026-11-24-0915-rest"
+    folder.mkdir(parents=True)
+    (folder / "app-simplify-codebase.log").write_text("transcript\n")
+    (folder / "lib-unknown.log").write_text("transcript\n")
+    (runs.LOG_DIR / "not-a-run").mkdir()
+    (runs.LOG_DIR / "2026-11-24-0915-loose.txt").write_text("")
+
+    [run], _ = collect_runs(config)
+    assert (run.group, run.started) == ("rest", local("2026-11-24 09:15"))
+    assert run.note == "started by hand; outcomes are not logged"
+    jobs = {(job.repo, job.prompt) for job in run.jobs}
+    assert jobs == {("app", "simplify-codebase"), ("lib-unknown", "")}
+    finished = [job.finished for job in run.jobs if job.finished is not None]
+    assert len(finished) == len(run.jobs)
+    assert {end - job.started for end, job in zip(finished, run.jobs, strict=True)} == {
+        dt.timedelta(minutes=1)
+    }
+    assert run.finished == max(finished)

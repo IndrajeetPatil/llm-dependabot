@@ -92,8 +92,9 @@ typecheck: ## Type-check with ty against the project's environment
 typecoverage: ## Require complete strict type coverage with pyrefly
 	uv run --locked pyrefly coverage check --fail-under 100 --strict
 
-test: ## Run the pytest suite
-	uv run --locked pytest
+test: ## Run the pytest suite, requiring full line and branch coverage
+	uv run --locked coverage run -m pytest
+	uv run --locked coverage report
 
 deadcode: ## Find unused code with unref
 	uv run --locked unref

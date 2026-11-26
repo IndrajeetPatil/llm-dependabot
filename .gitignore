@@ -13,3 +13,7 @@ dashboard.html
 
 # Built package.
 dist/
+
+# Coverage data from `make test`.
+.coverage
+htmlcov/

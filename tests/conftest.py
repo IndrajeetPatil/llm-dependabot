@@ -1,6 +1,7 @@
-"""Fixtures shared by every test: an isolated home and a valid config."""
+"""Fixtures shared by every test: an isolated home, a valid config, fake commands."""
 
 import json
+import os
 import sys
 from typing import TYPE_CHECKING, Any
 
@@ -38,6 +39,8 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
         "APP_BUNDLE": app_bundle,
         "LAUNCHER": app_bundle / "Contents/MacOS/llm-dependabot",
         "DASHBOARD_FILE": tmp_path / "dashboard.html",
+        "CONFIG_FILE": tmp_path / "config.yaml",
+        "PRIVATE_FILE": tmp_path / "private.yaml",
     }
     for name, module in list(sys.modules.items()):
         if name == "llm_dependabot" or name.startswith("llm_dependabot."):
@@ -101,3 +104,95 @@ def make_repo() -> Callable[..., Repo]:
         return Repo(owner="octo", name=name, default_branch="main", prompts=prompts)
 
     return make
+
+
+# Stands in for an external command: logs its arguments, then answers with the
+# first matching rule in rules.json, using up rules that have a limited count.
+FAKE_COMMAND = """\
+import json, os, sys, time
+state = os.environ["FAKE_COMMANDS"]
+name, args = os.path.basename(sys.argv[0]), sys.argv[1:]
+with open(os.path.join(state, "calls.jsonl"), "a") as calls:
+    calls.write(json.dumps([name, *args]) + "\\n")
+rules_path = os.path.join(state, "rules.json")
+with open(rules_path) as file:
+    rules = json.load(file)
+line = " ".join(args)
+for rule in rules:
+    if rule["name"] == name and rule["match"] in line and rule["times"] != 0:
+        rule["times"] -= 1
+        with open(rules_path, "w") as file:
+            json.dump(rules, file)
+        sys.stdout.write(rule["stdout"])
+        time.sleep(rule["sleep"])
+        sys.exit(rule["code"])
+"""
+
+
+class FakeCommands:
+    """Fake executables first on PATH, scripted per test and recording each call.
+
+    The code under test runs them through its real subprocess calls, so the
+    shell helpers are exercised too. Commands not installed stay missing.
+    """
+
+    def __init__(self, root: Path) -> None:
+        """Keep the scripts in root/bin and their state in root."""
+        self.root: Path = root
+        self.bin: Path = root / "bin"
+        self.bin.mkdir(parents=True)
+        self.rules: list[dict[str, Any]] = []
+        self.save()
+
+    def save(self) -> None:
+        """Write the rules where the fake commands read them."""
+        (self.root / "rules.json").write_text(json.dumps(self.rules))
+
+    def install(self, *names: str) -> None:
+        """Put fake commands with these names on PATH; they succeed silently."""
+        for name in names:
+            script = self.bin / name
+            script.write_text(f"#!{sys.executable} -I\n{FAKE_COMMAND}")
+            script.chmod(0o755)
+
+    def on(  # ruff: ignore[too-many-arguments] (each is an independent knob)
+        self,
+        name: str,
+        match: str = "",
+        *,
+        stdout: str = "",
+        code: int = 0,
+        times: int = -1,
+        sleep: float = 0,
+    ) -> None:
+        """Answer calls of name whose arguments contain match.
+
+        Rules apply in the order added, each at most times times (or always).
+        """
+        self.install(name)
+        self.rules.append({
+            "name": name,
+            "match": match,
+            "stdout": stdout,
+            "code": code,
+            "times": times,
+            "sleep": sleep,
+        })
+        self.save()
+
+    def calls(self, name: str) -> list[list[str]]:
+        """The arguments of each call of name, in order."""
+        log = self.root / "calls.jsonl"
+        if not log.exists():
+            return []
+        lines = log.read_text().splitlines()
+        return [call[1:] for call in map(json.loads, lines) if call[0] == name]
+
+
+@pytest.fixture
+def commands(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> FakeCommands:
+    """Fake external commands; git and Python stay real."""
+    fake = FakeCommands(tmp_path / "commands")
+    monkeypatch.setenv("FAKE_COMMANDS", str(fake.root))
+    monkeypatch.setenv("PATH", f"{fake.bin}{os.pathsep}{os.environ['PATH']}")
+    return fake

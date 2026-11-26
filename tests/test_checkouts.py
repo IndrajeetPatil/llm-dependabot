@@ -1,6 +1,7 @@
 """Checkouts against real git repositories, with a local bare repository as origin."""
 
 import datetime as dt
+import shutil
 import subprocess
 from typing import TYPE_CHECKING
 
@@ -14,7 +15,7 @@ from llm_dependabot.checkouts import (
     prepare_checkout,
     remove_checkout,
 )
-from llm_dependabot.state import Pending, State, load_state
+from llm_dependabot.state import Checkout, Pending, State, load_state
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -177,3 +178,82 @@ def test_cleanup_removes_finished_pull_requests_and_their_managed_clones(
     assert load_state().pending == []
     assert load_state().managed_clones == []
     assert not clone.exists()
+
+
+def test_a_missing_clone_is_cloned_and_managed(
+    clone: Path,
+    config: Config,
+    make_repo: Callable[..., Repo],
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Without a local copy, gh clones one, and cleanup may later delete it."""
+    origin = tmp_path / "remote/octo/project.git"
+    shutil.rmtree(clone)
+    real_sh = checkouts.sh
+
+    def sh(*args: str | Path, check: bool = True) -> str:
+        """Clone from the local origin where gh would clone from GitHub."""
+        if args[:3] == ("gh", "repo", "clone"):
+            return real_sh("git", "clone", "--quiet", origin, args[4])
+        return real_sh(*args, check=check)
+
+    monkeypatch.setattr(checkouts, "sh", sh)
+    state = State()
+    checkout = prepare_checkout(
+        make_repo(), config.prompt("update-deps"), config, state, tmp_path / "l"
+    )
+    assert (checkout.worktree / "README.md").exists()
+    assert state.managed_clones == [clone]
+    assert load_state().managed_clones == [clone]
+
+
+def test_removing_a_checkout_of_a_deleted_clone_does_nothing(tmp_path: Path) -> None:
+    """A checkout whose clone the user deleted is simply forgotten."""
+    gone = tmp_path / "gone"
+    remove_checkout(
+        Checkout(
+            repo="octo/project",
+            clone=gone,
+            worktree=gone / "wt",
+            branch="b",
+            log=tmp_path / "l",
+            started=dt.datetime(2026, 11, 26, tzinfo=dt.UTC),
+        )
+    )
+    assert not gone.exists()
+
+
+def test_cleanup_keeps_what_it_cannot_safely_remove(
+    clone: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Unknown PR states and clones with local work survive; vanished clones go."""
+    (clone / "README.md").write_text("local work\n")
+    vanished = tmp_path / "vanished"
+    elsewhere = tmp_path / "elsewhere"
+    pending = Pending(
+        repo="octo/project",
+        clone=elsewhere,
+        worktree=elsewhere / "wt",
+        branch="b",
+        log=tmp_path / "l",
+        started=dt.datetime(2026, 11, 26, tzinfo=dt.UTC),
+        pr_number=1,
+        pr_url="u/1",
+    )
+    state = State(pending=[pending], managed_clones=[vanished, clone])
+
+    def pr_state(_repo: str, _number: int) -> str:
+        """Fail like gh does when GitHub cannot be reached."""
+        raise subprocess.CalledProcessError(1, "gh", stderr="offline")
+
+    monkeypatch.setattr(checkouts, "pr_state", pr_state)
+    cleanup_finished(state)
+    assert load_state().pending == [pending]
+    assert load_state().managed_clones == [clone]
+    out = capsys.readouterr().out
+    assert "octo/project#1: cannot check state: offline" in out
+    assert f"keeping {clone} for now: it has uncommitted changes" in out
