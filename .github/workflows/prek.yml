@@ -22,7 +22,7 @@ jobs:
         with:
           persist-credentials: false
 
-      # The private-names hook is a uv script.
+      # prek, Ruff, and the private-names hook script all come from uv.
       - name: Install uv
         uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
@@ -30,10 +30,7 @@ jobs:
 
       # A hook that rewrites a file fails the step.
       - name: Run prek hooks
-        uses: j178/prek-action@7b101f8338a08d2bd6fdb3625e4e7692428763a3 # v3.1.1
-        with:
-          prek-version: latest-known
-          extra-args: --all-files --stage pre-commit
+        run: uv run --locked prek run --all-files --stage pre-commit --show-diff-on-failure
         env:
           # qa.yml already runs ruff and ty through `make check`, and
           # security.yml scans the complete history with Gitleaks and audits

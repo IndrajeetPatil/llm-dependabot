@@ -17,7 +17,6 @@ workflows:
     '.github/workflows/prek.yml':
         - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
         - 'astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d'
-        - 'j178/prek-action@7b101f8338a08d2bd6fdb3625e4e7692428763a3'
     '.github/workflows/qa.yml':
         - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
         - 'astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d'
@@ -57,11 +56,6 @@ dependencies:
         commit: 'sha1-9b3254085494b55a0f7c4c2b3d2d52cc712ce370'
         owner_id: 9919
         repo_id: 259445878
-    'j178/prek-action@7b101f8338a08d2bd6fdb3625e4e7692428763a3':
-        ref: 'v3.1.1'
-        commit: 'sha1-7b101f8338a08d2bd6fdb3625e4e7692428763a3'
-        owner_id: 10510431
-        repo_id: 1052387486
     'lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8':
         ref: 'v2.9.0'
         commit: 'sha1-e7477775783ea5526144ba13e8db5eec57747ce8'

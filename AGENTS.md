@@ -34,7 +34,7 @@ Guidance for AI coding agents working in this repository.
 | `.github/prompts/` | This repository's own `update-deps` and `simplify-codebase` prompts, which run on the schedule, and `create-release`, which the owner runs by hand |
 | `CHANGELOG.md` | Release notes, also the documentation's changelog page (`docs/changelog.md` only includes it) |
 | `hextools/` | Artwork and R scripts that render the hex sticker, `app/icon.png`, and the social preview card |
-| `hooks/check_private_names.py` | Hook that keeps private repository names out of commits |
+| `hooks/check_private_names.py` | Hook that keeps private repository names out of commits; a uv script locked in `check_private_names.py.lock` |
 | `prek.toml` | Git hooks, run with `make hooks` |
 | `Makefile` | Entry points for common operations (`make help`) |
 | `Brewfile` | Command-line tools that `make setup` installs with `brew bundle` |
@@ -154,8 +154,14 @@ whatever is checked out there is what the scheduled runs execute.
 - Add type annotations everywhere; `ty check` and pyrefly's strict type
   coverage must pass. If they disagree, ty wins.
 
-- Development tools belong in the `dev` dependency group, so `uv.lock` pins
-  them; never run them with `uvx`. Scheduled runs use `--no-dev`.
+- Get Python and every Python tool through uv. Interpreters are uv-managed
+  only (`python-preference` in `pyproject.toml`), locally and in CI; never
+  add `actions/setup-python`, pip, pipx, or a Homebrew Python tool.
+  Development tools, prek included, belong in the `dev` dependency group, so
+  `uv.lock` pins them; run them with `uv run --locked`, never `uvx`, and
+  have prek hooks call them the same way instead of pinning their own
+  copies. A standalone script declares its dependencies inline and runs from
+  its own lockfile (`uv lock --script`). Scheduled runs use `--no-dev`.
 
 - Keep the documentation site building with `make docs`: register new pages
   in `nav` and the `llmstxt` sections of `mkdocs.yml`, and link outside

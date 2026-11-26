@@ -6,7 +6,6 @@ brew "uv"
 brew "gh"
 # Scans staged changes for secrets in the prek gitleaks hook.
 brew "gitleaks"
-brew "prek"
 # The default coding agent; replace it with your agent's package if you
 # change `agent` in config.yaml.
 cask "antigravity-cli"
