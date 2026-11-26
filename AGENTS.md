@@ -24,7 +24,7 @@ Guidance for AI coding agents working in this repository.
 | `mkdocs.yml` | Documentation site configuration, navigation, and `llms.txt` sections |
 | `lychee.toml` | Link-check settings for the CI link check |
 | `overrides/` | Site template overrides: structured data, `llms.txt` links, and README edit links |
-| `pyproject.toml`, `uv.lock` | The uv project: CLI dependencies and entry point, the `docs` group with Zensical, and Ruff and ty configuration |
+| `pyproject.toml`, `uv.lock` | The uv project: package metadata, CLI dependencies and entry point, the `dev` group of development tools, the `docs` group with Zensical, and tool configuration |
 | `.github/workflows/` | CI workflows: checks on pull requests, docs deployment from `main` |
 | `.github/workflows/actions.lock` | Generated lockfile of every workflow's direct and transitive actions |
 | `.github/zizmor.yml` | zizmor policy that requires full-SHA action pins |
@@ -64,7 +64,8 @@ Prefer the Makefile targets over invoking tools directly:
 
 ```sh
 make help          # list all targets
-make check         # lint, format check, type check, and dependency audit
+make check         # lint, format check, type check and coverage, dead code, audit, and build
+make build         # build the sdist and wheel into dist/
 make hooks         # every prek hook on all files; must pass before committing
 make format        # apply ruff formatting
 make update-deps   # upgrade locked dependencies and prek hooks
@@ -92,10 +93,21 @@ owner's Mac.
 - Keep non-Python assets, such as the dashboard's HTML, CSS, and JavaScript,
   in their own files, loaded with `importlib.resources`, not in Python strings.
 
-- Ruff runs with `select = ["ALL"]`; fix findings rather than adding ignores,
-  and justify any new ignore in a comment in `pyproject.toml`.
+- Ruff runs with `select = ["ALL"]` and preview rules; fix findings rather
+  than adding ignores, and justify any new ignore in a comment in
+  `pyproject.toml`. Name rules, not codes, in ignores and in
+  `# ruff: ignore[rule-name] (reason)` comments.
 
-- Add type annotations everywhere; `ty check` must pass.
+- Give every module, class, and function a Google-style docstring: a summary
+  line saying what it does, plus paragraphs on why when the behaviour is not
+  obvious. Leave out `Args:`, `Returns:`, and `Raises:` sections, which only
+  restate the signature; Ruff's rules for them are ignored for that reason.
+
+- Add type annotations everywhere; `ty check` and pyrefly's strict type
+  coverage must pass. If they disagree, ty wins.
+
+- Development tools belong in the `dev` dependency group, so `uv.lock` pins
+  them; never run them with `uvx`. Scheduled runs use `--no-dev`.
 
 - Keep the documentation site building with `make docs`: register new pages
   in `nav` and the `llmstxt` sections of `mkdocs.yml`, and link outside

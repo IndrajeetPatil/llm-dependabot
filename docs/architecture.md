@@ -12,14 +12,14 @@ intelligence lives in each repository's own prompts.
 
 | Component | Role |
 | --- | --- |
-| `src/llm_dependabot/` | The CLI: a Python package, run with uv from the checkout, that discovers repositories, runs the agent, tracks pull requests, and writes the launchd agents |
+| `src/llm_dependabot/` | The CLI: a Python package, run with `uv run` from the checkout, that discovers repositories, runs the agent, tracks pull requests, and writes the launchd agents |
 | [`config.yaml`](https://github.com/IndrajeetPatil/llm-dependabot/blob/main/config.yaml) and `private.yaml` | The prompts, their cadences, the schedule, and which repositories take part (see [Configuration](configuration.md)) |
 | [`app/`](https://github.com/IndrajeetPatil/llm-dependabot/tree/main/app) | Sources of the LLM Dependabot app, a tiny launcher that holds the Full Disk Access grant |
 | launchd | macOS's built-in scheduler: one agent per group, plus a cleanup agent |
 | Coding agent | Runs the prompt and opens the pull request; any agent with a non-interactive mode, set in `config.yaml` |
 | `gh` and `git` | Discovery, cloning, worktrees, and pull request state |
 
-The script leans on widely used libraries rather than code of its own:
+The CLI leans on widely used libraries rather than code of its own:
 [Typer](https://typer.tiangolo.com) for the command line and prompts,
 [pydantic](https://docs.pydantic.dev) (with its Rust core) to strictly
 validate the configuration, state, and `gh` output, [PyYAML](https://pyyaml.org) to read the YAML, and
@@ -27,7 +27,7 @@ validate the configuration, state, and `gh` output, [PyYAML](https://pyyaml.org)
 
 ## Process tree
 
-![Process and run: launchd starts the LLM Dependabot app, login shell, uv script, and coding agent, with caffeinate keeping the Mac awake; each discovered prompt is checked for due status, and due prompts get an isolated worktree, pull-request decision, and recorded run date.](images/process-and-run.webp)
+![Process and run: launchd starts the LLM Dependabot app, login shell, the CLI under uv, and coding agent, with caffeinate keeping the Mac awake; each discovered prompt is checked for due status, and due prompts get an isolated worktree, pull-request decision, and recorded run date.](images/process-and-run.webp)
 
 - **The app** starts the job as a child process rather than replacing itself,
   so macOS treats it as the "responsible process" and applies its Full Disk
