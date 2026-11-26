@@ -78,10 +78,31 @@ make dry-run GROUP=python
 make docs          # build the documentation site strictly
 ```
 
-`make setup`, `make install`, `make uninstall`, `make run`, and `make cleanup`
-change the user's `launchd` agents, run the agent in YOLO mode, or delete
+`make setup`, `make install`, `make self-update`, `make uninstall`, `make run`,
+and `make cleanup` change the user's `launchd` agents, run the agent in YOLO mode, or delete
 checkouts. Do not run them unless explicitly asked; they only work on the
 owner's Mac.
+
+## The live checkout
+
+The owner's clone of this repository is also the running installation: the
+launchd agents run the CLI from it (`uv run --project <checkout>`), so
+whatever is checked out there is what the scheduled runs execute.
+
+- Never switch the owner's main checkout to a feature branch or leave
+  uncommitted work in it. Make changes in a separate worktree
+  (`git worktree add ../llm-dependabot-<topic> -b <branch> origin/main`), and
+  delete it with `git worktree remove` once the pull request is merged.
+
+- Merged changes reach the installation only through `make self-update`.
+  Python code and `uv.lock` changes need nothing more, since every run syncs
+  from the lockfile; there is no package to rebuild or reinstall.
+
+- When a pull request changes `app/`, the `Brewfile`, uv's
+  `required-version`, or anything `make install` writes (`config.yaml`,
+  `launchd.py`, `macos_app.py`), say in its body what the owner must do after
+  merging: `make self-update`, granting Full Disk Access again, or
+  `brew upgrade uv`.
 
 ## Conventions
 
