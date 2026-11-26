@@ -67,6 +67,23 @@ Any agent with a non-interactive mode. Antigravity CLI is the default, and
 Claude Code, Codex CLI, and GitHub Copilot CLI. Nothing else in llm-dependabot
 or in the prompts depends on which agent runs them.
 
+## Does it work with GitLab, Bitbucket, or GitHub Enterprise?
+
+It is built for GitHub because that is where my open-source work lives, under
+a personal account, so only that setup is used and tested.
+
+- **GitHub Enterprise** should be the smallest step. Every call goes through
+  `gh`, which supports Enterprise Server hosts (`gh auth login --hostname`,
+  `GH_HOST`), and `owner` can name an organisation as well as a user. Only the
+  dashboard's links assume `github.com`.
+
+- **GitLab and Bitbucket** would need a fork. The scheduling, worktrees, and
+  agent runs are plain `git` and carry over, but listing repositories,
+  checking for prompts, and tracking and labelling pull requests are `gh`
+  calls in `github.py`, which would need rewriting against `glab` or the
+  Bitbucket API. The prompts themselves would also need to open merge
+  requests with that platform's tooling instead of `gh`.
+
 ## Is it safe to let an agent run unattended?
 
 The agent runs with your credentials and without asking for approval, so
