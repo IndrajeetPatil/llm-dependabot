@@ -92,8 +92,9 @@ and keep the quality gates intact.
   `conventional-commits.yml`. Open ready PRs with `gh pr create`, keep their
   metadata current, and omit agent attribution.
 
-- Require green hosted CI and, where automatic Codex review is enabled,
-  approval of the current head with no unresolved findings. Fix failures,
+- Require every hosted check to pass, required or not, and, where automatic
+  Codex review is enabled, approval of the current head with no unresolved
+  findings. A rerun that fails again is not an explanation. Fix failures,
   reply to addressed findings, and resolve their threads.
   Mention the review bot only with the trigger `@codex review`, once after
   explicitly exhausted review usage refreshes. Leave the PR open if usage
@@ -102,4 +103,5 @@ and keep the quality gates intact.
 - Recheck the head, checks, and review threads before squash-merging, then
   verify the merge. Respect branch protections. Update from `main` only for
   conflicts or dependencies.
-  Report local validation, hosted CI, review, and merge state separately.
+  Report local validation, hosted CI, review, and merge state separately,
+  naming every failing check.
