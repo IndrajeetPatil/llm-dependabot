@@ -14,6 +14,7 @@ is merged or closed.
 | Command | Does |
 | --- | --- |
 | `make status` | Show the schedule, each group's prompt cadences, pending pull requests, and clones awaiting deletion |
+| `make dashboard` | Build `dashboard.html` (git-ignored) from the logs and open it: past runs, each job's duration, exit code, pull request and its latest known state, and transcript, plus the upcoming schedule; it follows the system's light or dark mode, with a button to switch |
 | `make list` | Show which repositories fall into which group, and which prompts each has |
 | `make dry-run GROUP=python` | List the repositories and prompts a group would run, without running anything; add `PROMPT=<name>` to preview one prompt |
 | `make run GROUP=python` | Run a group's due prompts now |

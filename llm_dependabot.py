@@ -21,6 +21,7 @@ import time
 from pathlib import Path
 from typing import Annotated, Any, Literal, NoReturn, cast, get_args
 lazy import hashlib
+lazy import html
 lazy import plistlib
 lazy import shlex
 lazy import tempfile
@@ -147,6 +148,16 @@ class Agent(Strict):
         return argv, PROMPT not in self.command
 
 
+class PullRequestLabel(Strict):
+    """The label added to every pull request a run opens."""
+
+    model_config = ConfigDict(frozen=True)
+
+    name: str
+    color: str = Field(pattern=r"^[0-9a-fA-F]{6}$")
+    description: str = ""
+
+
 class Config(Strict):
     owner: str
     prompts: list[Prompt] = Field(min_length=1)
@@ -155,6 +166,7 @@ class Config(Strict):
     agent_timeout_hours: PositiveFloat
     cleanup_interval_hours: PositiveFloat
     skip_weekends: bool = True
+    label: PullRequestLabel | None = None
     groups: list[Group]
     # Filled in from private.yaml, never from config.yaml.
     private_repos: frozenset[str] = Field(default=frozenset(), exclude=True)
@@ -659,6 +671,32 @@ def find_pr(repo: Repo, branch: str, started: dt.datetime) -> PullRequest | None
     return max(prs, key=lambda p: p.number, default=None)
 
 
+def add_label(repo: Repo, number: int, label: PullRequestLabel) -> None:
+    """Label a pull request, creating or updating the label in the repository."""
+    sh(
+        "gh",
+        "label",
+        "create",
+        label.name,
+        "-R",
+        repo.full_name,
+        "--force",
+        "--color",
+        label.color,
+        "--description",
+        label.description,
+    )
+    sh(
+        "gh",
+        "api",
+        "-X",
+        "POST",
+        f"repos/{repo.full_name}/issues/{number}/labels",
+        "-f",
+        f"labels[]={label.name}",
+    )
+
+
 def process_repo(
     repo: Repo, prompt: Prompt, config: Config, state: State, run_dir: Path
 ) -> str:
@@ -697,6 +735,11 @@ def process_repo(
         Pending(**checkout.model_dump(), pr_number=pr.number, pr_url=pr.url)
     )
     save_state(state)
+    if config.label is not None:
+        try:
+            add_label(repo, pr.number, config.label)
+        except subprocess.CalledProcessError as exc:
+            log(f"{label}: cannot label {pr.url}: {exc.stderr}")
     return f"{label}: PR #{pr.number}"
 
 
@@ -1041,6 +1084,557 @@ def status() -> None:
         typer.echo("clones to delete after their PRs finish:")
         for path in state.managed_clones:
             typer.echo(f"  {path}")
+
+
+# --------------------------------------------------------------------------- #
+# Dashboard
+# --------------------------------------------------------------------------- #
+
+DASHBOARD_FILE = ROOT / "dashboard.html"
+LOG_LINE = re.compile(r"\[(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)\] (.*)")
+RUN_FOLDER = re.compile(r"(\d{4}-\d\d-\d\d)-(\d\d)(\d\d)-(.+)")
+PR_EVENT = re.compile(r"(open|merged|closed) pull request (https://\S+/pull/\d+)")
+PR_FINISHED = re.compile(r"(\S+/\S+)#(\d+) is (merged|closed); cleaning up")
+EXIT_EVENT = re.compile(r"agent exited with code (-?\d+)")
+
+
+class Job(Strict):
+    """One prompt's agent run in one repository, as read back from the logs."""
+
+    repo: str
+    prompt: str
+    started: dt.datetime
+    finished: dt.datetime | None = None
+    exit_code: int | None = None
+    pr_url: str | None = None
+    pr_state: str | None = None
+    # Why the job ended without a pull request: skipped, failed, or none opened.
+    problem: str | None = None
+    transcript: Path | None = None
+
+
+class GroupRun(Strict):
+    """One run of a group, scheduled or started by hand."""
+
+    group: str
+    started: dt.datetime
+    finished: dt.datetime | None = None
+    note: str | None = None
+    jobs: list[Job] = []
+
+
+def read_log(path: Path) -> list[tuple[dt.datetime, str]]:
+    """The timestamped lines of a log, skipping noise from the login shell."""
+    return [
+        (dt.datetime.fromisoformat(match[1]), match[2])
+        for line in path.read_text(errors="replace").splitlines()
+        if (match := LOG_LINE.fullmatch(line))
+    ]
+
+
+def local_time(timestamp: float) -> dt.datetime:
+    return (
+        dt.datetime.fromtimestamp(timestamp, dt.UTC).astimezone().replace(tzinfo=None)
+    )
+
+
+def record_job_event(
+    run: GroupRun, jobs: dict[str, Job], at: dt.datetime, label: str, event: str
+) -> None:
+    # Labels are "<repo> <prompt>"; older logs carry only "<repo>".
+    repo, _, prompt = label.partition(" ")
+    problem = event.startswith(("skipped: ", "failed: "))
+    if event.startswith("running agent in ") or (problem and label not in jobs):
+        # Resolve the transcript in LOG_DIR, which may have moved since.
+        logged = Path(event.rpartition("(log: ")[2].removesuffix(")"))
+        jobs[label] = Job(
+            repo=repo,
+            prompt=prompt,
+            started=at,
+            transcript=LOG_DIR / logged.parent.name / logged.name
+            if logged.parent.name
+            else None,
+        )
+        run.jobs.append(jobs[label])
+    job = jobs.get(label)
+    if job is None:
+        return
+    if code := EXIT_EVENT.fullmatch(event):
+        job.exit_code, job.finished = int(code[1]), at
+    elif pr := PR_EVENT.fullmatch(event):
+        job.pr_state, job.pr_url = pr[1], pr[2]
+    elif event.startswith("no pull request"):
+        job.problem = "no pull request"
+    elif problem:
+        job.problem, job.finished = event, at
+
+
+def parse_group_log(group: str, lines: list[tuple[dt.datetime, str]]) -> list[GroupRun]:
+    runs: list[GroupRun] = []
+    run: GroupRun | None = None
+    jobs: dict[str, Job] = {}
+    for at, message in lines:
+        label, _, event = message.partition(": ")
+        if label == f"group {group}":
+            run = GroupRun(group=group, started=at)
+            jobs = {}
+            runs.append(run)
+            if event == "nothing due" or event.startswith("skipped"):
+                run.note, run.finished, run = event, at, None
+        elif run is not None and label == "summary":
+            run.finished, run = at, None
+        elif run is not None:
+            record_job_event(run, jobs, at, label, event)
+    return runs
+
+
+def manual_runs(config: Config, logged: set[Path]) -> list[GroupRun]:
+    """Runs started by hand, which leave only their transcripts behind."""
+    suffixes = sorted((f"-{p.name}" for p in config.prompts), key=len, reverse=True)
+    runs = []
+    for folder in LOG_DIR.iterdir():
+        match = RUN_FOLDER.fullmatch(folder.name)
+        if not folder.is_dir() or match is None or folder in logged:
+            continue
+        run = GroupRun(
+            group=match[4],
+            started=dt.datetime.fromisoformat(f"{match[1]} {match[2]}:{match[3]}"),
+            note="started by hand; outcomes are not logged",
+        )
+        for transcript in folder.glob("*.log"):
+            stem = transcript.stem
+            suffix = next((s for s in suffixes if stem.endswith(s)), "")
+            info = transcript.stat()
+            run.jobs.append(
+                Job(
+                    repo=stem.removesuffix(suffix),
+                    prompt=suffix.removeprefix("-"),
+                    started=local_time(info.st_birthtime),
+                    finished=local_time(info.st_mtime),
+                    transcript=transcript,
+                )
+            )
+        run.jobs.sort(key=lambda j: j.started)
+        run.finished = max((j.finished for j in run.jobs if j.finished), default=None)
+        runs.append(run)
+    return runs
+
+
+def collect_runs(config: Config) -> tuple[list[GroupRun], dict[str, str]]:
+    """Every run in the logs, newest first, and each PR's final state by URL."""
+    runs: list[GroupRun] = []
+    final: dict[str, str] = {}
+    running = {label.rpartition(".")[2] for label in running_jobs()}
+    for path in LOG_DIR.glob("*.log") if LOG_DIR.is_dir() else []:
+        lines = read_log(path)
+        for _, message in lines:
+            if match := PR_FINISHED.fullmatch(message):
+                final[f"https://github.com/{match[1]}/pull/{match[2]}"] = match[3]
+        group_runs = parse_group_log(path.stem, lines)
+        for run in group_runs:
+            if run.finished is None and (
+                run is not group_runs[-1] or run.group not in running
+            ):
+                run.note = "interrupted before its summary"
+        runs += group_runs
+    logged = {j.transcript.parent for r in runs for j in r.jobs if j.transcript}
+    if LOG_DIR.is_dir():
+        runs += manual_runs(config, logged)
+    for entry in load_state().pending:
+        final.setdefault(entry.pr_url, "open")
+    return sorted(runs, key=lambda r: r.started, reverse=True), final
+
+
+def next_run(group: Group, now: dt.datetime) -> dt.datetime:
+    days = (WEEKDAYS.index(group.weekday) - now.isoweekday()) % 7
+    when = dt.datetime.combine(now.date() + dt.timedelta(days=days), group.time)
+    return when if when > now else when + dt.timedelta(weeks=1)
+
+
+def format_duration(start: dt.datetime, end: dt.datetime | None) -> str:
+    if end is None:
+        return "&ndash;"
+    minutes, seconds = divmod(int((end - start).total_seconds()), 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours:
+        return f"{hours} h {minutes:02} min"
+    return f"{minutes} min" if minutes else f"{seconds} s"
+
+
+def job_status(job: Job, final: dict[str, str]) -> tuple[str, str]:
+    """A job's outcome as a (CSS class, text) chip."""
+    if job.pr_url is not None:
+        state = final.get(job.pr_url, job.pr_state or "open")
+        return state, state
+    if job.problem is not None and job.problem.startswith("failed"):
+        return "failed", "failed"
+    if job.exit_code not in {0, None}:
+        return "failed", f"exit {job.exit_code}"
+    if job.problem is not None:
+        return "muted", job.problem.partition(":")[0]
+    return "muted", "unknown" if job.finished else "running"
+
+
+def render_job(job: Job, owner: str, final: dict[str, str]) -> str:
+    esc = html.escape
+    kind, text = job_status(job, final)
+    status = f'<span class="chip {kind}">{esc(text)}</span>'
+    if job.pr_url is not None:
+        number = job.pr_url.rpartition("/")[2]
+        status = f'<a href="{esc(job.pr_url)}">#{number}</a> {status}'
+    transcript = (
+        f'<a href="{esc(job.transcript.as_uri())}">log</a>'
+        if job.transcript and job.transcript.exists()
+        else ""
+    )
+    exit_code = "" if job.exit_code is None else str(job.exit_code)
+    search = esc(f"{job.repo} {job.prompt} {text}".lower())
+    repo_url = f"https://github.com/{owner}/{job.repo}"
+    return (
+        f'<tr data-search="{search}">'
+        f'<th scope="row"><a href="{esc(repo_url)}">{esc(job.repo)}</a></th>'
+        f"<td>{esc(job.prompt) or '&ndash;'}</td>"
+        f"<td>{job.started:%H:%M}</td>"
+        f'<td class="num">{format_duration(job.started, job.finished)}</td>'
+        f'<td class="num{" bad" if exit_code not in {"", "0"} else ""}">'
+        f"{exit_code}</td>"
+        f"<td>{status}</td><td>{transcript}</td></tr>"
+    )
+
+
+def render_run(run: GroupRun, owner: str, final: dict[str, str]) -> str:
+    esc = html.escape
+    end = f"&ndash;{run.finished:%H:%M}" if run.finished else ""
+    title = (
+        f'<span class="when">{run.started:%a %d %b %Y, %H:%M}{end}</span>'
+        f'<span class="group">{esc(run.group)}</span>'
+    )
+    note = f'<p class="note">{esc(run.note)}</p>' if run.note is not None else ""
+    if not run.jobs:
+        return f'<section class="run empty"><h3>{title}</h3>{note}</section>'
+    rows = "".join(render_job(job, owner, final) for job in run.jobs)
+    meta = (
+        f"{len(run.jobs)} job{'s' * (len(run.jobs) != 1)}"
+        f" · {format_duration(run.started, run.finished)}"
+    )
+    return (
+        f'<section class="run"><h3>{title}<span class="meta">{meta}</span></h3>'
+        f'{note}<div class="table-wrapper"><table>'
+        "<thead><tr><th>Repository</th><th>Prompt</th><th>Started</th>"
+        '<th class="num">Took</th><th class="num">Exit</th><th>Pull request</th>'
+        f"<th>Transcript</th></tr></thead><tbody>{rows}</tbody></table></div>"
+        "</section>"
+    )
+
+
+def render_dashboard(config: Config) -> str:
+    esc = html.escape
+    now = dt.datetime.now()
+    runs, final = collect_runs(config)
+    jobs = [job for run in runs for job in run.jobs]
+    statuses = [job_status(job, final)[0] for job in jobs]
+    tiles = [
+        ("Group runs", sum(1 for run in runs if run.jobs)),
+        ("Agent runs", len(jobs)),
+        ("Pull requests", sum(1 for job in jobs if job.pr_url is not None)),
+        ("Merged", statuses.count("merged")),
+        ("Open", statuses.count("open")),
+        ("Failed", statuses.count("failed")),
+    ]
+    stats = "".join(
+        f'<div class="tile"><span class="value">{value}</span>'
+        f'<span class="label">{name}</span></div>'
+        for name, value in tiles
+    )
+    schedule = "".join(
+        f"<tr><th scope='row'>{esc(group.name)}</th>"
+        f"<td>{group.weekday[:3]} {group.time:%H:%M}</td>"
+        f"<td>{next_run(group, now):%a %d %b, %H:%M}</td><td>"
+        + ", ".join(
+            f"{esc(p.name)} <span class='muted'>{config.cadence(group, p)}</span>"
+            for p in config.prompts
+        )
+        + "</td></tr>"
+        for group in sorted(config.groups, key=lambda g: next_run(g, now))
+    )
+    body = "".join(render_run(run, config.owner, final) for run in runs) or (
+        f'<p class="note">No runs logged in {esc(str(LOG_DIR))} yet.</p>'
+    )
+    weekend = " Scheduled jobs skip weekends." if config.skip_weekends else ""
+    return DASHBOARD_PAGE.format(
+        css=DASHBOARD_CSS,
+        theme=DASHBOARD_THEME,
+        script=DASHBOARD_SCRIPT,
+        generated=f"{now:%a %d %b %Y, %H:%M}",
+        stats=stats,
+        schedule=schedule,
+        weekend=weekend,
+        runs=body,
+    )
+
+
+DASHBOARD_PAGE = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<script>{theme}</script>
+<title>LLM Dependabot dashboard</title>
+<style>{css}</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>LLM Dependabot</h1>
+    <p class="muted">Generated {generated} from the run logs.
+    Run <code>make dashboard</code> to refresh.</p>
+  </div>
+  <div class="controls">
+  <button id="theme" type="button">
+    <span class="to-dark">Dark mode</span><span class="to-light">Light mode</span>
+  </button>
+  <label class="filter">
+    <span class="visually-hidden">Filter jobs</span>
+    <input id="filter" type="search" autocomplete="off"
+      placeholder="Filter by repository, prompt, or status">
+  </label>
+  </div>
+</header>
+<main>
+  <section class="tiles" aria-label="Totals">{stats}</section>
+  <h2 id="schedule-caption">Schedule</h2>
+  <div class="table-wrapper" tabindex="0" role="region"
+    aria-labelledby="schedule-caption">
+    <table>
+      <thead><tr><th>Group</th><th>Runs</th><th>Next run</th><th>Prompts</th>
+      </tr></thead>
+      <tbody>{schedule}</tbody>
+    </table>
+  </div>
+  <p class="muted small">Monthly prompts run at the group's first run of each
+  month.{weekend}</p>
+  <h2>Runs</h2>
+  <div id="runs">{runs}</div>
+  <p id="no-match" class="note" hidden>No jobs match the filter.</p>
+</main>
+<script>{script}</script>
+</body>
+</html>
+"""
+
+# Applies a stored light or dark override before the page renders.
+DASHBOARD_THEME = """
+try {
+  document.querySelector('meta[name="color-scheme"]').content =
+    localStorage.getItem("color-scheme") ?? "light dark";
+} catch {}
+"""
+
+DASHBOARD_CSS = """
+:root {
+  color-scheme: light dark;
+  &:has(> head > meta[name="color-scheme"][content="dark"]) { color-scheme: dark; }
+  &:has(> head > meta[name="color-scheme"][content="light"]) { color-scheme: light; }
+  --bg: light-dark(#faf8f4, #171512);
+  --surface: light-dark(#fdfcf9, #201d19);
+  --bg-alt: light-dark(#f2efe8, #2a2621);
+  --text: light-dark(#201d18, #ece7dd);
+  --muted: light-dark(#5d574c, #a59d8f);
+  --border: light-dark(#e3ded2, #3a352e);
+  --accent: light-dark(#14584d, #5fbfae);
+  --accent-tint: light-dark(#e3efeb, #1d3430);
+  --rust: light-dark(#9a3d2e, #e08a78);
+  --rust-tint: light-dark(#f6e6e2, #3b2420);
+  --serif: "Fraunces Variable", "Fraunces", ui-serif, Georgia, serif;
+  --sans: "Hanken Grotesk Variable", "Hanken Grotesk", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 var(--sans);
+}
+header, main { max-inline-size: 72rem; margin-inline: auto; padding-inline: 1.5rem; }
+header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: end;
+  justify-content: space-between;
+  padding-block: 2rem 1rem;
+  border-block-end: 1px solid var(--border);
+}
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; margin: 0; }
+h1 { font-size: 1.9rem; color: var(--accent); }
+h2 { font-size: 1.25rem; margin-block: 2rem 0.75rem; }
+h3 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+  font-size: 1rem;
+}
+header p { margin: 0.25rem 0 0; }
+a { color: var(--accent); text-underline-offset: 2px; }
+code {
+  font-size: 0.9em;
+  background: var(--bg-alt);
+  padding: 0.05em 0.35em;
+  border-radius: 4px;
+}
+.muted, .meta, .note { color: var(--muted); }
+.small { font-size: 0.85rem; }
+.note { margin: 0.25rem 0 0; font-size: 0.9rem; }
+.controls { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+#theme {
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+#theme:hover { background: var(--bg-alt); }
+#theme:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* The button offers the scheme opposite to the one shown. */
+.to-light { display: none; }
+:root:has(meta[content="dark"]) .to-light { display: inline; }
+:root:has(meta[content="dark"]) .to-dark { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not(:has(meta[content="light"])) .to-light { display: inline; }
+  :root:not(:has(meta[content="light"])) .to-dark { display: none; }
+}
+.filter input {
+  inline-size: min(22rem, 80vw);
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.filter input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.75rem;
+  margin-block-start: 1.5rem;
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.tile .value { font: 600 1.7rem/1.1 var(--serif); font-variant-numeric: tabular-nums; }
+.tile .label { color: var(--muted); font-size: 0.85rem; }
+.table-wrapper {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+table { inline-size: 100%; border-collapse: collapse; }
+th, td { padding: 0.45rem 0.9rem; text-align: start; white-space: nowrap; }
+thead th {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted);
+  background: var(--bg-alt);
+}
+tbody th { font-weight: 500; }
+tbody tr + tr > * { border-block-start: 1px solid var(--border); }
+td:last-child { inline-size: 100%; }
+.num { text-align: end; font-variant-numeric: tabular-nums; }
+.bad { color: var(--rust); }
+.run { margin-block-end: 1.25rem; }
+.run h3 { margin-block-end: 0.5rem; }
+.run.empty h3 { margin: 0; font-size: 0.95rem; font-weight: 500; }
+.run.empty { display: flex; flex-wrap: wrap; gap: 0 0.75rem; align-items: baseline; }
+.run.empty .note { margin: 0; }
+.group {
+  font: 500 0.8rem var(--sans);
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.meta { font: 400 0.85rem var(--sans); }
+.chip {
+  display: inline-block;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: var(--bg-alt);
+  color: var(--muted);
+}
+.chip.merged, .chip.open { background: var(--accent-tint); color: var(--accent); }
+.chip.failed { background: var(--rust-tint); color: var(--rust); }
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+main { padding-block-end: 3rem; }
+"""
+
+DASHBOARD_SCRIPT = """
+const meta = document.querySelector('meta[name="color-scheme"]');
+const systemDark = matchMedia("(prefers-color-scheme: dark)");
+document.getElementById("theme").addEventListener("click", () => {
+  const system = systemDark.matches ? "dark" : "light";
+  const shown = meta.content === "light dark" ? system : meta.content;
+  const target = shown === "dark" ? "light" : "dark";
+  // Choosing the system's own scheme returns to following the system.
+  meta.content = target === system ? "light dark" : target;
+  try {
+    if (target === system) localStorage.removeItem("color-scheme");
+    else localStorage.setItem("color-scheme", target);
+  } catch {}
+});
+addEventListener("storage", (event) => {
+  if (event.key === "color-scheme") meta.content = event.newValue ?? "light dark";
+});
+const filter = document.getElementById("filter");
+const runs = [...document.querySelectorAll(".run")];
+filter.addEventListener("input", () => {
+  const terms = filter.value.toLowerCase().split(/\\s+/).filter(Boolean);
+  let shown = 0;
+  for (const run of runs) {
+    const rows = [...run.querySelectorAll("tr[data-search]")];
+    let visible = 0;
+    for (const row of rows) {
+      row.hidden = !terms.every((term) => row.dataset.search.includes(term));
+      visible += !row.hidden;
+    }
+    run.hidden = terms.length > 0 && visible === 0;
+    shown += !run.hidden;
+  }
+  document.getElementById("no-match").hidden = shown > 0;
+});
+"""
+
+
+@app.command()
+def dashboard(
+    *,
+    open_browser: Annotated[
+        bool, typer.Option("--open/--no-open", help="Open it in the browser.")
+    ] = True,
+) -> None:
+    """Build an HTML dashboard of past runs and their pull requests from the logs."""
+    DASHBOARD_FILE.write_text(render_dashboard(load_config()))
+    typer.echo(f"wrote {DASHBOARD_FILE}")
+    if open_browser:
+        typer.launch(DASHBOARD_FILE.as_uri())
 
 
 @app.command()

@@ -7,3 +7,6 @@ private.yaml
 
 # Built documentation site.
 site/
+
+# Run dashboard built by `make dashboard`.
+dashboard.html
