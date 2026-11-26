@@ -9,7 +9,7 @@ SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
 
 .DEFAULT_GOAL := help
-.PHONY: help setup update-deps install uninstall list status cleanup clean-logs run dry-run lint format format-check typecheck audit check hooks hooks-install actions-lock-install actions-lock actions-lock-verify check-actions-lock-version docs docs-serve
+.PHONY: help setup update-deps install uninstall list status dashboard cleanup clean-logs run dry-run lint format format-check typecheck audit check hooks hooks-install actions-lock-install actions-lock actions-lock-verify check-actions-lock-version docs docs-serve
 
 ##@ General
 
@@ -52,6 +52,9 @@ list: ## Show which repositories fall into which group
 
 status: ## Show the schedule and pending pull requests
 	$(SCRIPT) status
+
+dashboard: ## Build an HTML dashboard of past runs and their pull requests, and open it
+	$(SCRIPT) dashboard
 
 cleanup: ## Clean up after merged or closed pull requests
 	$(SCRIPT) cleanup
