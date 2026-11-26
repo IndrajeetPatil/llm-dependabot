@@ -148,6 +148,16 @@ class Agent(Strict):
         return argv, PROMPT not in self.command
 
 
+class PullRequestLabel(Strict):
+    """The label added to every pull request a run opens."""
+
+    model_config = ConfigDict(frozen=True)
+
+    name: str
+    color: str = Field(pattern=r"^[0-9a-fA-F]{6}$")
+    description: str = ""
+
+
 class Config(Strict):
     owner: str
     prompts: list[Prompt] = Field(min_length=1)
@@ -156,6 +166,7 @@ class Config(Strict):
     agent_timeout_hours: PositiveFloat
     cleanup_interval_hours: PositiveFloat
     skip_weekends: bool = True
+    label: PullRequestLabel | None = None
     groups: list[Group]
     # Filled in from private.yaml, never from config.yaml.
     private_repos: frozenset[str] = Field(default=frozenset(), exclude=True)
@@ -660,6 +671,32 @@ def find_pr(repo: Repo, branch: str, started: dt.datetime) -> PullRequest | None
     return max(prs, key=lambda p: p.number, default=None)
 
 
+def add_label(repo: Repo, number: int, label: PullRequestLabel) -> None:
+    """Label a pull request, creating or updating the label in the repository."""
+    sh(
+        "gh",
+        "label",
+        "create",
+        label.name,
+        "-R",
+        repo.full_name,
+        "--force",
+        "--color",
+        label.color,
+        "--description",
+        label.description,
+    )
+    sh(
+        "gh",
+        "api",
+        "-X",
+        "POST",
+        f"repos/{repo.full_name}/issues/{number}/labels",
+        "-f",
+        f"labels[]={label.name}",
+    )
+
+
 def process_repo(
     repo: Repo, prompt: Prompt, config: Config, state: State, run_dir: Path
 ) -> str:
@@ -698,6 +735,11 @@ def process_repo(
         Pending(**checkout.model_dump(), pr_number=pr.number, pr_url=pr.url)
     )
     save_state(state)
+    if config.label is not None:
+        try:
+            add_label(repo, pr.number, config.label)
+        except subprocess.CalledProcessError as exc:
+            log(f"{label}: cannot label {pr.url}: {exc.stderr}")
     return f"{label}: PR #{pr.number}"
 
 

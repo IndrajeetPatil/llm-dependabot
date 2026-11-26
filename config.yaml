@@ -63,6 +63,13 @@ cleanup_interval_hours: 3
 # scheduled on a weekend while this is on.
 skip_weekends: true
 
+# Label added to every pull request a run opens, so they are easy to find;
+# it is created in each repository as needed. Remove to leave PRs unlabelled.
+label:
+  name: llm-dependabot
+  color: "5fbfae"
+  description: Opened by llm-dependabot
+
 groups:
   - name: web
     languages: [TypeScript, JavaScript, Astro, Svelte, Vue, HTML, CSS]
