@@ -168,7 +168,8 @@ branch. The default configuration recognises:
 - `.github/prompts/simplify-codebase.md` (runs monthly by default)
 
 - `.github/prompts/gsc-analysis.md` (runs monthly by default; for websites
-  registered in Google Search Console)
+  registered in Google Search Console; see the
+  [example prompt](autonomy.md#self-healing-beyond-dependencies))
 
 The agent receives the file verbatim, as its only instruction, from inside a
 fresh worktree. A good prompt contains:
