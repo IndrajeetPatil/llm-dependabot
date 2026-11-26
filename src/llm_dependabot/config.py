@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from typing import Literal, cast, get_args
 
+import yaml
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -14,16 +15,22 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-lazy import yaml
 
 from llm_dependabot.paths import CONFIG_FILE, NAME, PRIVATE_FILE
 from llm_dependabot.shell import fail, local_today
 
 type Weekday = Literal[
-    "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
 ]
 WEEKDAYS: tuple[str, ...] = cast(
-    "tuple[str, ...]", get_args(Weekday.__value__)
+    "tuple[str, ...]",
+    get_args(Weekday.__value__),
 )  # launchd: Sunday is 0
 WEEKEND = frozenset({"Saturday", "Sunday"})
 
@@ -186,7 +193,7 @@ def yaml_to_json(path: Path) -> str:
     rejecting values YAML parsed as another type, such as an unquoted 9:00
     (the integer 540).
     """
-    return json.dumps(yaml.safe_load(path.read_text()) or {})
+    return json.dumps(yaml.safe_load(path.read_text(encoding="utf-8")) or {})
 
 
 def load_config() -> Config:

@@ -51,14 +51,21 @@ def clone(tmp_path: Path, config: Config) -> Path:
 
 
 def test_prepare_checkout_adds_a_worktree_off_the_default_branch(
-    clone: Path, config: Config, make_repo: Callable[..., Repo], tmp_path: Path
+    clone: Path,
+    config: Config,
+    make_repo: Callable[..., Repo],
+    tmp_path: Path,
 ) -> None:
     """A run works in its own worktree and leaves the clone alone."""
     git("-C", clone, "checkout", "--quiet", "-b", "my-work")
     (clone / "notes.txt").write_text("uncommitted\n")
     prompt = config.prompt("update-deps")
     checkout = prepare_checkout(
-        make_repo(), prompt, config, State(), tmp_path / "a.log"
+        make_repo(),
+        prompt,
+        config,
+        State(),
+        tmp_path / "a.log",
     )
 
     assert checkout.worktree.parent == checkouts.WORKTREE_ROOT
@@ -104,7 +111,11 @@ def test_a_directory_in_the_way_is_skipped(
     occupy(config.clone_root / "project")
     with pytest.raises(SkipRepoError, match=match):
         prepare_checkout(
-            make_repo(), config.prompt("update-deps"), config, State(), tmp_path / "l"
+            make_repo(),
+            config.prompt("update-deps"),
+            config,
+            State(),
+            tmp_path / "l",
         )
 
 
@@ -142,7 +153,9 @@ def add_a_worktree(clone: Path) -> None:
     ],
 )
 def test_clone_is_disposable(
-    clone: Path, change: Callable[[Path], None], expected: tuple[bool, str]
+    clone: Path,
+    change: Callable[[Path], None],
+    expected: tuple[bool, str],
 ) -> None:
     """Only a clean clone without local commits or other worktrees may be deleted."""
     change(clone)
@@ -159,7 +172,11 @@ def test_cleanup_removes_finished_pull_requests_and_their_managed_clones(
     """Cleanup keeps open pull requests and deletes clones nothing needs."""
     state = State(managed_clones=[clone])
     checkout = prepare_checkout(
-        make_repo(), config.prompt("update-deps"), config, state, tmp_path / "l"
+        make_repo(),
+        config.prompt("update-deps"),
+        config,
+        state,
+        tmp_path / "l",
     )
     # Two pull requests from one checkout: worktree names have minute precision.
     pending = [
@@ -202,7 +219,11 @@ def test_a_missing_clone_is_cloned_and_managed(
     monkeypatch.setattr(checkouts, "sh", sh)
     state = State()
     checkout = prepare_checkout(
-        make_repo(), config.prompt("update-deps"), config, state, tmp_path / "l"
+        make_repo(),
+        config.prompt("update-deps"),
+        config,
+        state,
+        tmp_path / "l",
     )
     assert (checkout.worktree / "README.md").exists()
     assert state.managed_clones == [clone]
@@ -220,7 +241,7 @@ def test_removing_a_checkout_of_a_deleted_clone_does_nothing(tmp_path: Path) -> 
             branch="b",
             log=tmp_path / "l",
             started=dt.datetime(2026, 11, 26, tzinfo=dt.UTC),
-        )
+        ),
     )
     assert not gone.exists()
 
@@ -298,7 +319,9 @@ def follow_origin_head(clone: Path) -> None:
     ],
 )
 def test_stale_checkout_flags_code_scheduled_runs_would_miss(
-    clone: Path, arrange: Callable[[Path], None], expected: str | None
+    clone: Path,
+    arrange: Callable[[Path], None],
+    expected: str | None,
 ) -> None:
     """The tool's checkout is flagged when off the default branch or behind it."""
     arrange(clone)

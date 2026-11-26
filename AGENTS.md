@@ -15,7 +15,7 @@ Guidance for AI coding agents working in this repository.
 
 | Path | Purpose |
 | --- | --- |
-| `src/llm_dependabot/` | The CLI package (Python 3.15+); see the module map below |
+| `src/llm_dependabot/` | The CLI package (Python 3.14+, run on the 3.15 in `.python-version`); see the module map below |
 | `src/llm_dependabot/dashboard/templates/` | The dashboard's HTML, CSS, and JavaScript |
 | `tests/` | pytest suite, one file per module; `conftest.py` redirects every per-user path to a temporary directory and provides the `commands` fixture of fake executables |
 | `config.yaml` | Shared settings and the source of truth for prompts, cadences, groups, weekdays, and times |
@@ -70,7 +70,7 @@ make check         # lint, format check, type check and coverage, tests, dead co
 make test          # the pytest suite with 100% line and branch coverage (uv run pytest -k NAME for one test)
 make build         # build the sdist and wheel into dist/
 make hooks         # every prek hook on all files; must pass before committing
-make format        # apply ruff formatting
+make format        # add missing trailing commas, then apply ruff formatting
 make update-deps   # upgrade locked dependencies and prek hooks
 make actions-lock  # regenerate .github/workflows/actions.lock after action changes
 make list          # show group assignment (needs gh authenticated)
@@ -143,6 +143,13 @@ whatever is checked out there is what the scheduled runs execute.
   obvious. Leave out `Args:`, `Returns:`, `Yields:`, and `Raises:` sections,
   which only restate the signature; Ruff's rules for them are ignored for
   that reason.
+
+- Support every Python from the `requires-python` floor, one minor release
+  below the latest, even though `.python-version` runs the latest: never use
+  a language feature or API newer than the floor. ty checks against the
+  floor, and CI runs the tests on it. Below Python 3.15, text I/O decodes
+  with the locale's encoding, so pass `encoding="utf-8"` to every text-mode
+  file and subprocess call (Ruff checks the files, not the subprocesses).
 
 - Add type annotations everywhere; `ty check` and pyrefly's strict type
   coverage must pass. If they disagree, ty wins.

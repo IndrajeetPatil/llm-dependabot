@@ -13,7 +13,7 @@ Follow `AGENTS.md` throughout, especially its workflow rules.
 | --- | --- | --- |
 | CLI, dev, and docs dependencies | `dependencies` and the `dev` and `docs` groups in `pyproject.toml`, locked in `uv.lock` | The PyYAML minimum in `hooks/check_private_names.py`, and the locked Ruff version with the `ruff-pre-commit` rev in `prek.toml` |
 | uv build backend | `uv_build` in `[build-system]` of `pyproject.toml` | The `required-version` of uv in `pyproject.toml` |
-| Python | `requires-python` in `pyproject.toml` and `hooks/check_private_names.py`, and `.python-version` | The latest stable CPython release |
+| Python | `.python-version`; the floor in `requires-python`, `target-version` of Ruff, and `python-version` of ty in `pyproject.toml`, and `requires-python` in `hooks/check_private_names.py` | `.python-version` on the latest stable CPython release, the floor one minor release below it |
 | prek hooks | Frozen `rev` commit SHAs in `prek.toml` | The latest release of each hook repository |
 | prek | `minimum_prek_version` in `prek.toml`; `prek-version: latest-known` in `prek.yml` follows the `prek-action` pin | The latest `j178/prek` release |
 | GitHub Actions | Every `uses:` line in `.github/workflows/` | `.github/workflows/actions.lock` and every other use of the same action |
@@ -34,10 +34,14 @@ Follow `AGENTS.md` throughout, especially its workflow rules.
    the one in `pyproject.toml`. After editing `pyproject.toml`, run `uv lock`
    so the lockfile matches it.
 
-3. If the `requires-python` floor is no longer the latest stable CPython,
-   raise it in `pyproject.toml`, `hooks/check_private_names.py`, and
-   `.python-version`, and
-   adopt the new version's features where they simplify the code.
+3. Keep `.python-version`, which development and scheduled runs use, on
+   the latest stable CPython release, and the supported floor one minor
+   release below it: `requires-python`, Ruff's `target-version`, and ty's
+   `python-version` in `pyproject.toml`, and `requires-python` in
+   `hooks/check_private_names.py`. When a new CPython release moves the
+   floor, adopt the features the new floor allows where they simplify the
+   code; never use a feature newer than the floor. CI runs the tests on the
+   floor, which it reads from `pyproject.toml`.
 
 ## prek hooks
 

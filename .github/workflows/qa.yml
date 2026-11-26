@@ -29,3 +29,27 @@ jobs:
 
       - name: Run checks
         run: make check
+
+  test-minimum-python:
+    name: Tests on the minimum Python
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          enable-cache: false
+
+      # make check runs on .python-version; this runs the suite on the
+      # requires-python floor, read from pyproject.toml so it never drifts.
+      - name: Run tests
+        run: |
+          UV_PYTHON=$(sed -n 's/^requires-python = ">=\(.*\)"$/\1/p' pyproject.toml)
+          test -n "$UV_PYTHON"
+          export UV_PYTHON
+          make test

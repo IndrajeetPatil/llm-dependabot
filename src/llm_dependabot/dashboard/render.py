@@ -1,9 +1,9 @@
 """Render past runs, totals, and the schedule as a self-contained HTML page."""
 
 import datetime as dt
+import html
 from importlib.resources import files
 from typing import TYPE_CHECKING
-lazy import html
 
 from llm_dependabot.config import WEEKDAYS
 from llm_dependabot.dashboard.runs import collect_runs

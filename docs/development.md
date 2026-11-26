@@ -4,7 +4,8 @@
 
 ![Development toolchain and tech stack: four bands cover the Python package and locked project dependencies, core libraries and the native Full Disk Access launcher, local Ruff, ty, pyrefly, unref, uv audit, deptry, and prek checks, and pull-request CI and supply-chain checks with GitHub Actions, actionlint, zizmor, Gitleaks, actions.lock, Zensical, Homebrew, and the Brewfile.](images/tech-stack.webp)
 
-- **Python 3.15** in a [uv](https://docs.astral.sh/uv/) project: the
+- **Python 3.14 or later** (3.15 in `.python-version`, which development
+  and scheduled runs use) in a [uv](https://docs.astral.sh/uv/) project: the
   `llm_dependabot` package under `src/`, with its dependencies locked in
   `uv.lock`. uv creates and syncs the virtual environment on each run, and
   `make build` builds the sdist and wheel with the `uv_build` backend.
@@ -59,7 +60,7 @@ run them again on each pull request:
 
 | Workflow | Runs | Trigger |
 | --- | --- | --- |
-| `qa.yml` | `make check` | Pull requests |
+| `qa.yml` | `make check`, and `make test` on the minimum Python in `requires-python` | Pull requests |
 | `prek.yml` | The prek hooks other than Ruff and ty | Pull requests |
 | `security.yml` | Gitleaks over the full history and zizmor over the workflows | Pull requests |
 | `conventional-commits.yml` | Commit messages and the pull-request title | Pull requests |

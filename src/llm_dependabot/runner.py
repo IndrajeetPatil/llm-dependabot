@@ -8,7 +8,7 @@ import threading
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
-lazy import filelock
+import filelock
 
 from llm_dependabot.checkouts import (
     SkipRepoError,
@@ -34,7 +34,11 @@ if TYPE_CHECKING:
 
 
 def planned_runs(
-    config: Config, group: Group, repos: list[Repo], state: State, forced: list[str]
+    config: Config,
+    group: Group,
+    repos: list[Repo],
+    state: State,
+    forced: list[str],
 ) -> list[tuple[Repo, Prompt]]:
     """The (repository, prompt) pairs to run, in order.
 
@@ -52,14 +56,18 @@ def planned_runs(
 
 
 def run_agent(
-    agent: Agent, worktree: Path, prompt: str, log_path: Path, timeout_hours: float
+    agent: Agent,
+    worktree: Path,
+    prompt: str,
+    log_path: Path,
+    timeout_hours: float,
 ) -> int:
     """Run the agent in a worktree, logging its output; return its exit code.
 
     A run that outlasts its timeout is stopped and returns -1.
     """
     argv, via_stdin = agent.argv(prompt, timeout_hours)
-    with log_path.open("w") as out:
+    with log_path.open("w", encoding="utf-8") as out:
         proc = subprocess.Popen(
             argv,
             cwd=worktree,
@@ -67,12 +75,13 @@ def run_agent(
             stdout=out,
             stderr=subprocess.STDOUT,
             start_new_session=True,
-            text=True,
+            encoding="utf-8",
         )
         try:
             # Agents with a timeout of their own stop first; this stops the rest.
             proc.communicate(
-                prompt if via_stdin else None, timeout=timeout_hours * 3600 + 600
+                prompt if via_stdin else None,
+                timeout=timeout_hours * 3600 + 600,
             )
         except subprocess.TimeoutExpired:
             os.killpg(proc.pid, signal.SIGTERM)
@@ -84,13 +93,21 @@ def run_agent(
 def current_branch(checkout: Checkout) -> str:
     """The branch checked out in the worktree, which the agent may have changed."""
     current = sh(
-        "git", "-C", checkout.worktree, "branch", "--show-current", check=False
+        "git",
+        "-C",
+        checkout.worktree,
+        "branch",
+        "--show-current",
+        check=False,
     )
     return current or checkout.branch
 
 
 def label_pr(
-    repo: Repo, pr: PullRequest, pr_label: PullRequestLabel, label: str
+    repo: Repo,
+    pr: PullRequest,
+    pr_label: PullRequestLabel,
+    label: str,
 ) -> bool:
     """Label a pull request; return whether that worked, logging why not."""
     try:
@@ -103,7 +120,10 @@ def label_pr(
 
 @contextmanager
 def labelling_early(
-    checkout: Checkout, repo: Repo, pr_label: PullRequestLabel | None, label: str
+    checkout: Checkout,
+    repo: Repo,
+    pr_label: PullRequestLabel | None,
+    label: str,
 ) -> Generator[set[int]]:
     """While the agent works, label its pull request as soon as one exists.
 
@@ -139,7 +159,11 @@ def labelling_early(
 
 
 def agent_pass(
-    checkout: Checkout, repo: Repo, prompt: Prompt, config: Config, label: str
+    checkout: Checkout,
+    repo: Repo,
+    prompt: Prompt,
+    config: Config,
+    label: str,
 ) -> tuple[int, PullRequest | None, set[int]]:
     """Run the agent in a prepared checkout, then find the pull request it opened.
 
@@ -163,7 +187,11 @@ def agent_pass(
 
 
 def process_repo(
-    repo: Repo, prompt: Prompt, config: Config, state: State, run_dir: Path
+    repo: Repo,
+    prompt: Prompt,
+    config: Config,
+    state: State,
+    run_dir: Path,
 ) -> str:
     """Run one prompt in one repository; return a one-line summary."""
     label = f"{repo.name} {prompt.name}"
@@ -182,7 +210,7 @@ def process_repo(
 
     log(f"{label}: {pr.state.lower()} pull request {pr.url}")
     state.pending.append(
-        Pending(**checkout.model_dump(), pr_number=pr.number, pr_url=pr.url)
+        Pending(**checkout.model_dump(), pr_number=pr.number, pr_url=pr.url),
     )
     save_state(state)
     if config.label is not None and pr.number not in labelled:

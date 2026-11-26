@@ -29,7 +29,8 @@ def toolchain(commands: FakeCommands) -> FakeCommands:
 
 
 def test_build_app_builds_once_until_its_sources_change(
-    toolchain: FakeCommands, config: Config
+    toolchain: FakeCommands,
+    config: Config,
 ) -> None:
     """The app is compiled, iconified, and signed, then left alone while unchanged."""
     assert build_app(config) is True
@@ -100,7 +101,8 @@ def test_full_disk_access_granted(
 
 
 def test_show_full_disk_access_steps_opens_settings_and_the_app(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     """The steps open the privacy pane and reveal the app in the Finder."""
     launched: list[tuple[str, bool]] = []

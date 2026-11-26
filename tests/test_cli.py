@@ -60,7 +60,9 @@ def test_a_run_runs_the_plan_and_notifies(monkeypatch: pytest.MonkeyPatch) -> No
     """A run logs and notifies its summary."""
     notified: list[tuple[str, str]] = []
     monkeypatch.setattr(
-        cli, "run_plan", lambda _c, _g, plan: [f"{r.name}: PR #1" for r, _ in plan]
+        cli,
+        "run_plan",
+        lambda _c, _g, plan: [f"{r.name}: PR #1" for r, _ in plan],
     )
     monkeypatch.setattr(cli, "notify", lambda *args: notified.append(args))
     result = runner.invoke(app, ["run", "python"])
@@ -108,9 +110,9 @@ def test_status_shows_the_schedule_and_pending_pull_requests(home: Path) -> None
                     started=dt.datetime(2026, 11, 24, 10, tzinfo=dt.UTC),
                     pr_number=1,
                     pr_url="https://github.com/octo/app/pull/1",
-                )
+                ),
             ],
-        )
+        ),
     )
     result = runner.invoke(app, ["status"])
     assert result.exit_code == 0, result.output
@@ -179,7 +181,10 @@ def test_status_lists_clones_awaiting_deletion(home: Path) -> None:
     ],
 )
 def test_dashboard_writes_the_page(
-    monkeypatch: pytest.MonkeyPatch, args: list[str], *, opened: bool
+    monkeypatch: pytest.MonkeyPatch,
+    args: list[str],
+    *,
+    opened: bool,
 ) -> None:
     """The dashboard command writes the page, and opens it unless told not to."""
     launched: list[str] = []
@@ -198,7 +203,9 @@ def test_install(monkeypatch: pytest.MonkeyPatch, *, granted: bool) -> None:
     monkeypatch.setattr(cli, "install_agents", lambda _config: calls.append("install"))
     monkeypatch.setattr(cli, "full_disk_access_granted", lambda _config: granted)
     monkeypatch.setattr(
-        cli, "show_full_disk_access_steps", lambda: calls.append("steps")
+        cli,
+        "show_full_disk_access_steps",
+        lambda: calls.append("steps"),
     )
     result = runner.invoke(app, ["install"])
     assert result.exit_code == 0, result.output
@@ -220,7 +227,9 @@ def test_uninstall_removes_every_agent(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.parametrize("terminal", [True, False])
 def test_setup_needs_a_terminal(
-    monkeypatch: pytest.MonkeyPatch, *, terminal: bool
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    terminal: bool,
 ) -> None:
     """Setup runs its steps from a terminal, and refuses to run without one."""
     ran: list[Config] = []
@@ -234,7 +243,9 @@ def test_setup_needs_a_terminal(
 
 @pytest.mark.parametrize("skip_weekends", [True, False])
 def test_status_mentions_skipped_weekends_only_when_on(
-    config: Config, *, skip_weekends: bool
+    config: Config,
+    *,
+    skip_weekends: bool,
 ) -> None:
     """The weekend note appears only when scheduled jobs skip weekends."""
     config.skip_weekends = skip_weekends
@@ -254,7 +265,8 @@ def test_status_mentions_skipped_weekends_only_when_on(
 )
 @pytest.mark.usefixtures("discovered")
 def test_stale_checkout_warnings_are_shown(
-    monkeypatch: pytest.MonkeyPatch, args: list[str]
+    monkeypatch: pytest.MonkeyPatch,
+    args: list[str],
 ) -> None:
     """Runs and status warn when the tool's own checkout misses merged code."""
     monkeypatch.setattr(cli, "stale_checkout", lambda _root: "it is behind")

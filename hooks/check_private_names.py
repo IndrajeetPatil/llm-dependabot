@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# requires-python = ">=3.15"
+# requires-python = ">=3.14"
 # dependencies = ["pyyaml>=6.0.4"]
 # ///
 """Fail if a staged file or commit message names a repository from private.yaml.
@@ -24,7 +24,7 @@ def main(paths: list[str]) -> int:
     if not PRIVATE_FILE.exists():
         return 0
     names = (yaml.safe_load(PRIVATE_FILE.read_text(encoding="utf-8")) or {}).get(
-        "repos"
+        "repos",
     ) or []
     if not names:
         return 0

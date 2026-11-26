@@ -32,6 +32,9 @@ The first stable release.
 - Review past runs, their pull requests, and agent transcripts in an HTML
   dashboard (`make dashboard`), and the schedule in `make status`.
 
+- Support Python 3.14 and later; the checkout runs on the newest stable
+  release, named in `.python-version`.
+
 - Pull merged changes into the checkout the scheduled jobs run from with
   `make self-update`; `make status` and every run warn when that checkout is
   behind `origin/main` or has another branch checked out.

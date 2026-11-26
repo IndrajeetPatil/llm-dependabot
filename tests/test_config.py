@@ -35,7 +35,7 @@ def set_at(raw: dict[str, Any], path: tuple[str | int, ...], value: object) -> N
 def test_the_committed_config_is_valid() -> None:
     """The repository's own config.yaml validates."""
     config = Config.model_validate_json(
-        config_module.yaml_to_json(ROOT / "config.yaml")
+        config_module.yaml_to_json(ROOT / "config.yaml"),
     )
     assert config.groups
     assert config.bundle_id.endswith(".llm-dependabot")
@@ -61,12 +61,18 @@ def test_values_are_parsed(config: Config) -> None:
         pytest.param(("groups", 0, "time"), UNQUOTED_TIME, "time", id="unquoted time"),
         pytest.param(("groups", 1, "name"), "python", "unique", id="duplicate group"),
         pytest.param(
-            ("prompts", 1, "name"), "update-deps", "unique", id="duplicate prompt"
+            ("prompts", 1, "name"),
+            "update-deps",
+            "unique",
+            id="duplicate prompt",
         ),
         pytest.param(("prompts", 0, "name"), "-x", "pattern", id="bad prompt name"),
         pytest.param(("label", "color"), "red", "pattern", id="bad label colour"),
         pytest.param(
-            ("bundle_id_prefix",), "com example", "pattern", id="bad bundle prefix"
+            ("bundle_id_prefix",),
+            "com example",
+            "pattern",
+            id="bad bundle prefix",
         ),
         pytest.param(("agent", "command"), [], "at least 1", id="empty command"),
         pytest.param(("agent_timeout_hours",), 0, "greater than 0", id="zero timeout"),
@@ -77,7 +83,10 @@ def test_values_are_parsed(config: Config) -> None:
             id="override for an unknown prompt",
         ),
         pytest.param(
-            ("groups", 0, "weekday"), "Saturday", "skip_weekends", id="weekend group"
+            ("groups", 0, "weekday"),
+            "Saturday",
+            "skip_weekends",
+            id="weekend group",
         ),
     ],
 )
@@ -123,10 +132,13 @@ def test_valid_variations_are_accepted(
 
 
 @pytest.mark.parametrize(
-    ("group", "cadence"), [("python", "weekly"), ("rest", "monthly")]
+    ("group", "cadence"),
+    [("python", "weekly"), ("rest", "monthly")],
 )
 def test_a_group_overrides_a_prompt_cadence(
-    config: Config, group: str, cadence: str
+    config: Config,
+    group: str,
+    cadence: str,
 ) -> None:
     """A group's cadence override replaces the prompt's own."""
     assert config.group(group).cadence_for(config.prompt("update-deps")) == cadence
@@ -153,7 +165,11 @@ def test_an_unknown_name_fails(config: Config, method: str) -> None:
     ],
 )
 def test_agent_argv(
-    command: list[str], hours: float, argv: list[str], *, via_stdin: bool
+    command: list[str],
+    hours: float,
+    argv: list[str],
+    *,
+    via_stdin: bool,
 ) -> None:
     """The prompt fills its placeholder argument, or goes to stdin without one."""
     agent = Agent(name="a", command=command)

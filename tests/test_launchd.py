@@ -32,7 +32,9 @@ def test_there_is_one_agent_per_group_plus_the_cleanup(config: Config) -> None:
     ],
 )
 def test_each_group_runs_on_its_weekday_and_time(
-    config: Config, group: str, when: dict[str, int]
+    config: Config,
+    group: str,
+    when: dict[str, int],
 ) -> None:
     """Each group's agent fires on its weekday and time, and logs to its own file."""
     plist = desired_agents(config)[f"com.example.llm-dependabot.{group}"]
@@ -106,7 +108,8 @@ def test_installed_labels_lists_only_this_tools_agents() -> None:
 
 
 def test_unload_boots_the_agent_out_and_deletes_its_plist(
-    commands: FakeCommands, monkeypatch: pytest.MonkeyPatch
+    commands: FakeCommands,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Unloading stops the job in the user's GUI domain and removes the plist."""
     monkeypatch.setattr(launchd.os, "getuid", lambda: 501)
@@ -114,7 +117,7 @@ def test_unload_boots_the_agent_out_and_deletes_its_plist(
     install_plists("com.example.llm-dependabot.rest")
     launchd.unload("com.example.llm-dependabot.rest")
     assert commands.calls("launchctl") == [
-        ["bootout", "gui/501/com.example.llm-dependabot.rest"]
+        ["bootout", "gui/501/com.example.llm-dependabot.rest"],
     ]
     assert launchd.installed_labels() == []
 

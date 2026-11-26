@@ -51,7 +51,7 @@ def read_log(path: Path) -> list[tuple[dt.datetime, str]]:
     """The timestamped lines of a log, skipping noise from the login shell."""
     return [
         (dt.datetime.fromisoformat(match[1]), match[2])
-        for line in path.read_text(errors="replace").splitlines()
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines()
         if (match := LOG_LINE.fullmatch(line))
     ]
 
@@ -64,7 +64,11 @@ def local_time(timestamp: float) -> dt.datetime:
 
 
 def record_job_event(
-    run: GroupRun, jobs: dict[str, Job], at: dt.datetime, label: str, event: str
+    run: GroupRun,
+    jobs: dict[str, Job],
+    at: dt.datetime,
+    label: str,
+    event: str,
 ) -> None:
     # Labels are "<repo> <prompt>"; older logs carry only "<repo>".
     """Apply one logged event to the job it belongs to, creating it if new."""
@@ -139,7 +143,7 @@ def manual_runs(config: Config, logged: set[Path]) -> list[GroupRun]:
                     started=local_time(info.st_birthtime),
                     finished=local_time(info.st_mtime),
                     transcript=transcript,
-                )
+                ),
             )
         run.jobs.sort(key=lambda j: j.started)
         run.finished = max((j.finished for j in run.jobs if j.finished), default=None)

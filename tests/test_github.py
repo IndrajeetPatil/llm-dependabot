@@ -38,7 +38,7 @@ def test_gh_json_validates_camel_case_output(monkeypatch: pytest.MonkeyPatch) ->
             "visibility": "PUBLIC",
             "primaryLanguage": {"name": "Python"},
             "defaultBranchRef": {"name": "trunk"},
-        }
+        },
     ]
     calls: list[tuple[str, ...]] = []
 
@@ -72,10 +72,16 @@ BEFORE: dt.datetime = STARTED - dt.timedelta(minutes=1)
     ("by_head", "recent", "expected"),
     [
         pytest.param(
-            [(3, STARTED), (5, STARTED)], [], 5, id="newest on the run branch"
+            [(3, STARTED), (5, STARTED)],
+            [],
+            5,
+            id="newest on the run branch",
         ),
         pytest.param(
-            [], [(7, BEFORE), (8, STARTED)], 8, id="opened since the run started"
+            [],
+            [(7, BEFORE), (8, STARTED)],
+            8,
+            id="opened since the run started",
         ),
         pytest.param([], [(7, BEFORE)], None, id="only older pull requests"),
         pytest.param([], [], None, id="none at all"),
@@ -156,7 +162,7 @@ def test_has_prompt(
             "api",
             "repos/octo/project/contents/.github/prompts/update-deps.md?ref=main",
             "--silent",
-        ]
+        ],
     ]
 
 
@@ -165,12 +171,13 @@ def test_pr_state(commands: FakeCommands) -> None:
     commands.on("gh", stdout='{"state": "MERGED"}')
     assert pr_state("octo/project", 12) == "MERGED"
     assert commands.calls("gh") == [
-        ["pr", "view", "12", "-R", "octo/project", "--json", "state"]
+        ["pr", "view", "12", "-R", "octo/project", "--json", "state"],
     ]
 
 
 def test_add_label_creates_the_label_then_applies_it(
-    commands: FakeCommands, make_repo: Callable[..., Repo]
+    commands: FakeCommands,
+    make_repo: Callable[..., Repo],
 ) -> None:
     """The label is created or updated in the repository, then added to the PR."""
     commands.install("gh")
