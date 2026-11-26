@@ -40,8 +40,11 @@ Issues = "https://github.com/IndrajeetPatil/llm-dependabot/issues"
 # Development tools, locked in uv.lock so new rules arrive only through a
 # reviewed dependency update; scheduled runs use --no-dev and never install them.
 dev = [
+  "coverage>=7.17.5",
   "deptry>=0.25.1",
   "pyrefly>=1.5.0",
+  "pytest>=9.2.0",
+  "pytest-random-order>=1.2.0",
   "ruff>=0.17.6",
   "ty>=0.0.111",
   "unref>=0.5.1",
@@ -55,6 +58,43 @@ build-backend = "uv_build"
 
 [tool.uv]
 required-version = ">=0.13.0"
+
+[tool.pytest]
+# Strict mode enables strict_config, strict_markers, strict_parametrization_ids,
+# and strict_xfail, plus any strictness options future pytest releases add. The
+# dev group pins pytest, so new options arrive only through a reviewed update.
+strict = true
+minversion = "9.2"
+required_plugins = ["pytest-random-order"]
+# A parametrize with no cases fails collection instead of silently skipping.
+empty_parameter_set_mark = "fail_at_collect"
+# Collect only tests defined in test modules, not ones they import.
+collect_imported_tests = false
+addopts = [
+  # Summarise every outcome other than a pass.
+  "-ra",
+  # Shuffle the order, so tests cannot depend on one another.
+  "--random-order",
+  # Import test modules without changing sys.path.
+  "--import-mode=importlib",
+]
+testpaths = ["tests"]
+# Every warning, including deprecations from dependencies, fails its test.
+filterwarnings = ["error"]
+# Isolates every test from the real home directory (see tests/conftest.py).
+usefixtures = ["home"]
+
+[tool.coverage.run]
+branch = true
+source = ["llm_dependabot"]
+
+[tool.coverage.report]
+# Every line and branch is tested; macOS and network calls are faked.
+fail_under = 100
+precision = 2
+show_missing = true
+skip_covered = true
+skip_empty = true
 
 [tool.ruff]
 target-version = "py315"
@@ -90,6 +130,14 @@ ignore = [
   "start-process-with-partial-path",
   # print is the CLI's output.
   "print",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+  # pytest checks with plain assert statements.
+  "assert",
+  # Expected values read better inline than as named constants.
+  "magic-value-comparison",
 ]
 
 [tool.ruff.lint.pydocstyle]

@@ -10,7 +10,7 @@ SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
 
 .DEFAULT_GOAL := help
-.PHONY: help setup update-deps install uninstall list status dashboard cleanup clean-logs run dry-run lint format format-check typecheck typecoverage deadcode audit build check hooks hooks-install actions-lock-install actions-lock actions-lock-verify check-actions-lock-version docs docs-serve
+.PHONY: help setup update-deps install uninstall list status dashboard cleanup clean-logs run dry-run lint format format-check typecheck typecoverage test deadcode audit build check hooks hooks-install actions-lock-install actions-lock actions-lock-verify check-actions-lock-version docs docs-serve
 
 ##@ General
 
@@ -92,6 +92,10 @@ typecheck: ## Type-check with ty against the project's environment
 typecoverage: ## Require complete strict type coverage with pyrefly
 	uv run --locked pyrefly coverage check --fail-under 100 --strict
 
+test: ## Run the pytest suite, requiring full line and branch coverage
+	uv run --locked coverage run -m pytest
+	uv run --locked coverage report
+
 deadcode: ## Find unused code with unref
 	uv run --locked unref
 
@@ -103,7 +107,7 @@ audit: ## Check dependencies for known vulnerabilities (uv audit) and declaratio
 build: ## Build the package's sdist and wheel into dist/
 	uv build --clear
 
-check: lint format-check typecheck typecoverage deadcode audit build ## Run all development checks and build the package
+check: lint format-check typecheck typecoverage test deadcode audit build ## Run all development checks and build the package
 
 hooks: ## Run every prek hook on all files
 	prek run --all-files
