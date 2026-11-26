@@ -17,9 +17,9 @@ if TYPE_CHECKING:
 def test_there_is_one_agent_per_group_plus_the_cleanup(config: Config) -> None:
     """Each group gets an agent, and so does the cleanup."""
     assert sorted(desired_agents(config)) == [
-        "com.indrajeetpatil.llm-dependabot.cleanup",
-        "com.indrajeetpatil.llm-dependabot.python",
-        "com.indrajeetpatil.llm-dependabot.rest",
+        "com.example.llm-dependabot.cleanup",
+        "com.example.llm-dependabot.python",
+        "com.example.llm-dependabot.rest",
     ]
 
 
@@ -35,7 +35,7 @@ def test_each_group_runs_on_its_weekday_and_time(
     config: Config, group: str, when: dict[str, int]
 ) -> None:
     """Each group's agent fires on its weekday and time, and logs to its own file."""
-    plist = desired_agents(config)[f"com.indrajeetpatil.llm-dependabot.{group}"]
+    plist = desired_agents(config)[f"com.example.llm-dependabot.{group}"]
     assert plist["StartCalendarInterval"] == when
     assert plist["StandardOutPath"] == str(launchd.LOG_DIR / f"{group}.log")
     assert shlex.split(plist["ProgramArguments"][-1])[-3:] == [
@@ -50,14 +50,12 @@ def test_jobs_start_through_the_app_in_a_login_shell(config: Config) -> None:
     for plist in desired_agents(config).values():
         program = plist["ProgramArguments"]
         assert program[:5] == [str(launchd.LAUNCHER), "/bin/zsh", "-l", "-i", "-c"]
-        assert plist["AssociatedBundleIdentifiers"] == [
-            "com.indrajeetpatil.llm-dependabot"
-        ]
+        assert plist["AssociatedBundleIdentifiers"] == ["com.example.llm-dependabot"]
 
 
 def test_the_cleanup_runs_at_load_and_on_an_interval(config: Config) -> None:
     """The cleanup agent runs at load and every interval."""
-    cleanup = desired_agents(config)["com.indrajeetpatil.llm-dependabot.cleanup"]
+    cleanup = desired_agents(config)["com.example.llm-dependabot.cleanup"]
     assert cleanup["StartInterval"] == 3 * 3600
     assert cleanup["RunAtLoad"] is True
     assert shlex.split(cleanup["ProgramArguments"][-1])[-2:] == [
@@ -93,15 +91,17 @@ def install_plists(*labels: str) -> None:
 
 
 def test_installed_labels_lists_only_this_tools_agents() -> None:
-    """Only plists with the bundle identifier's prefix count, sorted."""
+    """Only plists named after the tool count, under any prefix, sorted."""
     install_plists(
-        "com.indrajeetpatil.llm-dependabot.rest",
-        "com.indrajeetpatil.llm-dependabot.cleanup",
+        "com.example.llm-dependabot.rest",
+        "com.example.llm-dependabot.cleanup",
+        "org.previous.llm-dependabot.python",
         "com.example.other",
     )
     assert launchd.installed_labels() == [
-        "com.indrajeetpatil.llm-dependabot.cleanup",
-        "com.indrajeetpatil.llm-dependabot.rest",
+        "com.example.llm-dependabot.cleanup",
+        "com.example.llm-dependabot.rest",
+        "org.previous.llm-dependabot.python",
     ]
 
 
@@ -111,10 +111,10 @@ def test_unload_boots_the_agent_out_and_deletes_its_plist(
     """Unloading stops the job in the user's GUI domain and removes the plist."""
     monkeypatch.setattr(launchd.os, "getuid", lambda: 501)
     commands.install("launchctl")
-    install_plists("com.indrajeetpatil.llm-dependabot.rest")
-    launchd.unload("com.indrajeetpatil.llm-dependabot.rest")
+    install_plists("com.example.llm-dependabot.rest")
+    launchd.unload("com.example.llm-dependabot.rest")
     assert commands.calls("launchctl") == [
-        ["bootout", "gui/501/com.indrajeetpatil.llm-dependabot.rest"]
+        ["bootout", "gui/501/com.example.llm-dependabot.rest"]
     ]
     assert launchd.installed_labels() == []
 
@@ -122,9 +122,9 @@ def test_unload_boots_the_agent_out_and_deletes_its_plist(
 def test_running_jobs_reads_each_agents_state(commands: FakeCommands) -> None:
     """A job counts as running only when launchctl says its state is running."""
     install_plists(
-        "com.indrajeetpatil.llm-dependabot.python",
-        "com.indrajeetpatil.llm-dependabot.rest",
+        "com.example.llm-dependabot.python",
+        "com.example.llm-dependabot.rest",
     )
     commands.on("launchctl", ".python", stdout="{\n\tstate = running\n}\n")
     commands.on("launchctl", ".rest", stdout="{\n\tstate = waiting\n}\n")
-    assert launchd.running_jobs() == ["com.indrajeetpatil.llm-dependabot.python"]
+    assert launchd.running_jobs() == ["com.example.llm-dependabot.python"]

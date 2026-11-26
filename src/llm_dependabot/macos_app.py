@@ -5,7 +5,7 @@ import re
 import shutil
 import time
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 lazy import hashlib
 lazy import plistlib
 lazy import tempfile
@@ -17,7 +17,6 @@ from llm_dependabot.paths import (
     APP_BUNDLE,
     APP_NAME,
     APP_SOURCE,
-    BUNDLE_ID,
     FULL_DISK_ACCESS_PANE,
     LAUNCHER,
     NAME,
@@ -25,13 +24,16 @@ from llm_dependabot.paths import (
 )
 from llm_dependabot.shell import sh
 
+if TYPE_CHECKING:
+    from llm_dependabot.config import Config
 
-def app_info() -> dict[str, Any]:
+
+def app_info(config: Config) -> dict[str, Any]:
     """The app's Info.plist."""
     return {
         "CFBundleName": APP_NAME,
         "CFBundleDisplayName": APP_NAME,
-        "CFBundleIdentifier": BUNDLE_ID,
+        "CFBundleIdentifier": config.bundle_id,
         "CFBundleExecutable": NAME,
         "CFBundleIconFile": "AppIcon",
         "CFBundlePackageType": "APPL",
@@ -51,17 +53,18 @@ def build_icon(source: Path, icns: Path) -> None:
         sh("iconutil", "-c", "icns", iconset, "-o", icns)
 
 
-def build_app() -> bool:
+def build_app(config: Config) -> bool:
     """Build the LLM Dependabot app; return True if it changed.
 
     macOS ties the Full Disk Access grant to the app's code signature, so the
-    app is rebuilt, and needs granting again, only when its sources change.
+    app is rebuilt, and needs granting again, only when its sources or its
+    bundle identifier change.
     """
     sources = [APP_SOURCE / "launcher.c", APP_SOURCE / "icon.png"]
     digest = hashlib.sha256()
     for path in sources:
         digest.update(path.read_bytes())
-    digest.update(json.dumps(app_info(), sort_keys=True).encode())
+    digest.update(json.dumps(app_info(config), sort_keys=True).encode())
     stamp = STATE_DIR / "app.sha256"
     if LAUNCHER.exists() and stamp.exists() and stamp.read_text() == digest.hexdigest():
         return False
@@ -70,28 +73,36 @@ def build_app() -> bool:
     contents = APP_BUNDLE / "Contents"
     (contents / "Resources").mkdir(parents=True)
     LAUNCHER.parent.mkdir()
-    (contents / "Info.plist").write_bytes(plistlib.dumps(app_info()))
+    (contents / "Info.plist").write_bytes(plistlib.dumps(app_info(config)))
     sh("clang", "-O2", "-Wall", "-Werror", "-o", LAUNCHER, sources[0])
     build_icon(sources[1], contents / "Resources/AppIcon.icns")
-    sh("codesign", "--force", "--sign", "-", "--identifier", BUNDLE_ID, APP_BUNDLE)
+    sh(
+        "codesign",
+        "--force",
+        "--sign",
+        "-",
+        "--identifier",
+        config.bundle_id,
+        APP_BUNDLE,
+    )
     stamp.write_text(digest.hexdigest())
     return True
 
 
-def full_disk_access_granted(path: Path) -> bool:
-    """Check that a launchd job started through the app can read path.
+def full_disk_access_granted(config: Config) -> bool:
+    """Check that a launchd job started through the app can read the clone root.
 
     This runs a throwaway agent, so it exercises the same privacy checks as
     the scheduled jobs rather than those of the current terminal. A job
     without access may instead hang on a privacy prompt; it is stopped after
     ten seconds and counts as not granted.
     """
-    label = f"{BUNDLE_ID}.access-check"
+    label = config.launchd_label("access-check")
     plist_path = STATE_DIR / f"{label}.plist"
     plist_path.write_bytes(
         plistlib.dumps({
             "Label": label,
-            "ProgramArguments": [str(LAUNCHER), "/bin/ls", str(path)],
+            "ProgramArguments": [str(LAUNCHER), "/bin/ls", str(config.clone_root)],
             "RunAtLoad": True,
             "StandardOutPath": "/dev/null",
             "StandardErrorPath": "/dev/null",

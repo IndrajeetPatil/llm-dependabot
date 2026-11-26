@@ -55,6 +55,7 @@ def raw_config(tmp_path: Path) -> dict[str, Any]:
     """A valid config.yaml, as the dictionary YAML would load it."""
     return {
         "owner": "octo",
+        "bundle_id_prefix": "com.example",
         "prompts": [
             {"name": "update-deps", "path": ".github/prompts/update-deps.md"},
             {

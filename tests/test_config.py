@@ -38,7 +38,13 @@ def test_the_committed_config_is_valid() -> None:
         config_module.yaml_to_json(ROOT / "config.yaml")
     )
     assert config.groups
-    assert all(group.label.endswith(f".{group.name}") for group in config.groups)
+    assert config.bundle_id.endswith(".llm-dependabot")
+
+
+def test_the_bundle_id_names_the_app_and_its_agents(config: Config) -> None:
+    """The prefix plus the tool's name identifies the app and prefixes labels."""
+    assert config.bundle_id == "com.example.llm-dependabot"
+    assert config.launchd_label("python") == "com.example.llm-dependabot.python"
 
 
 def test_values_are_parsed(config: Config) -> None:
@@ -59,6 +65,9 @@ def test_values_are_parsed(config: Config) -> None:
         ),
         pytest.param(("prompts", 0, "name"), "-x", "pattern", id="bad prompt name"),
         pytest.param(("label", "color"), "red", "pattern", id="bad label colour"),
+        pytest.param(
+            ("bundle_id_prefix",), "com example", "pattern", id="bad bundle prefix"
+        ),
         pytest.param(("agent", "command"), [], "at least 1", id="empty command"),
         pytest.param(("agent_timeout_hours",), 0, "greater than 0", id="zero timeout"),
         pytest.param(

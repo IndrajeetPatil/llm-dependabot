@@ -142,7 +142,7 @@ def ensure_full_disk_access(config: Config) -> None:
     """Install the app and agents, then wait for Full Disk Access."""
     step(f"{APP_NAME} app, launchd agents, and Full Disk Access")
     install_agents(config)
-    while not full_disk_access_granted(config.clone_root):
+    while not full_disk_access_granted(config):
         show_full_disk_access_steps()
         pause(f"Once {APP_NAME} is switched on,")
     typer.echo(f"scheduled jobs can read {config.clone_root}")

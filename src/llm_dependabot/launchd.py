@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 lazy import shlex
 
 from llm_dependabot.config import WEEKDAYS
-from llm_dependabot.paths import BUNDLE_ID, LAUNCH_AGENTS, LAUNCHER, LOG_DIR, ROOT
+from llm_dependabot.paths import LAUNCH_AGENTS, LAUNCHER, LOG_DIR, NAME, ROOT
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -34,14 +34,14 @@ def cli_command(*args: str) -> str:
 
 
 def plist_for(
-    label: str, shell_command: str, schedule: dict[str, Any], log_name: str
+    config: Config, job: str, shell_command: str, schedule: dict[str, Any]
 ) -> dict[str, Any]:
     """A launchd agent that runs the shell command through the app."""
     return {
-        "Label": label,
+        "Label": config.launchd_label(job),
         # Shows the jobs as "LLM Dependabot" in System Settings > General >
         # Login Items rather than as a bare shell.
-        "AssociatedBundleIdentifiers": [BUNDLE_ID],
+        "AssociatedBundleIdentifiers": [config.bundle_id],
         # The app's launcher holds the Full Disk Access grant (see
         # app/launcher.c). A login, interactive zsh picks up the same PATH
         # (Homebrew, uv, pnpm, the agent, gh) and keychain-backed credentials as a
@@ -54,8 +54,8 @@ def plist_for(
             "-c",
             shell_command,
         ],
-        "StandardOutPath": str(LOG_DIR / log_name),
-        "StandardErrorPath": str(LOG_DIR / log_name),
+        "StandardOutPath": str(LOG_DIR / f"{job}.log"),
+        "StandardErrorPath": str(LOG_DIR / f"{job}.log"),
         **schedule,
     }
 
@@ -69,18 +69,17 @@ def desired_agents(config: Config) -> dict[str, dict[str, Any]]:
             "Hour": group.time.hour,
             "Minute": group.time.minute,
         }
-        agents[group.label] = plist_for(
-            group.label,
+        agents[config.launchd_label(group.name)] = plist_for(
+            config,
+            group.name,
             cli_command("run", group.name, "--scheduled"),
             {"StartCalendarInterval": when},
-            f"{group.name}.log",
         )
-    label = f"{BUNDLE_ID}.cleanup"
-    agents[label] = plist_for(
-        label,
+    agents[config.launchd_label("cleanup")] = plist_for(
+        config,
+        "cleanup",
         cli_command("cleanup", "--scheduled"),
         {"StartInterval": int(config.cleanup_interval_hours * 3600), "RunAtLoad": True},
-        "cleanup.log",
     )
     return agents
 
@@ -92,8 +91,13 @@ def unload(label: str) -> None:
 
 
 def installed_labels() -> list[str]:
-    """Labels of the installed launchd agents."""
-    return sorted(p.stem for p in LAUNCH_AGENTS.glob(f"{BUNDLE_ID}.*.plist"))
+    """Labels of the installed launchd agents.
+
+    Agents are matched by the tool's name rather than the configured prefix,
+    so those installed under an earlier `bundle_id_prefix` are still found,
+    and replaced or removed.
+    """
+    return sorted(p.stem for p in LAUNCH_AGENTS.glob(f"*.{NAME}.*.plist"))
 
 
 def running_jobs() -> list[str]:

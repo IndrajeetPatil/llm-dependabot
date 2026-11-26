@@ -92,6 +92,11 @@ to ensure they match your local environment and preferred agent:
   languages (such as Rust, Go, Swift, or Ruby) or you prefer different run
   times, adjust the groups in `config.yaml` (see [Groups and the schedule](configuration.md#groups-and-the-schedule)).
 
+- **Bundle identifier (`bundle_id_prefix`):** set it to a reverse-DNS prefix
+  you own, such as `com.example` or `io.github.<your-login>`. It names the
+  LLM Dependabot app and its launchd agents; changing it later means granting
+  Full Disk Access again.
+
 - **Repository owner (`owner`):** you do not need to change this manually;
   `make setup` detects your authenticated GitHub account and offers to update
   `owner` in `config.yaml` automatically.

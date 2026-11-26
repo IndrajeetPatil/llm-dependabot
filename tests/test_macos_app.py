@@ -17,6 +17,7 @@ from llm_dependabot.macos_app import (
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from llm_dependabot.config import Config
     from tests.conftest import FakeCommands
 
 
@@ -28,12 +29,12 @@ def toolchain(commands: FakeCommands) -> FakeCommands:
 
 
 def test_build_app_builds_once_until_its_sources_change(
-    toolchain: FakeCommands,
+    toolchain: FakeCommands, config: Config
 ) -> None:
     """The app is compiled, iconified, and signed, then left alone while unchanged."""
-    assert build_app() is True
+    assert build_app(config) is True
     info = plistlib.loads((macos_app.APP_BUNDLE / "Contents/Info.plist").read_bytes())
-    assert info["CFBundleIdentifier"] == "com.indrajeetpatil.llm-dependabot"
+    assert info["CFBundleIdentifier"] == "com.example.llm-dependabot"
     assert info["LSUIElement"] is True
     [clang] = toolchain.calls("clang")
     assert clang[-3:] == [
@@ -47,11 +48,17 @@ def test_build_app_builds_once_until_its_sources_change(
 
     # Fake clang writes nothing, so stand in for the launcher it would build.
     macos_app.LAUNCHER.write_bytes(b"")
-    assert build_app() is False
+    assert build_app(config) is False
     assert len(toolchain.calls("clang")) == 1
 
     (macos_app.STATE_DIR / "app.sha256").write_text("stale")
-    assert build_app() is True
+    assert build_app(config) is True
+
+    macos_app.LAUNCHER.write_bytes(b"")
+    renamed = config.model_copy(update={"bundle_id_prefix": "org.example"})
+    assert build_app(renamed) is True
+    info = plistlib.loads((macos_app.APP_BUNDLE / "Contents/Info.plist").read_bytes())
+    assert info["CFBundleIdentifier"] == "org.example.llm-dependabot"
 
 
 @pytest.mark.parametrize(
@@ -64,7 +71,7 @@ def test_build_app_builds_once_until_its_sources_change(
 )
 def test_full_disk_access_granted(
     monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
+    config: Config,
     printed: str,
     polls: int,
     *,
@@ -87,7 +94,7 @@ def test_full_disk_access_granted(
     # Skip the waits between polls without touching the shared time module.
     monkeypatch.setattr(macos_app, "time", SimpleNamespace(sleep=lambda _s: None))
     macos_app.STATE_DIR.mkdir(parents=True)
-    assert full_disk_access_granted(tmp_path) is granted
+    assert full_disk_access_granted(config) is granted
     assert verbs == ["bootout", "bootstrap", *["print"] * polls, "bootout"]
     assert list(macos_app.STATE_DIR.iterdir()) == []
 

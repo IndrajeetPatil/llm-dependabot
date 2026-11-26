@@ -18,6 +18,7 @@ Run `make install` after editing either file.
 | Key | Meaning |
 | --- | --- |
 | `owner` | GitHub account whose repositories are considered |
+| `bundle_id_prefix` | A reverse-DNS prefix you own, such as `com.example`; with `.llm-dependabot` appended, it identifies the app and prefixes the launchd agents' labels. Changing it rebuilds the app, which needs Full Disk Access granted again; `make install` replaces the agents installed under the old prefix |
 | `prompts` | The prompts repositories can opt into, and how often each runs (see below) |
 | `clone_root` | Where existing clones are found and missing ones are cloned |
 | `agent` | The coding agent and how to call it (see below) |
@@ -179,6 +180,7 @@ fork it, and adapt the configuration for your own projects.
 | To change | Edit |
 | --- | --- |
 | Whose repositories take part | `owner` in `config.yaml` (`make setup` offers to set it), and `private.yaml` |
+| The app's and launchd agents' names | `bundle_id_prefix` in `config.yaml` |
 | Which prompts run, and how often | `prompts`, and per-group `cadence`, in `config.yaml` |
 | The schedule | `groups` in `config.yaml` |
 | The coding agent | `agent` in `config.yaml`, and its package in the `Brewfile` |
@@ -214,12 +216,6 @@ documentation, branding, and CI:
 
 `app/icon.png` is the app's icon; replacing it rebuilds the app, which needs
 Full Disk Access granted again.
-
-`BUNDLE_ID` in `src/llm_dependabot/paths.py` names the app and prefixes the
-launchd agents (`com.indrajeetpatil.llm-dependabot.*`). Keeping it is
-harmless. To use your own, run `make uninstall` first, since the CLI finds
-installed agents by this prefix, then change it, run `make install`, and
-grant the rebuilt app Full Disk Access again.
 
 ### Another operating system
 
