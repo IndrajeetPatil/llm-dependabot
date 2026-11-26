@@ -38,3 +38,15 @@ The first stable release.
 - Pull merged changes into the checkout the scheduled jobs run from with
   `make self-update`; `make status` and every run warn when that checkout is
   behind `origin/main` or has another branch checked out.
+
+### Fixed
+
+- Retain failed and interrupted agent work for manual recovery, including when
+  the final pull request lookup fails; show recovery paths in `make status`
+  and protect their managed clones from cleanup.
+
+- Keep failed and timed-out agents eligible for the next monthly run, while
+  continuing to track any pull request they opened.
+
+- Force remaining agent processes to stop after a bounded graceful shutdown
+  when a run times out.
