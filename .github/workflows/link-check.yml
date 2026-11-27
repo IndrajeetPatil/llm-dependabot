@@ -27,6 +27,8 @@ jobs:
       # whose site also serves HTTPS; by default lychee passes both.
       - name: Check links
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           fail: true
           args: >-
