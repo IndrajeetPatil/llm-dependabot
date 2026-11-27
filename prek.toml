@@ -69,16 +69,21 @@ args = [
 ]
 
 [[repos]]
-repo = "local"
+repo = "https://github.com/gitleaks/gitleaks"
+rev = "83d9cd684c87d95d656c1458ef04895a7f1cbd8e" # frozen: v8.30.1
 
-# Staged-diff secret scan with the Brewfile's gitleaks; CI scans the
-# complete history in security.yml instead.
 [[repos.hooks]]
 id = "gitleaks"
-name = "gitleaks (staged secret scan)"
-entry = "gitleaks git --pre-commit --redact --staged --verbose"
-language = "system"
-pass_filenames = false
+
+[[repos]]
+repo = "https://github.com/astral-sh/ty-pre-commit"
+rev = "004647638a470595d07264d09d135adc6682be41" # frozen: v0.0.111
+
+[[repos.hooks]]
+id = "ty"
+
+[[repos]]
+repo = "local"
 
 # Needs the gh-actions-lock extension, so CI skips it.
 [[repos.hooks]]
@@ -95,15 +100,6 @@ name = "forbid submodules"
 entry = "submodules are not allowed in this repository:"
 language = "fail"
 types = ["directory"]
-
-# ty runs in the project's own environment, which holds its dependencies.
-[[repos.hooks]]
-id = "ty"
-name = "ty"
-entry = "make typecheck"
-language = "system"
-files = "\\.py$"
-pass_filenames = false
 
 # Keep private repository names out of files and commit messages.
 [[repos.hooks]]
